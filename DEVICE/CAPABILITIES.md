@@ -12,8 +12,8 @@
 
 | 桶 | 块数 | 内容 |
 |---|---|---|
-| ① 无驱动 | **4** | SPSS/SPU 安全核、SOCCOP remoteproc、PMIC `hv-haptics`、vendor `bl@11`/`bias@3e`（用途未知）|
-| ② 有驱动未部署 | **7** | iris(VPU)、NFC st21nfca、硬件 TRNG、QCE、CTCU、Coresight TPDM/TNOC、传感器中枢(SLPI/QRMI) |
+| ① 无驱动 | **4** | SPSS/SPU 安全核、SOCCOP remoteproc、PMIC `hv-haptics`、vendor `bl@11`/`bias@3e`（用途未知）——**四块均已裁决不投入**，见 §5 |
+| ② 有驱动未部署 | **6** | iris(VPU)、硬件 TRNG、QCE、CTCU、Coresight TPDM/TNOC、传感器中枢(SLPI/QRMI)（NFC 已移出，见 §3 C6） |
 | ③ 未模块化 | **2** | `CONFIG_ATH12K=y`（defconfig 是 `=m`）、相机 CC/PLL 家族 `=y` 与其余 `=m` 混编 |
 | ④ 未上游化 | **8 类** | iris DTS、novatek 触屏、aw88461 功放、WCN7861(WiFi+BT)、GPS/`gmu@3d37000` 形态、传感器 fastrpc 1 行、tplg、相机 sm8750 camss |
 | ⑤ 已达成 | **17** | 见 §1 |
@@ -36,7 +36,7 @@
 | 9 | 音频编解码 WCD9390/95 + RX/TX/VA/WSA 宏 | 声卡 `Lenovo-Y700-Gen4` 在跑 | tplg 自编 `Lenovo-Y700-Gen4-tplg.bin` | tplg 可投 linux-firmware（建议 `qcom/sm8750/LENOVO/…`） | ⑤+④ |
 | 10 | 相机 PMIC wl2868c | `10-002f`→`wl2868c` | 无 | 已进 linux-next | ⑤ |
 | 11 | 闪光灯 PM8550 flash LED | 主线节点 okay | 无 | — | ⑤ |
-| 12 | NFC ST21NFCA | `CONFIG_NFC_ST21NFCA*` **未开**；DT `i2c@a80000` 两边都 disabled | 无 | 驱动在树 | **②**（先证物理贴装） |
+| 12 | ~~NFC ST21NFCA~~ | **不成立：本机无 NFC 硬件**（G1-10 取证五条：vendor 无 `android.hardware.nfc.xml`、无 HAL 库/固件、`elden.dts` 的 `st21nfc` 是总线 disabled 的共用模板）。`CONFIG_NFC_ST21NFCA*` 未开、DT `i2c@a80000` 两边都 disabled 与此一致 | 无 | 驱动在树（mac80211 之外的上游件） | ❌ 取消（不是桶②） |
 | 13 | 硬件 TRNG（`10c3000.rng`） | `CONFIG_HW_RANDOM_QCOM` **未开**（defconfig `=m`），现由 `smccc_trng` 兜底 | 无 | 无 | **②** |
 | 14 | QCE 加密引擎（`1dfa000.crypto`） | 三处 config **均无该符号** ⇒ 纯软算 | 无 | 无 | **②** |
 | 15 | CTCU（`10001000.ctcu`） | `CONFIG_CORESIGHT_CTCU` **未开**，驱动在树 | 无 | 无 | **②** |
@@ -61,10 +61,10 @@
 
 - **开 CONFIG（重编一次内核，可合并成一批）**：`CONFIG_HW_RANDOM_QCOM=m`、`CONFIG_CRYPTO_DEV_QCE=m`（+`_*`）、`CONFIG_CORESIGHT_{CTCU,TPDM,TNOC}=m`、`CONFIG_ATH12K=m`；验收 = `scripts/capability-audit.sh config` 无 `MISSING`、对应 `/sys/bus/platform/devices/*` 出现 driver 链接、`rng_current` 变 `qcom_trng`、`sync_state pending due to 1dfa000.crypto` 消失。
   ⚠ 先 `make olddefconfig` 再读符号：在机 `build/daily/.config` 是 **11-16** 生成的，而 `st21nfca` 文件 **11-25** 才进树 ⇒ 现在跑 `grep ST21NFCA .config` 是 `(absent)`，属于「config 早于树内容」而不是「树里没驱动」（`scripts/capability-audit.sh` 已把这两种成因分开提示）。
-- **NFC**：先证明 ST21NFCA 物理在位（vendor DT 里 `i2c@a80000` 也是 disabled ⇒ 可能根本没贴），再决定开不开 `CONFIG_NFC_ST21NFCA_I2C`。
+- ~~NFC~~：**不投入** —— 本机无 NFC 硬件（G1-10 已取消）。别再因为「DT 里有 `nfc@8` 节点」去开 CONFIG（那是多 SKU 共用模板，且 `&i2c0` 使能曾致硬关机 `PITFALLS #108`）。
 - **iris**：把工作树里 `&iris{okay}` 的板级覆盖提交进 DTS 系列，并换用上游 `vpu35_p4.mbn`（同文件名）后做一次上机验 TZ 签名（Q36 三件套的 ③）。
 - **固件门禁**：A2 曾因默认 `KDIR=build/vk151` 消失而**静默失效**（覆盖面 3/27）⇒ 正在补 `required-firmware.tsv` 清单 + KDIR 解析（lane C，产物 `reports/firmware-gate-a2-20261127.md`）。
-- **不投入（已有裁决）**：SPSS/SPU（GAPS §2）、SOCCOP、PMIC hv-haptics、Gunyah（D21）、Modem。
+- **不投入（已有裁决，逐项理由与重开条件见 §5）**：TEE/SPU、Gunyah、PMIH010x、FM/ST54、NFC、Modem、SOCCOP、vendor `bl@11`/`bias@3e`、双口快充选口、suspend 掉电率量化。
 
 ## 3. 本轮纠错（对 11-27 两份旧审计，别再用旧结论）
 
@@ -74,6 +74,7 @@
 | 「树内没有 st21nfca 驱动」 | **驱动在树**（`drivers/nfc/st21nfca/` 7 文件），缺的是 CONFIG + DT |
 | `aw99706` / `phy-nxp-ptn3222` 未上游 | **均已在 torvalds master**（2026-11-27 现取 200），④ 只剩本地 delta |
 | Q36「`/dev/video*` 零个 ⇒ 无硬件解码」 | 17 个 video **全是相机**；`dmesg\|grep -ci iris`=0 ⇒ iris 仍不可用，但**判据要换成 DT status + iris 日志** |
+| lane A 把 NFC 记为「桶② 有驱动未部署」 | **推翻**：本机**无 NFC 硬件**（`TASKS/G1.md` G1-10 = ❌，五条取证 + `PITFALLS #108`；vendor DT 里 `st21nfc` 是**总线 disabled 的共用模板**）⇒ 该行改 ❌，桶② 计数 7→6 |
 | 我方 `gmu@3d37000/0x68000` 疑为 payload bug | **vendor DT 就是这个值**；差异方向反了（该问主线 `3d6c000` 是否适用本板） |
 
 ## 4. 复现入口
@@ -88,3 +89,23 @@ bash rootfs/debian/elden-firmware/build.sh --check-fw-only    # lane C 落地后
 # 门禁
 bash scripts/check-doctor.sh
 ```
+
+## 5. 已裁决「不投入」的硬件面（勿重推）
+
+> 判据：**私有/无源码/无消费方** 三者之一 + 用户或台账已裁决。要重开必须给出「新增证据」，不是「再试一次」。
+
+| 项 | 硬件证据 | 不投入的理由（真源） | 重开条件 |
+|---|---|---|---|
+| **TEE / SPU / hw-fence / mem-buf** | vendor `remoteproc-spss@1880000` + `spss_utils`，节点 `ok`；主线无 spss 驱动 | 私有协议、无源码；主线无客户端与服务面（`TASKS/GAPS.md` §2「明确不投入」、`DEVICE/README.md` §1.3 ✗ 行） | 上游出现 SPU 客户端（如 qcomtee 上游化并有用例） |
+| **Gunyah（高通 hypervisor 做 VM）** | `CONFIG_GUNYAH=m` + 9 个 `.ko` 在盘，**均未加载**；mainline 无 gunyah | 2026-10-25 终局裁决不做；2026-11-11 改「有条件重启」而**条件未满足** ⇒ 视同不投入；`drivers/virt/gunyah` 只作 G1 上游补丁素材封存（loader 逆向/参考 VMM 差值/pVM 参数再试**三项均停**） | `reports/gunyah-restart-assessment-20261111.md` 里的条件成立（否则不排期、不占设备时间） |
+| **PMIH010x（PMIC 上的 hv-haptics 等）** | 主线无 `hv-haptics` 驱动；本机触觉实际由 `aw86927` 承担（`event2/3` 在跑） | 私有、且**未被使用**；`pmih0108.dtsi` 无对应节点 ⇒ 无消费方 | 原理图/实测证明该 PMIC 的相关模块真被使用 |
+| **FM 收音（RTC6226）** | 器件/驱动均无主线路径 | 私有；无主线 tuner 驱动可对齐（`DEVICE/README.md` §1.3 ✗ 行） | 上游出现对应 tuner 驱动且硬件确认在位 |
+| **ST54 SE（安全元件/NFC-eSE）** | 随 NFC 一并不成立 | 无 NFC 硬件 ⇒ 无 SE 通路；私有协议 | 同 NFC：先证贴装 |
+| **NFC（ST21NFCA）** | 本机**无** NFC 硬件（五条取证，`G1-10` ❌、`PITFALLS #108`） | 不是「缺驱动」；`&i2c0` 使能曾致**硬关机** | 拆机/原理图证到贴装（目前证据全是「没有」） |
+| **Modem（`remoteproc@4080000`）** | DT `disabled`；本机 `baseband=apq`；无 modem 固件 | 本机是 WiFi-only 配置（APQ 变体），无 modem 硬件可驱动 | 换到带 modem 的硬件变体 |
+| **SOCCOP remoteproc（`a3380000`）** | vendor 节点 `ok`，主线 `q6v5_pas` 只匹配 kaanapali/glymur | 无任何消费方（vendor 仅自用），投入产出为零 | 出现需要 SOCCOP 的用例 |
+| **vendor `bl@11`（i2c-backlight）/ `bias@3e`** | 两 compatible 在任何树都无匹配驱动 | 用途未知（无原理图/无用户），且背光实际走 `aw99706` 已工作 | 拿到原理图定位用途 |
+| **双口「长边数据 + 短边快充」** | 物理可行（短边 PD 单独插时 12.2 A / ≈46 W） | **被 ADSP 选口策略挡住**，AP 侧无控制面（`TASKS/GAPS.md` Q35 = 已判定不再投入） | ADSP 侧出现选口接口（vendor 新固件/上游 charger 链） |
+| **suspend 掉电率量化** | — | 2026-10-28 用户裁决：**最低优先、暂不排期**（不是否定可行性，是排序） | 有独立窗口时按 Q/T9 历史口径恢复 |
+| **SLPI 传感器原生栈（G1-34）** | AP 侧无私有 I2C 总线，需 QRTR + `qcom_smgr` | 「可选自研、未开工」；**G2 不等它**（容器走虚拟传感器）。注：传感器出数已于 2026-11-27 用 ADSP SSC 路线拿到，本项只剩「原生栈」形态 | 真要脱离 ADSP 固件栈时 |
+| **温控 OEM 层（`lenovo,sys-temp`/BCL/QMI cooling）** | 厂商私有 | 通用 thermal 框架已给 4 级 trip（55 zone 在跑），只需长负载复核壳温 | 长负载实测出现限频/过热问题 |

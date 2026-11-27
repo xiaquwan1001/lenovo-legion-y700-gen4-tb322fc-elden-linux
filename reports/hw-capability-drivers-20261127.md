@@ -1,5 +1,9 @@
 # 硬件能力集合 × 驱动面审计（lane A）— 2026-11-27
 
+> **父代理追加更正（2026-11-27 黄昏，勿按本报告原文执行）**：§0/§2 里 **NFC = 桶②** 的判定**作废**——
+> 本机**无 NFC 硬件**（`TASKS/G1.md` G1-10 = ❌，五条取证 + `PITFALLS #108`；vendor DT 的 `st21nfc` 是总线 disabled 的共用模板，
+> `&i2c0` 使能曾致硬关机）。现行口径见 `DEVICE/CAPABILITIES.md` 表格行 12（❌）与 §5「不投入清单」。
+
 > 边界：主机侧只读 + `ssh elden` 只读（`/sys`、`/proc`、`dmesg`、`lsmod`、`/proc/config.gz`、`systemctl is-enabled`）。
 > **未做**：`modprobe`、写 `/sys`、`systemctl start`、任何重启、任何发信、`git commit`。唯一写入 = 本文件。
 > 设备：`TB322FC`／SM8750P／`Linux 7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`／Debian 13 trixie，审计时 uptime 16 min（主机钟 `date` = 2026-11-27 16:26 CST）。
