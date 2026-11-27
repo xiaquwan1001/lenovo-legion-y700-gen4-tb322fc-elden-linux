@@ -73,3 +73,17 @@ sudo systemctl reboot                                     # 真重启复验：qb
 
 - 内核：`bash scripts/flash-b.sh bootslot-b/boot_b-device-20261127-vk192.img`（11-27 存档件，sha `68d3dc46…`）或任一 vk195/196 镜像。
 - DT 三处改动都在 `build/daily` 工作树（未提交到内核树远端；`git -C build/daily status` 可见），`git checkout -- arch/arm64/boot/dts/qcom/` 即回滚。
+
+## 6. T25 首轮判别结果（2026-11-27 21:0x，同一 vk197 上机窗口）
+
+| 假设 | 做了什么 | 结果 |
+|---|---|---|
+| A 包装层/协商 | `hevc_v4l2m2m` 解 HEVC（`libx265` 现编 640x480）；`vp9_v4l2m2m` 试 VP9 | HEVC **同现象**（`capture: driver decode error` + `corrupt decoded frame`）；VP9 的 ffmpeg 包装在本机不存在（`ffmpeg -decoders` 无 `vp9_v4l2m2m`）⇒ A 的证据不支持「只是 H.264 包装问题」 |
+| A' 驱动质量面 | `v4l2-compliance -d /dev/video17` | **41 过 / 7 败**：`VIDIOC_(UN)SUBSCRIBE_EVENT` FAIL、`G/S/TRY_FMT` FAIL（`!colorspace`，pix_mp.colorspace 未填）、`REQBUFS` FAIL（`q2.reqbufs != EBUSY`）、缺 `V4L2_CID_MIN_BUFFERS_FOR_CAPTURE` 控制项 ⇒ **主线上游质量缺口**（与解码失败不同层，但可独立成补丁） |
+| 编码侧旁证 | `h264_v4l2m2m` 编码（`/dev/video18`） | `Could not open encoder`（-22 EINVAL）⇒ 编码器路径连开启都不过 |
+| B 固件 HFI 版本 | 开 `dynamic_debug`（`file …/iris/* +p`）+ `dmesg -C` 后重解 | **开了但没出 HFI 报文**（连 `firmware version:` 的 dev_dbg 都没有 ⇒ 该 dynamic_debug 写法在本模块上没生效，下一轮改用 `echo 'module qcom_iris +p'`） |
+| C 上游成熟度 | 未查 | 下一轮 `lore`/`patchwork` 关键词 `iris` + `sm8750`（2026-11 后是否已有修复系列） |
+
+**状态机观察（供 B/C 用）**：一次失败解码的完整序列（dmesg，单实例）= `0→1`（input streaming）→ `1→2`（output streaming）→ **`2→4`（ERROR）** → `4→3` → `3→1` → `1→0`；同时 `sub_state 0→22`（`LOAD_RESOURCES|DRC_LAST|DRC`）→ `66`（`OUTPUT_PAUSE|DRC`）。**没有任何 `dev_err`**（`session error received` / `unsupported content` 都未打）⇒ 错误不是固件显式回错的常规路径，更像「固件发来 DRC/暂停事件后驱动自己判错」。这条要对着 `iris_common.c` / `iris_hfi_gen2_response.c` 的 DRC 路径读，是下一轮 30 分钟能定位的点。
+
+> 结论：**Q36 当前最可能是 B/C（固件代次或驱动对 SM8750 的 DRC 路径）**，不是 A 的 ffmpeg 包装层；`v4l2-compliance` 的 7 条失败可另立「driver quality」小系列（与解码失败解耦）。
