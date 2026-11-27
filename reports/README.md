@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：735
+- 报告总数：739
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -14,10 +14,10 @@
 | `q28` | 33 | `q28-ab-rig-20261116.md` |
 | `mail` | 30 | `mail-inbox-20261121.md` |
 | `q24` | 25 | `q24-cam-on-retire-20261127.md` |
-| `upstream` | 23 | `upstream-coresight-fixes-20261127.md` |
+| `upstream` | 24 | `upstream-coresight-fixes-20261127.md` |
 | `doc` | 20 | `doc-audit-20261125.md` |
+| `droidloom` | 20 | `droidloom-local-patches-20261127.md` |
 | `gunyah` | 20 | `gunyah-daily-line-20261126.md` |
-| `droidloom` | 19 | `droidloom-local-patches-20261127.md` |
 | `android` | 15 | `android-boot-audit-20261122.md` |
 | `m1` | 15 | `m1-u6-pas-dtbfw-leak-20261027.md` |
 | `comm` | 12 | `comm-triage-20261127-b.md` |
@@ -136,6 +136,7 @@
 | `dispcc` | 1 | `dispcc-battmgr-20261028.md` |
 | `distro` | 1 | `distro-upstream-feasibility-20261121.md` |
 | `drivers` | 1 | `drivers-build-iris-20261127.md` |
+| `dt` | 1 | `dt-vk197-adsp-iris-20261127.md` |
 | `dup` | 1 | `dup-check-20261125.md` |
 | `e3` | 1 | `e3-wcn-dyndbg-20261014.md` |
 | `edl` | 1 | `edl-toolchain-survey-20261101.md` |
@@ -156,6 +157,7 @@
 | `hwdec` | 1 | `hwdec-iris-sm8750-feasibility-20261127.md` |
 | `init` | 1 | `init-systemd-vs-openrc-20261011.md` |
 | `joonhoe` | 1 | `joonhoe-kim-contact-20261019.md` |
+| `kaanapali` | 1 | `kaanapali-tnoc-periphid-20261127.md` |
 | `lane` | 1 | `lane-reboot2-audit-20261014.md` |
 | `libc` | 1 | `libc-musl-vs-glibc-20261011.md` |
 | `limbus` | 1 | `limbus-appsealing-20261126.md` |
@@ -399,9 +401,10 @@
 - `q24-stageA-20261012.md` — Q24 阶段 A（安全采集）实测 + 设备挂死事件（2026-10-12）
 - `q24-repro-20261011.md` — Q24 复现 + RPMh 现场取证（2026-10-11）
 
-## `upstream`（23）
+## `upstream`（24）
 
 - `upstream-coresight-fixes-20261127.md` — reboot2 退役 + Coresight 两处上游缺陷（已投）+ vk196 持久化部署 — 2026-11-27
+- `upstream-sent-backfill-20261127.md` — 上游投递 SENT.md 按 MID 复核回填（2026-11-27T12:30Z）
 - `upstream-status-20261125.md` — 上游化当前一页（2026-11-25）
 - `upstream-ping-prep-20261124.md` — 两条「只欠一次礼貌 ping」的系列：现查事实 + 待发草稿（2026-11-24）
 - `upstream-recheck-20261124.md` — 上游状态现查 + sashiko 对 dwc3 v13 的三条 [Low] 判别（2026-11-24 无人值守轮）
@@ -448,6 +451,29 @@
 - `doc-audit-20261030.md` — 文档缺口/过时/矛盾审计（2026-10-30）
 - `doc-audit-20261026.md` — 文档与资料审计 — 2026-10-26（lane C，`.pi/agents/doc-audit.md` 清单 1–7）
 
+## `droidloom`（20）
+
+- `droidloom-local-patches-20261127.md` — droidloom 本地 patch 备料 — 2026-11-27（D24 lane）
+- `droidloom-release-download-verify-20261127.md` — droidloom release 资产下载验证 + 「rayburst 报无效」取证（2026-11-27，父代理亲测）
+- `droidloom-upgrade-51-ime-20261127.md` — droidloom 0.1.0-49 → 0.1.0-51 升级 + 占位 IME 复判（T15/T3 收口，2026-11-27 晚，父代理上机）
+- `droidloom-upstream-cluster-20261127.md` — droidloom 上游缺陷聚类 + 社区分叉评估（D24 第二轮，主机侧，2026-11-27）
+- `droidloom-cell-network-20261126.md` — droidloom cell 无网根因（工单 D2）——U2 平板，2026-11-26
+- `droidloom-deploy-20261126.md` — droidloom 部署（工单 D）——U2 平板 TB322FC，2026-11-26
+- `droidloom-display-sizing-20261126.md` — droidloom 小红书「画面不全 / 同意弹窗被截断」定位（2026-11-26，父代理上机）
+- `droidloom-ime-keyboard-20261126.md` — droidloom 输入法：「输入第一个字符后键盘缩回、再也唤不出」（2026-11-26，父代理上机取证 + adb 自动化复现）
+- `droidloom-real-ime-20261126.md` — droidloom 真 IME 绕行（工单 D6）——Fossify Keyboard 装进 cell，三轮连续输入验收通过（2026-11-26）
+- `droidloom-upstream-lane-20261126.md` — droidloom 附属仓库整理 + 上游缺陷/社区分叉评估（D24 常设 lane，首轮 2026-11-26）
+- `droidloom-app-compat-20261125.md` — droidloom 应用兼容三问（GMS / Limbus Company / 小红书）——2026-11-25 静态取证
+- `droidloom-source-build-20261125.md` — droidloom 源码本地克隆与编译（2026-11-25 收尾轮）
+- `droidloom-l2-phoc-syncobj-20261111.md` — C12 L2：phoc 广告 `wp_linux_drm_syncobj_manager_v1`（主机侧全链打通 + aarch64 产物就位）
+- `droidloom-notifications-abi-20261111.md` — droidloom 通知通道 ABI 死循环定位（静态分析，2026-11-11）
+- `droidloom-status-20261111.md` — droidloom 现状与下一步（2026-11-11 盘点）
+- `droidloom-warn-20261111.md` — droidloom 告警收尾：doctor 全表 + invalid Android frame 定位（2026-11-11）
+- `droidloom-feasibility-20261110.md` — Waydroid 网络现状定案 + droidloom 可行性复评（2026-11-10，设备实测）
+- `droidloom-feasibility-20261108.md` — droidloom 可行性复核（2026-11-08）——在线增量 + 四门槛判定
+- `droidloom-build-device-plan-20261030.md` — droidloom 真实构建 + 上机计划（2026-10-31）
+- `droidloom-feasibility-plan-20261030.md` — droidloom 可行性规划（2026-10-30）
+
 ## `gunyah`（20）
 
 - `gunyah-daily-line-20261126.md` — Gunyah 进「日常线」的可行性裁决（2026-11-26，lane G）
@@ -470,28 +496,6 @@
 - `gunyah-stage0-positive-20261024.md` — Gunyah 阶段 0/0b：**阳性** —— 本机确实跑在 Gunyah 下，且 SMCCC vendor-hyp 通道可用（2026-10-24）
 - `gunyah-vmm-first-attempt-20261024.md` — Gunyah VMM 第一步（2026-10-24 深夜）：用户态 harness 打通到 `VM_INIT`，RM 返回 **IRQ_INUSE(0x10)**
 - `gunyah-roadmap-20261021.md` — Gunyah 虚拟化线（拓展项）资产盘点 + 事实核查 + 分阶段规划
-
-## `droidloom`（19）
-
-- `droidloom-local-patches-20261127.md` — droidloom 本地 patch 备料 — 2026-11-27（D24 lane）
-- `droidloom-release-download-verify-20261127.md` — droidloom release 资产下载验证 + 「rayburst 报无效」取证（2026-11-27，父代理亲测）
-- `droidloom-upstream-cluster-20261127.md` — droidloom 上游缺陷聚类 + 社区分叉评估（D24 第二轮，主机侧，2026-11-27）
-- `droidloom-cell-network-20261126.md` — droidloom cell 无网根因（工单 D2）——U2 平板，2026-11-26
-- `droidloom-deploy-20261126.md` — droidloom 部署（工单 D）——U2 平板 TB322FC，2026-11-26
-- `droidloom-display-sizing-20261126.md` — droidloom 小红书「画面不全 / 同意弹窗被截断」定位（2026-11-26，父代理上机）
-- `droidloom-ime-keyboard-20261126.md` — droidloom 输入法：「输入第一个字符后键盘缩回、再也唤不出」（2026-11-26，父代理上机取证 + adb 自动化复现）
-- `droidloom-real-ime-20261126.md` — droidloom 真 IME 绕行（工单 D6）——Fossify Keyboard 装进 cell，三轮连续输入验收通过（2026-11-26）
-- `droidloom-upstream-lane-20261126.md` — droidloom 附属仓库整理 + 上游缺陷/社区分叉评估（D24 常设 lane，首轮 2026-11-26）
-- `droidloom-app-compat-20261125.md` — droidloom 应用兼容三问（GMS / Limbus Company / 小红书）——2026-11-25 静态取证
-- `droidloom-source-build-20261125.md` — droidloom 源码本地克隆与编译（2026-11-25 收尾轮）
-- `droidloom-l2-phoc-syncobj-20261111.md` — C12 L2：phoc 广告 `wp_linux_drm_syncobj_manager_v1`（主机侧全链打通 + aarch64 产物就位）
-- `droidloom-notifications-abi-20261111.md` — droidloom 通知通道 ABI 死循环定位（静态分析，2026-11-11）
-- `droidloom-status-20261111.md` — droidloom 现状与下一步（2026-11-11 盘点）
-- `droidloom-warn-20261111.md` — droidloom 告警收尾：doctor 全表 + invalid Android frame 定位（2026-11-11）
-- `droidloom-feasibility-20261110.md` — Waydroid 网络现状定案 + droidloom 可行性复评（2026-11-10，设备实测）
-- `droidloom-feasibility-20261108.md` — droidloom 可行性复核（2026-11-08）——在线增量 + 四门槛判定
-- `droidloom-build-device-plan-20261030.md` — droidloom 真实构建 + 上机计划（2026-10-31）
-- `droidloom-feasibility-plan-20261030.md` — droidloom 可行性规划（2026-10-30）
 
 ## `android`（15）
 
@@ -1250,6 +1254,10 @@
 
 - `drivers-build-iris-20261127.md` — 驱动补完轮：审计结论 + 编译配置 + iris 上机（2026-11-27 下午）
 
+## `dt`（1）
+
+- `dt-vk197-adsp-iris-20261127.md` — vk197 —— DT 单变量（ADSP fastrpc non-secure + 板级 iris）：传感器解阻 + iris 绑定，解码未通（2026-11-27 晚，父代理上机）
+
 ## `dup`（1）
 
 - `dup-check-20261125.md` — 上游重复性核查（2026-11-25）—— 在飞/在备 7 个系列逐条对上游维护者树查重
@@ -1329,6 +1337,10 @@
 ## `joonhoe`（1）
 
 - `joonhoe-kim-contact-20261019.md` — Joonhoe Kim 信息性接触 + dispcc runtime 残留实测（2026-10-19）
+
+## `kaanapali`（1）
+
+- `kaanapali-tnoc-periphid-20261127.md` — kaanapali（SM8850）TNOC periphid —— 缺口真、上游已覆盖 ⇒ **停手，不发系列** — 2026-11-27
 
 ## `lane`（1）
 
