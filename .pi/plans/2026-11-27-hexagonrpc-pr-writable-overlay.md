@@ -69,3 +69,19 @@
 3. 部署新二进制 → `systemctl restart elden-sensorspd` → 判据：
    `systemctl is-active`=active、`NRestarts`=0、三属性 true、`ssccli` 出值、overlay 目录 4 个非空文件、真重启后仍成立。
 4. 顺带定 `'w'` 是否应 `O_TRUNC`（PR 里留了问题），两种都测再回报。
+
+## 8. 2026-11-27 第三轮（上机复验完成）
+
+- **上机通过**（真重启、overlay 空目录）：`active` / `NRestarts=0` / `--failed` 空 / 三属性 true / `ssccli` Z≈±9.54；
+  overlay 4 文件真落盘（18628 / 6851 / 9 / 3 B）。
+- 部署二进制 sha `0a8ef526…a8afd92d7` → `/usr/local/bin/hexagonrpcd-patched`；回滚件 `.bak-20261127` = `4a7946b2…c192f7f`。
+- **写验收触发条件**：正常 boot 读 `-R/sensors/registry/sns_reg_version` 就不写；要把该文件从 `-R` 移走（first attach 等价）才进写路径，验完已还原。
+- **部署坑**：`-O` 目录须预建且对 `fastrpc` 可写，否则 `Could not initialize write overlay: Permission denied`（写侧静默关闭）。man page 已写；本仓待补 `tmpfiles.d`。
+- PR #31 已 **ready for review**；正文含本节数字；DCO pass、CI 等维护者批准。
+- 补丁原文入库 `patches/userland/hexagonrpc-pr31-20261127/`；报告 `reports/hexagonrpcd-overlay-hexagonfs-20261127.md`；双推 `d19b530da`；`check-doctor` FAIL=0 / WARN=3（存量 C 类）。
+
+## 9. 下一轮候选
+
+1. 本仓补 `packaging/elden-userland/files/etc/tmpfiles.d/hexagonrpc.conf`（`d /var/lib/hexagonrpc 0755 fastrpc fastrpc -`），避免装机时踩上面那条坑。
+2. `'w'` 的 `O_TRUNC` A/B：改一行 + 交叉编译 + 部署 + 重启看 registry 是否仍正确（两轮重启，约 10 min）。
+3. 看 PR #31 / #21 有无维护者回复（异步）。
