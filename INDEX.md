@@ -6,7 +6,12 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-27（22:5x CST 深夜轮：Q36 硬件解码打通 + T26/T2/T5 收口））
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-28（06:3x CST 早轮：上游对账 + T28/T29 主机侧调研））
+
+> **★ 2026-11-28 早轮（无人值守：上游机械对账 + phosh 两条调研）**：
+> ① **iris v4l2-compliance 系列对账（结论更正）**：v1 **已于 2026-11-27T15:20Z 外发 4 封**（lore 线程 4 封实证；INDEX 旧文「草稿未发」作废），**Bryan O'Donoghue 16:04Z 在 1/3 回帖要 `Fixes:` + `Cc: stable`**。对 mainline（v7.4-rc3）机械核对：**1/3 = 已合入主线的重复**（`1facae9bc3c1`，Vishnu Reddy 2026-09-29，同一行同一改法）、**3/3 = 被主线 `iris_vdec_s_fmt()` 无条件 seed `inst->crop` 取代**（`:271-274`/`:309-312`）、**只 2/3（colorspace 默认）仍成立** ⇒ v2 单贴已备（rebase v7.4-rc3，`Fixes: b530b95de22c` + `Cc: stable`，checkpatch 0E/0W/0C、模块编过、`git send-email --dry-run` OK），**投递被 keyring 锁阻（本机仅 GDM greeter 会话，`git credential fill` rc=128）⇒ 需用户登录后一条命令发**，命令与 lore 复核判据 = `reports/v4l2-compliance-v2-20261128.md` §4。
+> ② **Q36 残留对账**：INDEX 旧文记的「Moonlight 判据未验 / Tested-by 未发」**两项都已完成**（硬解日志 `out/iris-backport-1222157/moonlight-hwdecode-20261127.log` 的 `hevc_v4l2m2m`@`/dev/video17`；Tested-by v2 已于 11-27T15:26Z 发并进 lore，`patches/upstream/v4l2-compliance-iris-20261127/SENT.md` 同型账）；仅剩「上游合入后撤 backport」。
+> ③ **T28/T29 主机侧产出**（用户 11-27 深夜点名的明早待办）：phosh 输入法弹窗上游调研 + phosh 手势/视觉上游评估（报告落 `reports/`，手感/观感项标注「需设备窗 + 人目视」）。
 
 > **★★ 2026-11-27 深夜轮（Q36 硬件解码打通 + T26 收口 + droidloom T2 3/4 + T5 IME 持久性；上机）**：
 > ① **Q36 已解** —— backport 上游 patchwork **1222157**（Neil Armstrong，11 贴，未合入）到日常树（`patch -p1 --fuzz=3`；我方树老 6 周，`git apply` 从 03 起失败；唯一缺符号 `iris_vb2_signal_eos()` 本地补 4 行），
@@ -16,8 +21,8 @@
 > ③ **T2 本地 patch 3/4 落地（上机验收全绿）** —— 002 去 `--forward-signals` + 003 宿主 resolver 进 lease + 004 `runuser` 路径，承接二进制是 **`droidloomd`**（只换 `droidloom-supervisor` 不生效）；判据 = cell `Android is ready`、删 `/usr/local/bin/unshare` 后仍起、cell `DnsAddresses` 前两条 = 宿主 resolver 且 `dl_dns_redirect` = 0 + cell 内 `ping www.ustc.edu.cn` 直通。**残留 = 001 `WifiProvisioning` 自愈**（属 Android systemui，要跑包构建器，>1 GiB 下载红线 ⇒ 待裁决）。T4（DNS 重定向持久化）随之作废。
 > ④ **T5/T30 已闭合 —— Trime = 默认中文输入法（2026-11-27 深夜，纯 adb 无人值守）**：`default_input_method` = `com.osfans.trime/.ime.core.TrimeInputMethodService`；librime 自部署 `3 success, 0 failure`；软键盘「朙月拼音」点 `nihao` → 候选首项**「你好」**入框（`uiautomator dump` 读回）。**根因更正**：`Skip starting rime: storage not available` **不是缺 SAF 目录**，Step1 默认 app-specific storage 即可，真因 = 向导没走完 ⇒ rime 不启动。残留 = 整机重启后默认 IME 未本轮复核。报告 `reports/droidloom-trime-default-20261127.md`。
 > ⑤ **外发已发并报备**：droidloom issue #48 补充复现数据 <https://github.com/denialwm/droidloom/issues/48#issuecomment-7221182777>（正文 sha `7d621ce4…`，已隐去宿主 IP/校名/校内 DNS，`SENT.md` 记账）。
-> ⑥ **v4l2-compliance driver-quality 系列（草稿，未发）** —— 判为与 1222157 **不重叠**；3 贴落地后 `v4l2-compliance -d /dev/video17` **39过/9败 → 47过/1败**（bus_info 前缀 / colorspace 默认 / crop-compose seed；REQBUFS 由 backport 副产物修好）；残留 1 = `MIN_BUFFERS_FOR_CAPTURE` 在 SUBSCRIBE_EVENT 子测试找不到（控件其实已在，需细定位，未臆造补丁）。解码无回归（framemd5 0 mismatch）。产物 `patches/upstream/v4l2-compliance-iris-20261127/`（含 REPORT.md、SEND.sh dry-run）。
-> 产物 = `out/iris-backport-1222157/`（ko sha `9b815bc359012c1b…`）+ 组合补丁 `patches/backport-iris-drc-1222157/`；全账 `reports/iris-backport-1222157-20261127.md`。残留：Moonlight 判据未验（需 Sunshine + 真串流）、给 Neil 的 `Tested-by:` 未发、上游合入后应撤 backport。
+> ⑥ **v4l2-compliance driver-quality 系列**（2026-11-28 更正：**v1 已发**，11-27T15:20Z 4 封 lore 归档；Bryan 在 1/3 回帖要 `Fixes:`+`Cc: stable` ⇒ 对 mainline 对账后 **只留 colorspace 1 贴做 v2**（1/3 重复 `1facae9bc3c1`、3/3 被主线 s_fmt 重写取代），v2 待发（keyring 锁），账 `reports/v4l2-compliance-v2-20261128.md`）。历史：v1 三贴落地后 `v4l2-compliance -d /dev/video17` **39过/9败 → 47过/1败**（bus_info 前缀 / colorspace 默认 / crop-compose seed；REQBUFS 由 backport 副产物修好）；残留 1 = `MIN_BUFFERS_FOR_CAPTURE` 在 SUBSCRIBE_EVENT 子测试找不到（控件其实已在，需细定位，未臆造补丁）。解码无回归（framemd5 0 mismatch）。产物 `patches/upstream/v4l2-compliance-iris-20261127/`（含 REPORT.md、SEND.sh dry-run）。
+> 产物 = `out/iris-backport-1222157/`（ko sha `9b815bc359012c1b…`）+ 组合补丁 `patches/backport-iris-drc-1222157/`；全账 `reports/iris-backport-1222157-20261127.md`。~~残留：Moonlight 判据未验、给 Neil 的 `Tested-by:` 未发~~ **（2026-11-28 更正：两项均已完成，见本页顶栏 ②）**；仅剩「上游合入后撤 backport」。
 
 > **★ 2026-11-27 晚轮（vk196 持久化部署 + `reboot2` 退役 + Coresight 两处上游缺陷已投）**：
 > ① `boot_b` **首次写盘** = vk196（payload 与已验收 vk195 **逐字节同**：`Image.gz 9728a751…`/DTB `ce27003e…`/img `d702a93f…`；

@@ -1,0 +1,20 @@
+project	iid	kind	state	created	updated	notes	author	title	URL
+phoc	77	issue	opened	2019-09-20	2019-09-20	0	—	Support input-popup	https://gitlab.gnome.org/World/Phosh/phoc/-/issues/77
+phoc	153	issue	opened	2020-09-15	2025-12-17	1	—	input-method-v2 not setting cursor correctly	https://gitlab.gnome.org/World/Phosh/phoc/-/issues/153
+phoc	302	issue	opened	2022-10-10	2022-10-10	0	—	If IME is installed on the system, OSK will not be elevated to top surface.	https://gitlab.gnome.org/World/Phosh/phoc/-/issues/302
+phoc	430	issue	opened	2026-04-01	2026-04-01	0	—	text-input protocol 3.2 support	https://gitlab.gnome.org/World/Phosh/phoc/-/issues/430
+phoc	113	issue	opened	2020-02-12	2020-02-20	1	—	Sends set_surrounding_text to input_method even when text input doesn't support it	https://gitlab.gnome.org/World/Phosh/phoc/-/issues/113
+phoc	820	MR	merged	—	2026-10-31	—	xuqianhui1001	input-method-relay: Fix NULL deref in keyboard grab destroy handler	https://gitlab.gnome.org/World/Phosh/phoc/-/merge_requests/820
+phoc	813	MR	merged	—	2026-09-19	—	—	text-input: Add basic text-input-v3 version 2 support	https://gitlab.gnome.org/World/Phosh/phoc/-/merge_requests/813
+phoc	488	MR	merged	—	2023-10-04	—	—	text-input: Elevate OSK when text input gets enabled	https://gitlab.gnome.org/World/Phosh/phoc/-/merge_requests/488
+phoc	419	MR	merged	—	2023-03-01	—	—	Implement input method keyboard grab	https://gitlab.gnome.org/World/Phosh/phoc/-/merge_requests/419
+stevia	343	MR	opened	—	2026-11-27	—	matrixkernel	Add Fcitx5 support	https://gitlab.gnome.org/World/Phosh/stevia/-/merge_requests/343
+stevia	329	MR	merged	—	2026-11-26	—	—	input-method: Make hints a bitfield and add sensitivity property	https://gitlab.gnome.org/World/Phosh/stevia/-/merge_requests/329
+stevia	334	MR	opened	—	2026-11-25	—	Henry-Hiles	input-method: Notify when activated again while active	https://gitlab.gnome.org/World/Phosh/stevia/-/merge_requests/334
+stevia	335	MR	opened	—	2026-11-25	—	Henry-Hiles	hw-tracker: Don't require phoc's device state protocol	https://gitlab.gnome.org/World/Phosh/stevia/-/merge_requests/335
+stevia	117	issue	opened	2026-10-04	2026-10-04	0	—	Handle more hints (inhibit-osk / no-emoji / sensitive-data)	https://gitlab.gnome.org/World/Phosh/stevia/-/issues/117
+stevia	120	issue	opened	2026-10-26	2026-10-26	0	—	Handle zwp_input_method_keyboard_grab_v2	https://gitlab.gnome.org/World/Phosh/stevia/-/issues/120
+stevia	85	issue	closed	—	2026-11-04	—	—	Disable automatic keyboard opening	https://gitlab.gnome.org/World/Phosh/stevia/-/issues/85
+stevia	70	issue	closed	—	2026-11-04	—	—	[not-phosh/phoc] Keyboard does not unfold from v0.45.0 onwards	https://gitlab.gnome.org/World/Phosh/stevia/-/issues/70
+phosh	—	—	—	—	—	—	—	（近 60 天无 OSK/IM/popup 相关 MR：54 条 MR 全是 tray/battery/audio/overview 类）	https://gitlab.gnome.org/World/Phosh/phosh/-/merge_requests?state=all
+squeekboard	714	MR	opened	—	2026-10-26	—	—	Fix build with rust 1.98（唯一活跃件；项目 unmaintained）	https://gitlab.gnome.org/World/Phosh/squeekboard/-/merge_requests/714

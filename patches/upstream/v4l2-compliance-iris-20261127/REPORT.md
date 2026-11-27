@@ -1,6 +1,8 @@
-# iris v4l2-compliance driver-quality 系列（草稿，2026-11-27 深夜）
+# iris v4l2-compliance driver-quality 系列（**v1 已投 2026-11-27**，v2 只剩 1 贴，待发）
 
-> **状态**：**未外发**（草稿 + 实测）。是否发、何时发由用户裁决（`SEND.sh` 默认 dry-run）。
+> **状态（2026-11-28 早更新）**：v1 **已于 2026-11-27T15:20Z 外发 4 封**（lore 归档见 `SENT.md`），**Bryan O'Donoghue 16:04Z 在 1/3 回帖要 `Fixes:` + `Cc: stable`**。
+> 对 mainline 机械对账后：**1/3 = 已合入主线的重复**（`1facae9bc3c1`）、**3/3 = 被主线 s_fmt 重写取代**、**只 2/3 仍成立** ⇒ v2 = rebase 到 v7.4-rc3 的单贴
+> `0002-v2-fill-default-colorspace.patch`（checkpatch 0/0/0、`git apply --check` OK、模块编译过），**投递被 keyring 锁阻** ⇒ 需用户登录后发，命令见 `reports/v4l2-compliance-v2-20261128.md` §4。
 > **性质**：主机侧写补丁 + U2 上机实测。设备 = `ssh elden`，在机内核 `7.3.1-debug-vk189-suspend-g4da9a8b69fc8-dirty`；
 > 承接前提 = 已 backport 上游 1222157（`patches/backport-iris-drc-1222157/`，解码已通）。
 

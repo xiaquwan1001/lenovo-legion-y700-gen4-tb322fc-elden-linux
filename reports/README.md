@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：745
+- 报告总数：747
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -64,6 +64,7 @@
 | `m12` | 3 | `m12-charger-upstream-20261125.md` |
 | `m2` | 3 | `m2-a2-vendor-qbg-20261028.md` |
 | `m8ab` | 3 | `m8ab-readback-bootb-20261031.md` |
+| `phosh` | 3 | `phosh-gestures-assessment-20261128.md` |
 | `pitfalls` | 3 | `pitfalls-condense-20261122.md` |
 | `rayburst` | 3 | `rayburst-ab-20261127.md` |
 | `sensor` | 3 | `sensor-claim-verify-20261126.md` |
@@ -94,7 +95,6 @@
 | `local` | 2 | `local-cleanup-q24-q28-20261015.md` |
 | `m8` | 2 | `m8-rsc-ownership-20261031.md` |
 | `modular` | 2 | `modular-driver-audit-20261026.md` |
-| `phosh` | 2 | `phosh-mr-2005-rework-20261124.md` |
 | `pstore` | 2 | `pstore-ram-initrd-guard-20261116.md` |
 | `qemu` | 2 | `qemu-full-chain-20261113.md` |
 | `repo` | 2 | `repo-slim-candidates-20261125.md` |
@@ -208,6 +208,7 @@
 | `twrp` | 1 | `twrp-parity-edl-dload-20261020.md` |
 | `u3` | 1 | `u3-rpmhpd-presync-floor-20261027.md` |
 | `u4` | 1 | `u4-aw86927-sramwindow-20261027.md` |
+| `v4l2` | 1 | `v4l2-compliance-v2-20261128.md` |
 | `vbmeta` | 1 | `vbmeta-b-resign-20261121.md` |
 | `vk129` | 1 | `vk129-abi-fix-verified-20261020.md` |
 | `vk151` | 1 | `vk151-daily-candidate-20261023.md` |
@@ -922,6 +923,12 @@
 - `m8ab-restart-20261030.md` — M8 A/B 续测（2026-10-30）：基线臂三发正常，坏发未复现
 - `m8ab-build-20261029.md` — M8 v2 真机 A/B 两镜像臂构建报告（lane G，2026-10-29）
 
+## `phosh`（3）
+
+- `phosh-gestures-assessment-20261128.md` — T29 上游化评估（主机侧那半）· phosh/phoc 手势导航交互 + 视觉效果
+- `phosh-mr-2005-rework-20261124.md` — phosh !2005 第二轮（2026-11-24，按 guidog 意见重写）
+- `phosh-mr-power-mode-20261114.md` — phosh MR 提交材料（T20 / 2026-11-14）
+
 ## `pitfalls`（3）
 
 - `pitfalls-condense-20261122.md` — PITFALLS 踩坑库精简（降噪，不删知识）— 2026-11-22
@@ -1079,11 +1086,6 @@
 
 - `modular-driver-audit-20261026.md` — modular-driver-audit — 7.3 日常线（build/vk151）驱动模块化第二层审计
 - `modular-mobian-transition-20261026.md` — 驱动模块化 × Alpine→Mobian 迁移：交界面核对与落点改判（2026-10-26 续）
-
-## `phosh`（2）
-
-- `phosh-mr-2005-rework-20261124.md` — phosh !2005 第二轮（2026-11-24，按 guidog 意见重写）
-- `phosh-mr-power-mode-20261114.md` — phosh MR 提交材料（T20 / 2026-11-14）
 
 ## `pstore`（2）
 
@@ -1547,6 +1549,10 @@
 ## `u4`（1）
 
 - `u4-aw86927-sramwindow-20261027.md` — U4：`aw86927` SRAM 窗口从 C 内常数提升为 **per-chip 数据表**（2026-10-27）
+
+## `v4l2`（1）
+
+- `v4l2-compliance-v2-20261128.md` — iris v4l2-compliance 系列：机械对账后 v2 只剩 1 贴（2026-11-28 早，无人值守）
 
 ## `vbmeta`（1）
 
