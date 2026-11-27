@@ -21,14 +21,14 @@ done
 
 TO="suzuki.poulose@arm.com"
 CC="mike.leach@arm.com,james.clark@linaro.org,leo.yan@arm.com,alexander.shishkin@linux.intel.com,coresight@lists.linaro.org,linux-arm-kernel@lists.infradead.org,linux-kernel@vger.kernel.org"
-mapfile -t PATCHES < <(ls -1 v1-000*.patch | sort)
+mapfile -t PATCHES < <(ls -1 v2-000*.patch | sort)
 
 echo "== 1) 件数/编号/Subject"
 [ "${#PATCHES[@]}" -eq 3 ] || { echo "❌ 期望 3 封（cover + 2），实际 ${#PATCHES[@]}"; exit 1; }
 for p in "${PATCHES[@]}"; do
 	echo "  $p  →  $(sed -n 's/^Subject: //p' "$p" | head -1)"
 done
-grep -q 'Subject: \[PATCH 0/2\]' v1-0000-cover-letter.patch || { echo "❌ cover 编号不对"; exit 1; }
+grep -q 'Subject: \[PATCH v2 0/2\]' v2-0000-cover-letter.patch || { echo "❌ cover 编号不对（期望 [PATCH v2 0/2]）"; exit 1; }
 
 echo "== 2) 每封都有 AI 披露 + Signed-off-by"
 for p in "${PATCHES[@]}"; do

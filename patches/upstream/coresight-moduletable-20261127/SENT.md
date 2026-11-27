@@ -64,3 +64,29 @@ $ curl -sS -o /dev/null -w '%{http_code}\n' https://lore.kernel.org/all/20260101
 
 > 复核脚本化提示：`curl -sS https://lore.kernel.org/all/<MID>/t.mbox.gz`（**别带浏览器 UA/header**，否则吃 Anubis 挑战页）；
 > 判命中用 `gzip` magic + `grep -c '^From mboxrd'`，别用 HTTP 码单判。完整逐项证据 = `reports/upstream-sent-backfill-20261127.md`。
+
+## v2（2026-11-27T13:30Z / 21:30 CST）—— James Clark 的 R-b + Fixes 标签
+
+- 触发：James Clark `<6f997513-27da-47e5-83bb-18c267e930c6@linaro.org>`（13:02Z）给
+  `Reviewed-by: James Clark <james.clark@linaro.org>`，并提「Could probably do with fixes: tags for both commits」。
+- 改动（**零代码改动**，两处 hunk 与 v1 逐字节相同）：
+  - 每封加 `Fixes:` —— ctcu = `f78d206f3d73 ("Coresight: Add Coresight TMC Control Unit driver")`（2025-03-03），
+    tpda = `5b7916625c01 ("Coresight: Add TPDA link driver")`（2023-01-17）。两个哈希取自 GitHub API
+    对这两个文件的提交列表（本机内核树历史残缺，`git log` 读不到那条）。
+  - 每封带 James 的 `Reviewed-by`；cover `---` 之下写 v2 changelog + v1 链接。
+- 门禁：checkpatch --strict 每封 **0 errors**；唯一 warning 是 `Unknown commit id 'f78d206f3d73'`
+  （本机 checkpatch 跑的树是 7.4-rc3 浅克隆，看不到 2025-03 的提交 ⇒ 假阳性，已在 README 记）。
+- 发送：`bash SEND.sh --yes`（脚本已切到 `v2-000*.patch`），**3×250**，日志 `logs/sent-20261127-213017.txt`。
+
+| # | Subject | Message-ID | Result |
+|---|---|---|---|
+| 0/2 | [PATCH v2 0/2] coresight: add missing MODULE_DEVICE_TABLE() for CTCU and TPDA | `<20261127133017.1606830-1-xiaqinghuan@mail.ustc.edu.cn>` | 250 |
+| 1/2 | coresight: ctcu: add missing MODULE_DEVICE_TABLE() | `<20261127133017.1606830-2-…>` | 250 |
+| 2/2 | coresight: tpda: add missing MODULE_DEVICE_TABLE() | `<20261127133017.1606830-3-…>` | 250 |
+
+**lore 复核（父代理现查，默认 curl UA）**：`GET /all/<cover>/t.mbox.gz` = **200 gzip 7229 B**，
+解出 3 封（cover/1/2/2/2）且 `grep -c '^Fixes: |^Reviewed-by: James Clark'` = **4**（2 Fixes + 2 R-b）。
+
+**列表投递**：v2 三封仍收到 `coresight-bounces … awaits moderator approval` —— 订阅尚未确认完成
+（确认邮件 `<9e940513…>` 走 `-confirm+<token>@` 回复 + `-request@` 的 `confirm <token>` 两条路都没被受理；
+MM3 的网页确认要登录态）。**影响**：列表侧可见性仍靠 Cc 进 lore，不阻塞评审（James 就是从 lore/Cc 读到的）。

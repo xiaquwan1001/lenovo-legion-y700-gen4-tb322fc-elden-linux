@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 27 Nov 2026 19:40:00 +0800
+Subject: [PATCH v2 0/2] coresight: add missing MODULE_DEVICE_TABLE() for CTCU and TPDA
+
+Hi,
+
+both the CTCU and the TPDA driver are matched through an ID table, but
+neither exports that table, so building them as modules produces a
+module without an "of:" / "amba:" modalias.  udev cannot autoload such a
+module, and the device stays unbound until somebody loads it by hand.
+
+This was found on an SM8750 based phone (mainline v7.3.1,
+CONFIG_CORESIGHT_CTCU=m and CONFIG_CORESIGHT_TPDA=m):
+
+  # lsmod | grep -c coresight_ctcu
+  0
+  # modinfo -F alias coresight-ctcu
+  (empty)
+  # modprobe coresight-ctcu && readlink -f /sys/bus/platform/devices/10001000.ctcu/driver
+  .../drivers/coresight-ctcu
+
+Five tpda devices behave the same way.  With this series applied the
+modules carry "of:N*T*Cqcom,sa8775p-ctcu" and "amba:d???F0F??" aliases,
+and on the next boot both autoload with no modules-load.d help at all:
+
+  # lsmod | grep -E 'coresight_(ctcu|tpda)'
+  coresight_ctcu         16384  0
+  coresight_tpda         24576  0
+  # for f in /sys/bus/amba/devices/*; do [ -e $f/driver ] || n=$((n+1)); done; echo $n
+  0
+
+There is no functional change for built-in builds; MODULE_DEVICE_TABLE()
+is only used for module aliases.
+
+*** AI-assistance disclosure ***
+This series was prepared with the help of an LLM coding assistant.  The
+author reviewed every line, reproduced the before/after behaviour on
+hardware and is responsible for the content.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+v2:
+ - add the Fixes: tags requested by James Clark (both commits).
+ - carry James Clark's Reviewed-by from v1.
+ - no code change; the two hunks are byte-identical to v1.
+
+v1: https://lore.kernel.org/all/20261127113137.931578-1-xiaqinghuan@mail.ustc.edu.cn/
+
+Qianhui Xu (2):
+  coresight: ctcu: add missing MODULE_DEVICE_TABLE()
+  coresight: tpda: add missing MODULE_DEVICE_TABLE()
+
+ drivers/hwtracing/coresight/coresight-ctcu-core.c | 1 +
+ drivers/hwtracing/coresight/coresight-tpda.c      | 1 +
+ 2 files changed, 2 insertions(+)
+
+-- 
+2.51.0
+

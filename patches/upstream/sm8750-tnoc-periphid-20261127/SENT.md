@@ -76,3 +76,15 @@ Subject: Re: [PATCH 2/2] arm64: dts: qcom: sm8750: describe the TNOC AMBA periph
 
 > 复核脚本化提示：`curl -sS https://lore.kernel.org/all/<MID>/t.mbox.gz`（**别带浏览器 UA/header**，否则吃 Anubis）；
 > 判命中用 gzip magic + `grep -c '^From mboxrd'`。完整逐项证据 = `reports/upstream-sent-backfill-20261127.md`。
+
+## 后续：自认 superseded（2026-11-27T13:23Z / 21:23 CST，用户放行后发出）
+
+- 裁决：用户 2026-11-27 晚选「① 只回自己线程自认 superseded」。
+- 事实：Jie Gan `<jie.gan@oss.qualcomm.com>` 的 `[PATCH 0/4] Fix the TraceNoC probe issue on QCOM platform`
+  （2026-11-18，patchwork series **1214623**：`14995780` binding 放开 / `14995781` kaanapali / `14995782` sm8750 / `14995783` glymur）
+  与我们这两封**同节点同值**（`tn@109ab000` + `arm,primecell-periphid = <0x000f0c00>`）。父代理独立 pull 了该 series 四封确认。
+- 发出件：`out/mail-20261127/re-superseded-sm8750-tnoc-periphid.txt`（To: Jie Gan；Cc: 原线程维护者 + 列表；
+  含 AI 披露；附带一条可复用数据 = 本板加了该属性后 CoreSight AMBA 未绑定 28→0）。**未发 v2**。
+- Message-ID `<179578582079.1094405.15142623585619157958@mail.ustc.edu.cn>`（SMTP 250）；
+  lore 线程复核：`GET /all/<该 MID>/t.mbox.gz` = **200，10277 B，线程 5 封**（cover + 1/2 + 2/2 + sashiko `[Low]` + 本回帖）。
+- 草稿原件留档：`DRAFT-superseded-reply.txt`（与实发件同文，仅缺首部）。

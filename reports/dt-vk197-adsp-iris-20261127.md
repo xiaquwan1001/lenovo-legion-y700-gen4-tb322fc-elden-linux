@@ -2,6 +2,8 @@
 
 - **性质**：`Image.gz` 与 vk196 **逐字节相同**（`9728a751…`），只换 DTB（153124 → 153136 B，`ce27003e…` → `d3d766d2…`）⇒ 单变量。
 - **首见 `fastboot boot`（零写盘）→ 回归 → `scripts/flash-b.sh` 持久化 → 真重启复验**，全程未动 boot_a / 其它分区。
+> **⚠ 2026-11-27 晚勘误**：本文 §3/§6 里「`sub_state 22/66` = LOAD_RESOURCES…」「`2→4` = ERROR」两处判读**错了**（打印是 `%x`，且 `ERROR=5`）；已在 §3/§6 就地更正，结论不变（Q36 仍未通），但根因层从「固件代次」改判为「驱动 DRC / 首帧前 IPSC 路径」。权威判读 = `reports/iris-decode-static-20261127.md`。
+
 - **产物**：`out/boot-elden-vk197.img`（sha `12eb016a…` 未签 / `6341a981…` 签名后，96 MiB，写 boot_b 读回一致）、`out/boot-elden-vk197.manifest`。账 = `versions/vk-registry.tsv` 的 vk197 行。
 
 ## 0. 一页结论
@@ -59,7 +61,7 @@ sudo systemctl reboot                                     # 真重启复验：qb
 
 本轮已排除 / 已确立的事实（供上面三条判断复用）：
 
-- 固件**确实起来了**：驱动状态机打出 `sub_state 0→22→66`（= `LOAD_RESOURCES|DRC_LAST|DRC` → `OUTPUT_PAUSE|DRC`）⇒ HFI 命令通道活着，不是「固件没下载」。
+- 固件**确实起来了**：驱动状态机打出 `sub_state 0→0x22→0x66`（**打印是 `%x` 十六进制**）= `DRC|INPUT_PAUSE` → `DRC|DRC_LAST|INPUT_PAUSE|OUTPUT_PAUSE` ⇒ 固件在发首次 settings-change（HFI 命令/事件通道活着，不是「固件没下载」）。**更正（2026-11-27 晚静态判读，`reports/iris-decode-static-20261127.md` §0）**：早前按十进制读成 `LOAD_RESOURCES|DRC_LAST|DRC` 是误读，`0x22/0x66` 里没有 `LOAD_RESOURCES(0x80)`。
 - 不是分辨率/像素格式问题：320x240 与 640x480 同现象。
 - 不是 profile 问题：baseline/main/high 三档同现象。
 - `qcom_iris` **开机不自动加载**（访问 `/dev/video17` 前必须 `modprobe qcom_iris`）：模块有 `of:N*T*Cqcom,sm8750-irisC*` alias，但 udev 冷插没触发 ⇒ 待查（低优先，先记）。
@@ -84,6 +86,6 @@ sudo systemctl reboot                                     # 真重启复验：qb
 | B 固件 HFI 版本 | 开 `dynamic_debug`（`file …/iris/* +p`）+ `dmesg -C` 后重解 | **开了但没出 HFI 报文**（连 `firmware version:` 的 dev_dbg 都没有 ⇒ 该 dynamic_debug 写法在本模块上没生效，下一轮改用 `echo 'module qcom_iris +p'`） |
 | C 上游成熟度 | 未查 | 下一轮 `lore`/`patchwork` 关键词 `iris` + `sm8750`（2026-11 后是否已有修复系列） |
 
-**状态机观察（供 B/C 用）**：一次失败解码的完整序列（dmesg，单实例）= `0→1`（input streaming）→ `1→2`（output streaming）→ **`2→4`（ERROR）** → `4→3` → `3→1` → `1→0`；同时 `sub_state 0→22`（`LOAD_RESOURCES|DRC_LAST|DRC`）→ `66`（`OUTPUT_PAUSE|DRC`）。**没有任何 `dev_err`**（`session error received` / `unsupported content` 都未打）⇒ 错误不是固件显式回错的常规路径，更像「固件发来 DRC/暂停事件后驱动自己判错」。这条要对着 `iris_common.c` / `iris_hfi_gen2_response.c` 的 DRC 路径读，是下一轮 30 分钟能定位的点。
+**状态机观察（已由静态判读纠正，见 `reports/iris-decode-static-20261127.md` §1）**：`enum iris_inst_state` = `DEINIT=0, INIT=1, INPUT_STREAMING=2, OUTPUT_STREAMING=3, STREAMING=4, ERROR=5`。所以实测序列 `0→1→2→4→3→1→0` 是**一次干净的正常生命周期**（`2→4` = capture STREAMON 完成；`4→3`/`3→1` = 两个面 STREAMOFF；`1→0` = close），**dmesg 里一次 `to 5`（ERROR）都没有** ⇒ 错误不走状态机，`V4L2_BUF_FLAG_ERROR` 来自「零尺寸 `PSC_LAST` 输出缓冲被误标 ERROR」（`iris_hfi_gen2_response.c:393` 判 `LAST` 不判 `PSC_LAST`）。上游 Neil Armstrong 2026-11-25 的 11 贴系列（patchwork **1222157**，未合入）正是修这套（含一贴 *complete an unchanged first settings change for FFmpeg*）。
 
 > 结论：**Q36 当前最可能是 B/C（固件代次或驱动对 SM8750 的 DRC 路径）**，不是 A 的 ffmpeg 包装层；`v4l2-compliance` 的 7 条失败可另立「driver quality」小系列（与解码失败解耦）。

@@ -1,0 +1,93 @@
+v2-0000-cover-letter.patch
+v2-0001-coresight-ctcu-add-missing-MODULE_DEVICE_TABLE.patch
+v2-0002-coresight-tpda-add-missing-MODULE_DEVICE_TABLE.patch
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<suzuki.poulose@arm.com>
+RCPT TO:<mike.leach@arm.com>
+RCPT TO:<james.clark@linaro.org>
+RCPT TO:<leo.yan@arm.com>
+RCPT TO:<alexander.shishkin@linux.intel.com>
+RCPT TO:<coresight@lists.linaro.org>
+RCPT TO:<linux-arm-kernel@lists.infradead.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: suzuki.poulose@arm.com
+Cc: mike.leach@arm.com,
+	james.clark@linaro.org,
+	leo.yan@arm.com,
+	alexander.shishkin@linux.intel.com,
+	coresight@lists.linaro.org,
+	linux-arm-kernel@lists.infradead.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v2 0/2] coresight: add missing MODULE_DEVICE_TABLE() for CTCU and TPDA
+Date: Fri, 27 Nov 2026 21:30:06 +0800
+Message-ID: <20261127133008.1599944-1-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+(body) Adding cc: James Clark <james.clark@linaro.org> from line 'Reviewed-by: James Clark <james.clark@linaro.org>'
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<suzuki.poulose@arm.com>
+RCPT TO:<mike.leach@arm.com>
+RCPT TO:<james.clark@linaro.org>
+RCPT TO:<leo.yan@arm.com>
+RCPT TO:<alexander.shishkin@linux.intel.com>
+RCPT TO:<coresight@lists.linaro.org>
+RCPT TO:<linux-arm-kernel@lists.infradead.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: suzuki.poulose@arm.com
+Cc: mike.leach@arm.com,
+	james.clark@linaro.org,
+	leo.yan@arm.com,
+	alexander.shishkin@linux.intel.com,
+	coresight@lists.linaro.org,
+	linux-arm-kernel@lists.infradead.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v2 1/2] coresight: ctcu: add missing MODULE_DEVICE_TABLE()
+Date: Fri, 27 Nov 2026 21:30:07 +0800
+Message-ID: <20261127133008.1599944-2-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261127133008.1599944-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261127133008.1599944-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
+(body) Adding cc: James Clark <james.clark@linaro.org> from line 'Reviewed-by: James Clark <james.clark@linaro.org>'
+Dry-OK. Log says:
+Server: smtp.ustc.edu.cn
+MAIL FROM:<xiaqinghuan@mail.ustc.edu.cn>
+RCPT TO:<suzuki.poulose@arm.com>
+RCPT TO:<mike.leach@arm.com>
+RCPT TO:<james.clark@linaro.org>
+RCPT TO:<leo.yan@arm.com>
+RCPT TO:<alexander.shishkin@linux.intel.com>
+RCPT TO:<coresight@lists.linaro.org>
+RCPT TO:<linux-arm-kernel@lists.infradead.org>
+RCPT TO:<linux-kernel@vger.kernel.org>
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+To: suzuki.poulose@arm.com
+Cc: mike.leach@arm.com,
+	james.clark@linaro.org,
+	leo.yan@arm.com,
+	alexander.shishkin@linux.intel.com,
+	coresight@lists.linaro.org,
+	linux-arm-kernel@lists.infradead.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH v2 2/2] coresight: tpda: add missing MODULE_DEVICE_TABLE()
+Date: Fri, 27 Nov 2026 21:30:08 +0800
+Message-ID: <20261127133008.1599944-3-xiaqinghuan@mail.ustc.edu.cn>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261127133008.1599944-1-xiaqinghuan@mail.ustc.edu.cn>
+References: <20261127133008.1599944-1-xiaqinghuan@mail.ustc.edu.cn>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+
+Result: OK
