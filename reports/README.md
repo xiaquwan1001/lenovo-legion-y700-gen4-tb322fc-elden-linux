@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：730
+- 报告总数：731
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -83,6 +83,7 @@
 | `f2fs` | 2 | `f2fs-host-bench-20261025.md` |
 | `fastrpc` | 2 | `fastrpc-nonsecure-evidence-20261113.md` |
 | `g3` | 2 | `g3-steam-screenshot-paths-20261029.md` |
+| `hw` | 2 | `hw-capability-drivers-20261127.md` |
 | `integrity` | 2 | `integrity-h2-20261111.md` |
 | `kernel` | 2 | `kernel-rebase-cost-20261107.md` |
 | `lanes` | 2 | `lanes-consolidated-20261101.md` |
@@ -150,7 +151,6 @@
 | `greetd` | 1 | `greetd-stop-verify-20261031.md` |
 | `hexagonrpc` | 1 | `hexagonrpc-upstream-registry-write-20261127.md` |
 | `hide` | 1 | `hide-android-partitions-20261119.md` |
-| `hw` | 1 | `hw-capability-drivers-20261127.md` |
 | `hwdec` | 1 | `hwdec-iris-sm8750-feasibility-20261127.md` |
 | `init` | 1 | `init-systemd-vs-openrc-20261011.md` |
 | `joonhoe` | 1 | `joonhoe-kim-contact-20261019.md` |
@@ -1014,6 +1014,11 @@
 - `g3-steam-screenshot-paths-20261029.md` — G3 Steam 判据②「截图」路径清单 + captive-portal 绕过草案（2026-10-29，纯主机）
 - `g3-steam-20261028.md` — G3 第一批：Steam 客户端起到登录界面（2026-10-28，持设备）
 
+## `hw`（2）
+
+- `hw-capability-drivers-20261127.md` — 硬件能力集合 × 驱动面审计（lane A）— 2026-11-27
+- `hw-capability-firmware-20261127.md` — 硬件能力集合补完 × 固件面审计（lane B）— 2026-11-27
+
 ## `integrity`（2）
 
 - `integrity-h2-20261111.md` — H2 完整性巡检报告 — 2026-11-11
@@ -1300,10 +1305,6 @@
 ## `hide`（1）
 
 - `hide-android-partitions-20261119.md` — 在文件管理器侧栏隐藏只读 Android / 持久化分区 — 机制调研 + 脚本 + 上机判据
-
-## `hw`（1）
-
-- `hw-capability-drivers-20261127.md` — 硬件能力集合 × 驱动面审计（lane A）— 2026-11-27
 
 ## `hwdec`（1）
 

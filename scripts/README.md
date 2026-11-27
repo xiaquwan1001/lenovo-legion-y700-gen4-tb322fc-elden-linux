@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=005fd086ca11a69f（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=e820061301941e3b（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,8 +7,8 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**364**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 85 / 设备操作 109 / 造件 71 / 取证 52 / 一次性 3 / 公共库 8 / 其它 36
+- 入口总数：**365**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 86 / 设备操作 109 / 造件 71 / 取证 52 / 一次性 3 / 公共库 8 / 其它 36
 - 引用数为 0 的孤立件：**0**（判定口径见下）
 
 ## 判据（怎么读这张表）
@@ -24,7 +24,7 @@
 
 > 本文件由生成器重写，**手改会被下一次生成覆盖**；要改内容就改被索引脚本的头注释，要改分组就改 `gen-scripts-index.py` 的 `GROUPS`。
 
-## 门禁（85）
+## 门禁（86）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -65,6 +65,7 @@
 | `scripts/android-slim-v3-build.sh` | RETIRED 2026-11-27：v3 super 已写入并 EDL 读回校验通过（一次性构建器），配方与判据在 reports/android-slim-v3-20261119.md；替代/复核：该报告 §7/§8；可复核：reports/disk-audit-20261126.md | 20 |
 | `scripts/assert-kernel-sane.sh` | 打包前的「内核身份 / 存活」硬门（pack-time gate）。 | 35 |
 | `scripts/cam-load-verify.sh` | 在设备上当 root 跑：加载相机模块栈并做前后对拍（Q24 口径：加载后不要燄屏）。 | 11 |
+| `scripts/capability-audit.sh` | 设备能力集合的**只读**现查（DEVICE/CAPABILITIES.md 的复现入口） | 1 |
 | `scripts/check-abi-config.sh` | 内核 .config 的 ABI 敏感项门禁（build/pack-time gate）。 | 38 |
 | `scripts/check-doc-assets.sh` | 文档里用反引号写出的资产路径必须真实存在。 | 65 |
 | `scripts/check-doctor.sh` | elden 项目医生 — 机器账自检（只读，不改任何文件） | 349 |
@@ -132,8 +133,8 @@
 | `scripts/bt-up.sh` | bring up Bluetooth at boot on the TB322FC (elden). | 20 |
 | `scripts/build-hapticd.sh` | 交叉编译 elden-hapticd（Waydroid 马达透传宿主 daemon） | 13 |
 | `scripts/cam-loopback.sh` | 把 mainline 相机（libcamera 软 ISP）转发到一个 v4l2loopback 节点。 | 46 |
-| `scripts/cam-mode.sh` | elden 上「相机 ⇄ 熄屏」互斥的操作口径（在设备上当 root 跑） | 111 |
-| `scripts/camera-modules-load.sh` | bring up the mainline camera stack on TB322FC. | 79 |
+| `scripts/cam-mode.sh` | elden 上「相机 ⇄ 熄屏」互斥的操作口径（在设备上当 root 跑） | 120 |
+| `scripts/camera-modules-load.sh` | bring up the mainline camera stack on TB322FC. | 85 |
 | `scripts/camera-stream-up.sh` | 在设备上把 camss 采集链路配置到可出流（幂等）。 | 30 |
 | `scripts/charge-ctl.sh` | battery / charger control for TB322FC (elden), qcom-battmgr. | 42 |
 | `scripts/charge-watch.sh` | keep the qcom-battmgr charger settings applied. | 67 |
@@ -198,7 +199,7 @@
 | `scripts/serial-log.sh` | ★ STALE 复判（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。 | 14 |
 | `scripts/serial-logger.sh` | ★ RETIRED-for-forensics（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留文件，但退出「取证工具」序列**。 | 43 |
 | `scripts/serial-probe.sh` | 独占串口并「敲一下」：把当前 ttyACM0 的输出与回声抓下来 | 8 |
-| `scripts/serial-run.sh` | 通过设备 USB CDC-ACM 串口 (/dev/ttyACM0) 执行一条命令并打印回显 | 20 |
+| `scripts/serial-run.sh` | 通过设备 USB CDC-ACM 串口 (/dev/ttyACM0) 执行一条命令并打印回显 | 22 |
 | `scripts/serial-sysrq.py` | 通过 USB 串口控制台发 SysRq（免物理断电复位/取栈）。 | 7 |
 | `scripts/serial-tap.py` | 稳定的设备串口落盘（替代 serial-logger.sh 的 cat 循环） | 30 |
 | `scripts/sleep-bisect.sh` | ★ LEGACY（2026-11-23 头注落地，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）： | 24 |

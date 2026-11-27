@@ -186,6 +186,9 @@
 
 ### 1.2 固件清单与通路（"正常驱动原厂全部固件"的分解）
 
+> **本表 = 「这些固件从哪来、走哪条通路」**；**「哪些硬件能力还没接通、缺驱动/缺固件/缺上游」看 [`CAPABILITIES.md`](CAPABILITIES.md)**
+> （五桶表 + 27 条固件请求 × 本机 × linux-firmware × 可否分发，2026-11-27 核实；复现入口 `scripts/capability-audit.sh fw`）。
+
 | 固件 | 来源分区 | 本地资产 | 主线通路 | 状态 |
 |---|---|---|---|---|
 | ADSP `adsp.mdt`+`adsp_dtb` | LUN4 `modem_a` | `backup/fw/modem/` | `qcom_q6v5_pas`；DT 期望 `/lib/firmware/qcom/sm8750/adsp.mdt` | ✅ 起（音频 graph 已通） |
