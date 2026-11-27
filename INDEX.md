@@ -58,7 +58,9 @@
 > 全账 = `reports/pmic-pon-reset-reason-20261127.md`。
 > ③ **D10 复扫**（`reports/comm-triage-20261127.md`）：窗口内**人类评审新增 0 条**；四个上游系列封数与上轮逐一相同、不建议催；
 > `mobian1/droid-juicer !46` 逐字段不变（notes=0）；**新工具事实** = `lore-kernel.gnuweeb.org` 是免 Anubis 的 lore 镜像。
-> **退信面仍未核**（GNOME keyring 锁：`secret-tool: Cannot get secret of a locked object`）⇒ 需用户登录图形会话解锁。
+> （**2026-11-27 01:1xZ 已补**：keyring 解锁后 IMAP 三箱实测 —— INBOX 24 / Junk 17 新件，**我方四系列回信 0、退信 0**；
+> 并已获用户放行回帖 `linux-msm/hexagonrpc#29`：<https://github.com/linux-msm/hexagonrpc/issues/29#issuecomment-7207186502>，
+> 文本存档 `out/upstream-post-20261127/`。）
 
 > **🆕 2026-11-26 23:1x（用户放行上机后接续：`#692` 假说 A **被实验否证**）**：三次零写盘 `fastboot boot` 试验核（`out/fastrpc1-20261126/` sha `2050cf6c…`）+ 在机 vk192 对照，共 6 发实测（报告 §8）：
 > ① **先补上一班漏的采集**：试验核 `/dev/fastrpc-adsp`（非 secure）**在**、`qrtr 400` 在、ADSP `running` ⇒ `qcom,non-secure-domain` 生效，旧阻塞项消除（且并不依赖补丁）。

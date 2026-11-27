@@ -151,3 +151,28 @@ curl -sS 'https://gitlab.com/api/v4/groups/mobian1/merge_requests?state=opened&o
 # C) IMAP（本轮缺失项，下一轮必做）
 timeout -k 5 420 python3 /tmp/d11_scan.py   # 复制 d11 脚本，把增量切点改成 INTERNALDATE > 2026-11-26T05:55Z
 ```
+
+---
+
+## 补：2026-11-27 01:1xZ（用户登录解锁 keyring 后，父代理补齐两块）
+
+### ① IMAP 三箱（window `2026-11-26T05:55Z` → `2026-11-27T01:1xZ`）
+
+| 箱 | 新件 | 其中我方线程回信 | 退信/DSN |
+|---|---|---|---|
+| INBOX | 24 | **0** | **0** |
+| Junk E-mail | 17 | 0 | 0 |
+| Sent Items | 0 | — | — |
+
+判据：`BODY.PEEK[HEADER.FIELDS (DATE FROM SUBJECT ...)]`，`readonly=True`，切点 `INTERNALDATE > 2026-11-26T05:55Z`；
+关键词过滤 `elden|dwc3|wl2868c|aw86927|sm8750|TB322FC|dsi-phy`（我方在飞线程全零命中），退信过滤 `mailer-daemon|postmaster|undeliver|delivery status`。
+⇒ **四个上游系列（elden v10 / dwc3 v16 / M6 DSI-PHY v3 / aw86927 v4）在窗口内没有任何回复**，与机器人面结论一致。
+
+### ② 上游发帖（用户放行后）：`linux-msm/hexagonrpc#29` 已回
+
+- 帖子：<https://github.com/linux-msm/hexagonrpc/issues/29#issuecomment-7207186502>（`2026-11-27T01:18:43Z`，作者 `xiaquwan1001`，已用 API 复核为最新一条评论）
+- 文本存档：`out/upstream-post-20261127/hexagonrpc-issue29.md`
+- 内容（要点）：SM8750/Y700 上同族断言 + **本板把 ADSP SSR 放大成整机 PS_HOLD 复位**；真因之一是我们这边 sensor 配置是 0 字节占位（换上真
+  vendor 配置后**不再断言**）；三条文件服务细节（`-R` 扁平布局 vs droid-juicer 的 Android 布局、`fwrite` 的 `sequence<byte>` 长度字在 prim buffer、
+  签名不匹配不该 abort 监听循环）；`fopen_with_env_fd`(36) 缺失会让 attach 半途退出；我们已实现可写 overlay（~200 行）并愿以 PR 形式提交。
+  含 AI 辅助披露。
