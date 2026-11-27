@@ -6,13 +6,16 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-27（22:2x CST 深夜轮：Q36 硬件解码打通（backport 1222157）+ T26 收口））
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-27（22:5x CST 深夜轮：Q36 硬件解码打通 + T26/T2/T5 收口））
 
-> **★★ 2026-11-27 深夜轮（Q36 硬件解码打通 + T26 收口；上机，零写盘）**：
+> **★★ 2026-11-27 深夜轮（Q36 硬件解码打通 + T26 收口 + droidloom T2 3/4 + T5 IME 持久性；上机）**：
 > ① **Q36 已解** —— backport 上游 patchwork **1222157**（Neil Armstrong，11 贴，未合入）到日常树（`patch -p1 --fuzz=3`；我方树老 6 周，`git apply` 从 03 起失败；唯一缺符号 `iris_vb2_signal_eos()` 本地补 4 行），
 > **只重编 `qcom-iris.ko`、不换内核不改 DT** ⇒ H.264 `frame=90` / HEVC `frame=90`、无 `decode error`、**framemd5 与软解逐帧 90/90 零不一致**。
 > **根因表述更正**：`:393` 少判 `PSC_LAST` **不是修复点**（backport 后该行未变），真修复 = 系列 09/10 的 `early_capture`/`drc_unsignalled` 分支（零尺寸 `PSC_LAST` 走重入队，不置 ERROR）。
 > ② **T26 收口，真因是我方自己** —— `/etc/modprobe.d/elden-blacklist-iris.conf`（`blacklist qcom-iris` 实验保险丝）⇒ alias/udev/kmod 全正常但被静默跳过；改名 `.disabled` 后 `udevadm trigger` 即加载，**冷启实测自动加载 + `/dev/video17` 权限变 `crw-rw----+`（uaccess ACL，普通用户可直用）**；未用 `modules-load.d`。
+> ③ **T2 本地 patch 3/4 落地（上机验收全绿）** —— 002 去 `--forward-signals` + 003 宿主 resolver 进 lease + 004 `runuser` 路径，承接二进制是 **`droidloomd`**（只换 `droidloom-supervisor` 不生效）；判据 = cell `Android is ready`、删 `/usr/local/bin/unshare` 后仍起、cell `DnsAddresses` 前两条 = 宿主 resolver 且 `dl_dns_redirect` = 0 + cell 内 `ping www.ustc.edu.cn` 直通。**残留 = 001 `WifiProvisioning` 自愈**（属 Android systemui，要跑包构建器，>1 GiB 下载红线 ⇒ 待裁决）。T4（DNS 重定向持久化）随之作废。
+> ④ **T5**：真重启后默认 IME 仍 Fossify ✅；中文输入 🟡（装 Trime 3.3.13 可注册/可切换，但首启要 SetupActivity 且 `Skip starting rime: storage not available!` ⇒ 已恢复 Fossify，下次需有人值守 10 分钟并裁决「英文/中文」取一）。
+> ⑤ **外发已发并报备**：droidloom issue #48 补充复现数据 <https://github.com/denialwm/droidloom/issues/48#issuecomment-7221182777>（正文 sha `7d621ce4…`，已隐去宿主 IP/校名/校内 DNS，`SENT.md` 记账）。
 > 产物 = `out/iris-backport-1222157/`（ko sha `9b815bc359012c1b…`）+ 组合补丁 `patches/backport-iris-drc-1222157/`；全账 `reports/iris-backport-1222157-20261127.md`。残留：Moonlight 判据未验（需 Sunshine + 真串流）、给 Neil 的 `Tested-by:` 未发、上游合入后应撤 backport。
 
 > **★ 2026-11-27 晚轮（vk196 持久化部署 + `reboot2` 退役 + Coresight 两处上游缺陷已投）**：
