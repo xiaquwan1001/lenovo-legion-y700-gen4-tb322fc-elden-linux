@@ -21,3 +21,4 @@
 - **上游补丁资产「投递状态」逐目录对账 — 2026-11-07**：`reports/patch-delivery-audit-20261107.md`
 - **UEFI/引导链/UFS 邮件分诊 2026-11-03**：`reports/uefi-mail-triage-20261103.md`
 - **wl2868c 驱动系列 v2 重生成（备料，不投递）— 2026-10-29**：`reports/wl2868c-v2-20261029.md`
+- **通信复扫 D10-c（2026-11-27 午间，窗口接 03:29Z；PR #31 CI 状态 + IMAP + Mobian/phosh）**：`reports/comm-triage-20261127-c.md`

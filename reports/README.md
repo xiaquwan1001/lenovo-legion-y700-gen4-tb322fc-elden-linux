@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：710
+- 报告总数：713
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -17,11 +17,11 @@
 | `upstream` | 22 | `upstream-status-20261125.md` |
 | `doc` | 20 | `doc-audit-20261125.md` |
 | `gunyah` | 20 | `gunyah-daily-line-20261126.md` |
-| `droidloom` | 17 | `droidloom-upstream-cluster-20261127.md` |
+| `droidloom` | 18 | `droidloom-release-download-verify-20261127.md` |
 | `android` | 15 | `android-boot-audit-20261122.md` |
 | `m1` | 15 | `m1-u6-pas-dtbfw-leak-20261027.md` |
+| `comm` | 12 | `comm-triage-20261127-b.md` |
 | `m3` | 12 | `m3-v5-selfcontained-20261031.md` |
-| `comm` | 11 | `comm-triage-20261127-b.md` |
 | `ime` | 11 | `ime-single-stack-20261124.md` |
 | `mobian` | 10 | `mobian-phosh-upstream-20261125.md` |
 | `b5` | 9 | `b5-apss-wdt-static-review-20261126.md` |
@@ -90,6 +90,7 @@
 | `phosh` | 2 | `phosh-mr-2005-rework-20261124.md` |
 | `pstore` | 2 | `pstore-ram-initrd-guard-20261116.md` |
 | `qemu` | 2 | `qemu-full-chain-20261113.md` |
+| `rayburst` | 2 | `rayburst-ab-20261127.md` |
 | `repo` | 2 | `repo-slim-candidates-20261125.md` |
 | `route` | 2 | `route-b-impl-20261108.md` |
 | `shutdown` | 2 | `shutdown-console-spam-20261125.md` |
@@ -175,7 +176,6 @@
 | `project` | 1 | `project-audit-20261111.md` |
 | `py` | 1 | `py-static-scan-20261120.md` |
 | `qca` | 1 | `qca-fw-download-suspend-20261021.md` |
-| `rayburst` | 1 | `rayburst-redirect-hang-20261126.md` |
 | `reboot` | 1 | `reboot-bootloader-by-kernel-20261125.md` |
 | `rebuild` | 1 | `rebuild-corrupt-img-20261102.md` |
 | `replay` | 1 | `replay-2026-10-17-m1-73-vk127.md` |
@@ -460,8 +460,9 @@
 - `gunyah-vmm-first-attempt-20261024.md` — Gunyah VMM 第一步（2026-10-24 深夜）：用户态 harness 打通到 `VM_INIT`，RM 返回 **IRQ_INUSE(0x10)**
 - `gunyah-roadmap-20261021.md` — Gunyah 虚拟化线（拓展项）资产盘点 + 事实核查 + 分阶段规划
 
-## `droidloom`（17）
+## `droidloom`（18）
 
+- `droidloom-release-download-verify-20261127.md` — droidloom release 资产下载验证 + 「rayburst 报无效」取证（2026-11-27，父代理亲测）
 - `droidloom-upstream-cluster-20261127.md` — droidloom 上游缺陷聚类 + 社区分叉评估（D24 第二轮，主机侧，2026-11-27）
 - `droidloom-cell-network-20261126.md` — droidloom cell 无网根因（工单 D2）——U2 平板，2026-11-26
 - `droidloom-deploy-20261126.md` — droidloom 部署（工单 D）——U2 平板 TB322FC，2026-11-26
@@ -516,6 +517,21 @@
 - `m1-rebase-7.3rc7-feasibility-20261013.md` — M1 资产树基线重基可行性评估（7.2.0 血统 → 7.3-rc7）
 - `m1-clean-tree-20261011.md` — M1 干净上游资产树：组装 + 构建验证（2026-10-11）
 
+## `comm`（12）
+
+- `comm-triage-20261127-b.md` — 通信复扫 D10-b（窗口 `2026-11-27T01:10Z` → `2026-11-27T03:29Z`）— 只读
+- `comm-triage-20261127-c.md` — 通信跟踪 D10-c（窗口 `2026-11-27T03:29Z` → `2026-11-27T04:07Z`）— 只读
+- `comm-triage-20261127.md` — 通信复扫 D10（2026-11-26T05:55Z → ≈22:0xZ）— 只读
+- `comm-triage-20261126-d10.md` — D10 通信 lane 复扫（2026-11-25T11:25Z → 2026-11-26T04:20Z）— 只读
+- `comm-triage-20261126-d11.md` — 通信复扫 D11（2026-11-26T04:20Z → 05:55Z + GitLab 面）— 只读
+- `comm-triage-20261126.md` — 通信 lane 增量复扫（2026-11-25 01:45Z → 2026-11-25 22:11Z）— B4，只读
+- `comm-triage-20261125.md` — 通信 lane 增量复扫（2026-11-24 08:00Z → 2026-11-25 01:45Z）— D10，只读
+- `comm-triage-20261124-c.md` — 通信 lane 复扫（2026-11-24 03:0xZ / 11:0x CST）— D10 只读
+- `comm-triage-20261124-d.md` — 通信 lane 复扫（2026-11-24 11:5x CST）— D10 只读，第 2 轮
+- `comm-triage-20261124-e.md` — 通信 lane 复扫（2026-11-24 05:00Z → 08:30Z）— E 轮，只读
+- `comm-triage-20261123-b.md` — D10 通信跟踪（b 轮，下午）2026-11-23
+- `comm-triage-20261123.md` — D10 通信跟踪（邮件 + Mobian/phosh GitLab）2026-11-23
+
 ## `m3`（12）
 
 - `m3-v5-selfcontained-20261031.md` — M3 v5 系列自足性门禁 + cover letter — 2026-10-31
@@ -530,20 +546,6 @@
 - `m3-6-wireless-slice-20261013.md` — M3-6 无线片：就绪化 + M4 无线立项建议（2026-10-13）
 - `m3-missing-support-matrix-20261013.md` — M3 缺口矩阵 — 板 DTS 依赖项的上游支持面（2026-10-13）
 - `m3-series-plan-20261013.md` — M3 板支持系列 — 拆分计划与验收口径（2026-10-13）
-
-## `comm`（11）
-
-- `comm-triage-20261127-b.md` — 通信复扫 D10-b（窗口 `2026-11-27T01:10Z` → `2026-11-27T03:29Z`）— 只读
-- `comm-triage-20261127.md` — 通信复扫 D10（2026-11-26T05:55Z → ≈22:0xZ）— 只读
-- `comm-triage-20261126-d10.md` — D10 通信 lane 复扫（2026-11-25T11:25Z → 2026-11-26T04:20Z）— 只读
-- `comm-triage-20261126-d11.md` — 通信复扫 D11（2026-11-26T04:20Z → 05:55Z + GitLab 面）— 只读
-- `comm-triage-20261126.md` — 通信 lane 增量复扫（2026-11-25 01:45Z → 2026-11-25 22:11Z）— B4，只读
-- `comm-triage-20261125.md` — 通信 lane 增量复扫（2026-11-24 08:00Z → 2026-11-25 01:45Z）— D10，只读
-- `comm-triage-20261124-c.md` — 通信 lane 复扫（2026-11-24 03:0xZ / 11:0x CST）— D10 只读
-- `comm-triage-20261124-d.md` — 通信 lane 复扫（2026-11-24 11:5x CST）— D10 只读，第 2 轮
-- `comm-triage-20261124-e.md` — 通信 lane 复扫（2026-11-24 05:00Z → 08:30Z）— E 轮，只读
-- `comm-triage-20261123-b.md` — D10 通信跟踪（b 轮，下午）2026-11-23
-- `comm-triage-20261123.md` — D10 通信跟踪（邮件 + Mobian/phosh GitLab）2026-11-23
 
 ## `ime`（11）
 
@@ -1031,6 +1033,11 @@
 - `qemu-full-chain-20261113.md` — B16：QEMU 复刻 GRUB → vk188 → 串口 dmesg 全链（2026-11-13，主机侧）
 - `qemu-usage-survey-20261112.md` — QEMU 可用于哪些排错面 —— 技术评估（2026-11-12）
 
+## `rayburst`（2）
+
+- `rayburst-ab-20261127.md` — rayburst/aria2 GitHub release 下载 hang 的 A/B 复现与定位（D20，2026-11-27）
+- `rayburst-redirect-hang-20261126.md` — rayburst 下载 GitHub release hang 取证（2026-11-26，只读取证）
+
 ## `repo`（2）
 
 - `repo-slim-candidates-20261125.md` — 仓库瘦身盘点（只读盘点 lane）— 2026-11-25
@@ -1380,10 +1387,6 @@
 ## `qca`（1）
 
 - `qca-fw-download-suspend-20261021.md` — BT 固件下载窗口 × suspend：根因、修复与副作用（2026-10-21）
-
-## `rayburst`（1）
-
-- `rayburst-redirect-hang-20261126.md` — rayburst 下载 GitHub release hang 取证（2026-11-26，只读取证）
 
 ## `reboot`（1）
 

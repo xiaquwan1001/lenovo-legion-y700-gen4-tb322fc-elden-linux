@@ -32,3 +32,5 @@
 - **tasks-slim-20261107 — 任务 C：10 个超长表格单元格下沉复核**：`reports/tasks-slim-20261107.md`
 - **用户态部署漂移只读审计（2026-11-21）**：`reports/userland-drift-audit-20261121.md`
 - **用户态镜像一致性门（T9，A9/A10）— 2026-11-27**：`reports/userland-mirror-gate-20261127.md`
+- **rayburst/aria2 下载 hang 的 A/B 复现（三档 ×2 次 + curl 对照；定位到 all-proxy 空串退化直连）**：`reports/rayburst-ab-20261127.md`
+- **droidloom release 资产下载验证（49 已在盘、51 三件新下、UA 无关证据、编译 vs 下载裁决）**：`reports/droidloom-release-download-verify-20261127.md`
