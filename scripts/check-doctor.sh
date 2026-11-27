@@ -131,8 +131,13 @@ fi
 #      所以并发不会打乱报告顺序，也不会让某一段的输出插进另一段。
 # 2026-11-27 加墙钟观测（30 子门后 full 已拖到 24 s，文档还写 1.4 s ⇒ 静默回归 18 倍无人知）：
 #   逐子门计时（后台启动前取 t0、wait 后取 t1），① `== <子门> ==` 行尾追加秒数（人读）；
-#   ② 汇总行加总墙钟；③ --json 加 "secs"/{…} 与 "total"；④ 软阈值 WARN（fast > 5 s /
-#   full > 10 s，只 WARN 不 FAIL）——判定契约不变：判据仍只看子门输出的 [ok]/[FAIL]/[warn] 行。
+#   ② 汇总行加总墙钟；③ --json 加 "secs"/{…} 与 "total"；④ 软预算 WARN（只 WARN 不 FAIL）。
+#   预算口径（2026-11-27 父进程复核后校正）：分**单子门**与**总墙钟**两道 —— 两种静默回归
+#   形态不同：①单门自发膨胀（历史实例 §24 2 s → 23 s）；②总墙钟被新子门拖走（30 子门时期
+#   full 24 s）而每门都看着正常。单门预算取「该门正常浮动上限」而不是「健康值」：§05-vk
+#   （vk 镜像扫描）11–12 s、§05f（pahole 核 vmlinux）14–15 s 是常驻重件，写 10 s 会让每次
+#   full 都喊 WARN（恒响的告警等于没告警，正是本轮要拆的「过防御」形态）。
+#   判定契约不变：判据仍只看子门输出的 [ok]/[FAIL]/[warn] 行。
 declare -A START_NS SECS_MS
 T_ALL0=$(date +%s%N)
 pids=""
@@ -160,8 +165,11 @@ for p in $pids; do
   fi
 done
 TOTAL_MS=$(( ($(date +%s%N) - T_ALL0) / 1000000 ))
-case "$PROFILE" in fast) THR_MS=5000 ;; *) THR_MS=10000 ;; esac
-THR_S=$((THR_MS / 1000))
+case "$PROFILE" in
+  fast) THR_MS=5000;  TOT_MS=6000 ;;    # fast：单门 5 s（§27/§28 现 0.3–4.4 s）、总 6 s（现 3.0–4.6 s）
+  *)    THR_MS=16000; TOT_MS=20000 ;;   # full：单门 16 s（§05f/§05-vk 常驻 11–15 s）、总 20 s（现 11–15 s）
+esac
+THR_S=$((THR_MS / 1000)); TOT_S=$((TOT_MS / 1000))
 
 # ---- 按固定顺序输出 + 统计 ----
 fail=0
@@ -174,8 +182,8 @@ for s in $LIST; do
   ms="${SECS_MS[$s]:-0}"
   # 软阈值：只 WARN 不 FAIL（防「下次再静默回归 18 倍」；计入口径与子门自身的 [warn] 相同）
   if [ "$ms" -gt "$THR_MS" ]; then
-    printf '  [warn] 子门墙钟 %d.%03ds > 软阈值 %ds（只提醒不拦截；上次静默回归：§24 2 s → 23 s）\n' \
-      "$((ms / 1000))" "$((ms % 1000))" "$((THR_MS / 1000))" >> "$out"
+    printf '  [warn] 子门墙钟 %d.%03ds > 单门预算 %ds（只提醒不拦截；历史实例：§24 2 s → 23 s）\n' \
+      "$((ms / 1000))" "$((ms % 1000))" "$THR_S" >> "$out"
   fi
   if [ "$JSON" != 1 ]; then
     secs=$(printf '%d.%03d' "$((ms / 1000))" "$((ms % 1000))")
@@ -201,7 +209,12 @@ if [ "$JSON" = 1 ]; then
     "$json_secs" "$secs"
 else
   echo
-  echo "== 汇总: FAIL=$fail  WARN=$warn  墙钟=$(printf '%d.%03d' "$((TOTAL_MS / 1000))" "$((TOTAL_MS % 1000))")s（软阈值 full>${THR_S}s/fast>5s 只 WARN） =="
+  if [ "$TOTAL_MS" -gt "$TOT_MS" ]; then
+    printf '  [warn] 总墙钟 %d.%03ds > 总预算 %ds（只提醒不拦截；历史实例：30 子门时期 24 s 无人知）\n' \
+      "$((TOTAL_MS / 1000))" "$((TOTAL_MS % 1000))" "$TOT_S"
+    warn=$((warn + 1))
+  fi
+  echo "== 汇总: FAIL=$fail  WARN=$warn  墙钟=$(printf '%d.%03d' "$((TOTAL_MS / 1000))" "$((TOTAL_MS % 1000))")s（预算：单门 ${THR_S}s / 总 ${TOT_S}s，只 WARN） =="
   for s in $LIST; do   # 逐子门秒数（固定顺序；段头没接上秒数的（如一体多节件）在这里兜底可见）
     ms="${SECS_MS[$s]:-0}"
     printf '  %s %d.%03ds\n' "$s" "$((ms / 1000))" "$((ms % 1000))"
