@@ -18,12 +18,13 @@
 
 ## 2. v2（单贴）做了什么
 
-产物 = `patches/upstream/v4l2-compliance-iris-20261127/0002-v2-fill-default-colorspace.patch`（sha256 `27b56239b1cd9a80…`）：
+产物 = `patches/upstream/v4l2-compliance-iris-20261127/0002-v2-fill-default-colorspace.patch`（sha256 `35816a1bc7db3db9…`，2026-11-28 二版：Fixes 段落加了一句甄别）：
 
 1. `iris_vdec_inst_init()`：fmt_src（OUTPUT）补 `REC709 / XFER_709 / YCBCR_709 / LIM_RANGE`；fmt_dst（CAPTURE）把四行 `*_DEFAULT` 换成同一组值。
 2. `iris_vdec_try_fmt()`：`pixmp->colorspace == V4L2_COLORSPACE_DEFAULT` 时归一成同一组值（保证 `G_FMT → S_FMT` 幂等、TRY_FMT 自洽）。
 3. 报文：v2 changelog 明写「1/3 重复 `1facae9bc3c1`、3/3 被主线 s_fmt 重写取代，请 drop」+ AI 披露 + `Fixes: b530b95de22c ("media: iris: implement s_fmt, g_fmt and try_fmt ioctls")` + `Cc: stable@vger.kernel.org`。
-   - `Fixes:` 取值依据：`b530b95de22c` 的树内容（raw `iris_vdec.c` @ 该 sha）里 `colorspace = V4L2_COLORSPACE_DEFAULT` 首次出现在 `iris_vdec_inst_init()` 的 fmt 初始化段（第 47-50 行），即引入点。
+   - `Fixes:` 取值依据（**本轮被独立复核纠正过一次，记下过程**）：父代理初查「`b530b95de22c` 的 raw 文件里有这 4 行」就判为引入点；lane 独立复核指出**该提交的 parent `38fc8beaba55` 里这 4 行就已存在** ⇒ 初查结论作废。父代理复跑确认：`iris_vdec.c` 在 **`38fc8beaba55`**（"media: iris: implement reqbuf ioctl with vb2_queue_setup"，Dikshita，2025-02-07）**才被创建**，其 parent `bb8a95aa038e` 该文件不存在（raw 404）⇒ **初始化**的引入点 = `38fc8beaba55`；但**「S_FMT 原样存下客户端 DEFAULT、G_FMT 原样回吐」这条行为**由 `b530b95de22c`（s_fmt/g_fmt/try_fmt 实现，同日）引入，缺陷的**可观测形态**从这里开始。
+   - **决定**：`Fixes: b530b95de22c`（行为引入点），并在报文里**点名两个 sha** 说明「初始化器更早（38fc8bea），原样存取的是 b530b95」——让维护者一眼判定，不赌单点。
 
 ## 3. 门禁（父代理自跑）
 

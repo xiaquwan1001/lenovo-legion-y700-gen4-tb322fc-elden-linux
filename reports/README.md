@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：749
+- 报告总数：750
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -102,6 +102,7 @@
 | `shutdown` | 2 | `shutdown-console-spam-20261125.md` |
 | `t14` | 2 | `t14-s3s4s6-offline-verify-20261114.md` |
 | `t18` | 2 | `t18-charging-timing-20261111.md` |
+| `v4l2` | 2 | `v4l2-compliance-overlap-20261128.md` |
 | `v4l2loopback` | 2 | `v4l2loopback-73-upgrade-20261112.md` |
 | `vk127` | 2 | `vk127-sampling-20261017.md` |
 | `vk163` | 2 | `vk163-modular-20261026.md` |
@@ -208,7 +209,6 @@
 | `twrp` | 1 | `twrp-parity-edl-dload-20261020.md` |
 | `u3` | 1 | `u3-rpmhpd-presync-floor-20261027.md` |
 | `u4` | 1 | `u4-aw86927-sramwindow-20261027.md` |
-| `v4l2` | 1 | `v4l2-compliance-v2-20261128.md` |
 | `vbmeta` | 1 | `vbmeta-b-resign-20261121.md` |
 | `vk129` | 1 | `vk129-abi-fix-verified-20261020.md` |
 | `vk151` | 1 | `vk151-daily-candidate-20261023.md` |
@@ -1124,6 +1124,11 @@
 - `t18-charging-timing-20261111.md` — T18 补充：充电与开机时序（2026-11-11 深夜，用户提示「USB 不充电/充电和开机有关」）
 - `t18-usb-charging-triage-20261111.md` — T18 USB 充电图标/状态抖动 — 初查报告（只读）
 
+## `v4l2`（2）
+
+- `v4l2-compliance-overlap-20261128.md` — v4l2-compliance 3 贴（已发系列 1224591）Fixes/Cc-stable/残项核定（2026-11-28，限时简报）
+- `v4l2-compliance-v2-20261128.md` — iris v4l2-compliance 系列：机械对账后 v2 只剩 1 贴（2026-11-28 早，无人值守）
+
 ## `v4l2loopback`（2）
 
 - `v4l2loopback-73-upgrade-20261112.md` — v4l2loopback 升级到 7.3.1（vk184）兼容 — 报告 2026-11-12
@@ -1551,10 +1556,6 @@
 ## `u4`（1）
 
 - `u4-aw86927-sramwindow-20261027.md` — U4：`aw86927` SRAM 窗口从 C 内常数提升为 **per-chip 数据表**（2026-10-27）
-
-## `v4l2`（1）
-
-- `v4l2-compliance-v2-20261128.md` — iris v4l2-compliance 系列：机械对账后 v2 只剩 1 贴（2026-11-28 早，无人值守）
 
 ## `vbmeta`（1）
 

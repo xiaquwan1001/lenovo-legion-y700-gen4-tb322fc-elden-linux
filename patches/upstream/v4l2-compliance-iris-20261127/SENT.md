@@ -22,3 +22,9 @@
 - **v2 = 单贴** `0002-v2-fill-default-colorspace.patch`（rebase 到 v7.4-rc3，`Fixes: b530b95de22c` + `Cc: stable`，AI 披露，正文要求 drop 1/3 与 3/3）：
   `git apply --check` OK / `checkpatch --strict` 0E 0W 0C / `make M=drivers/media/platform/qcom/iris modules` 编过 / `git send-email --dry-run` 解析 OK（stable@vger 由 Cc trailer 自动带入）。
 - **未投**：本机只有 GDM greeter 会话，keyring 锁 ⇒ `git credential fill` rc=128 `could not read Password`。投递命令与 lore 复核判据见 `reports/v4l2-compliance-v2-20261128.md` §4（需用户登录后一条命令发）。
+
+## 2026-11-28 二版 patch（Fixes 甄别被独立复核纠正）
+
+- lane 独立核（`reports/v4l2-compliance-overlap-20261128.md`）：`b530b95de22c` 的 **parent `38fc8beaba55` 里那 4 行 `*_DEFAULT` 已存在** ⇒ 父代理初判「b530b95 是初始化引入点」作废。
+- 父代理复跑（GitHub API 逐级 parent + raw 文件「有/无」）：`iris_vdec.c` 在 **`38fc8beaba55`**（reqbuf 提交，2025-02-07）才创建（其 parent `bb8a95aa038e` 该文件 404），**初始化**引入点 = 38fc8bea；**行为**（S_FMT 存 DEFAULT / G_FMT 回吐）引入点 = `b530b95de22c`。
+- 二版报文同时点名两个 sha，`Fixes:` 仍用 `b530b95de22c`（缺陷可观测形态的引入点）。新 sha256 = `35816a1bc7db3db9…`，`git apply --check` 与 `send-email --dry-run` 重跑均 OK。

@@ -39,6 +39,11 @@ This is v2 of 2/3 of the series. Two patches are withdrawn:
 AI assistance was used to prepare this change; I reviewed every line, and all
 measurements above are mine.
 
+The *_DEFAULT initialisers themselves predate this: they came with
+38fc8beaba55 ("media: iris: implement reqbuf ioctl with vb2_queue_setup"), which
+brought iris_vdec.c in.  The ioctl path that stores and returns them untouched
+is b530b95de22c, so that is the tag below.
+
 Fixes: b530b95de22c ("media: iris: implement s_fmt, g_fmt and try_fmt ioctls")
 Cc: stable@vger.kernel.org
 Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
