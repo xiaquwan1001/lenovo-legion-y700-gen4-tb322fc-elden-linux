@@ -40,25 +40,11 @@
 > 一行 = 一个「大方向」。**派子代理先读本表**：按维度派、不同维度可并行（主机侧），同维度内 ≤2 lane；
 > 需设备的一律由主会话串行执行。每 lane 交付物必须落 `reports/` + 一句可复核判据。
 > 详细沿革（11-18 → 11-21 六个长块）已逐字下沉 → `TASKS/sessions/2026-11-21-§4待办区块下沉.md`。
+> **★历次 §4 增量叙事（11-21 → 11-25，6 块）已下沉**：逐字原文在 `TASKS/sessions/2026-11-27-TASKS-4-久积叙事下沉.md`；当前待办只读本表与 §4.0a。
 >
 > **★常设 lane（用户 2026-11-23 定，硬规则）**：每轮并行派发**至少一条通信 lane（D10）** —— 查邮件 INBOX + 我方在 **Mobian（gitlab.com/mobian1/*、salsa.debian.org/Mobian-team/*、droid-juicer MR）** 与 **phosh/phoc（gitlab.gnome.org/World/Phosh/*）** 的 MR/issue 回复；**只读，不回复不外发**（发信/推 MR 仍按 §7 逐次放行）。
->
-> **★2026-11-23 派发（并行 4 lane + D10，全主机侧、零设备）**：A = **D2 G7 路线 A 第二步**（解除 `connector@0/1 ↔ typec-mux@42/43` devlink 环 → 新 DTB/镜像；出口门 = 静态 phandle 图无环 + `dtc` okay ≥34 + `dtbs_check` 新增 0；报告 `reports/g7-routeA-dtfix-20261123.md`）· B = **D5 批 3**（`ath12k-load.sh` bind 设备名、`arm-console-run.sh` #584 SIGPIPE、`q28-por-rounds.sh` P1、`gpt-restore-tb322fc.py` fail-closed 表指纹门；`reports/scripts-hardening-3-20261123.md`）· C = **D6 文档卫生**（`docs-health` 清零 + PITFALLS DEMOTE 只测算不搬；`reports/doc-audit-20261123.md`）· D = **D2 Mobian 首件**（droid-juicer `configs/lenovo,elden.toml` 成品 + MR 描述，不投；`reports/mobian-firstmr-20261123.md`）· E = **D10 通信**（`reports/comm-triage-20261123.md`）。**主机负载口径（用户 2026-11-23 放行）**：新 CPU（i7-14700KF / 28 线程）允许更高并行 ⇒ 跨维度 lane 上限 2→4，编译仍 `-j26` 起（留交互核）。
->
-> **★2026-11-23 下午收口（全部已独立复核入库，`857047b3` + `c1ce6146`）**：① **G7 rev2 双向 devlink**（`reports/g7-routeA-dtfix-20261123.md`；dtbs 32/新增 0，镜像 sha `79164085…`）**flight-2 已上机**（用户物理键进 BL，零写盘）：role switch 不再卡 `waiting_for_supplier`、fsa4480 四件 mux/switch 注册、ADSP/CDSP 双 running、**card0+DSI-1 connected（7.4-rc3 显示栈超预期）**；**真根因教训：`/lib/modules/<UTS>` 整套没进根**（部署后 `modprobe fsa4480` 即注册）——入 PITFALLS 级教训：RAM 载起新核必须连模块一起部署。遗留：0×180 devlink 失败 5 条（上游 mtp 板对照待查，可能为 connector 平台设备 fw_devlink 语义而非我方错）+ altmode bound 但 `/sys/class/typec` 空 + ucsi PPM init failed；**换口测试未达**（用户换边后设备自动重启回 vk192，pstore 空，重启根因未取证）——**用户裁决：再进 BL 的重测往后排**。② **D5 批 3+4 全收口**（4 脚本 + STALE 15 = 3 归档 12 头注 + O_DIRECT 硬门 6/6，反例 rc=90）。③ **D1**：hexagonrpcd 门 + 时间基线件 + 真 bug（`daily-baseline.sh --root DIR` 解析错使构建侧 no-op，已修）。④ **D10**：krzk 点名 v11 投法两条（披露进 `---` 下 + 新线程）⇒ **dwc3 v12 投递 lane M1 已派（用户放行发信）**；aw86927 白拿 3 枚 `Tested-by`（Joonhoe Kim，TB323FU）收进下版。⑤ **D3 lane H2**：RIME 后端 A/B 双案骨架 aarch64 编译过、主推 A（零上游改动）；震动 12 行 env-gated patch；方向键缺（布局 0 命中）已补 terminal.json/vk-driver patch；10 条需上机判据（`reports/ime-rime-backend-20261123.md`）。⑥ 主机当天两次 panic 已上交 hw-stability（内存稳定性，项目侧不深挖）。
-
-**★2026-11-25 夜轮（用户「检查待办+派发」+四项点名调查；计划 = `.pi/plans/2026-11-25-派发-调查四项.md`，零设备：平板不在线）**：4 lane 并行 —— A 通信+Mobian/phosh 上游化（`reports/mobian-phosh-upstream-20261125.md`）· B droidloom × GMS × 目标 APK（`reports/droidloom-app-compat-20261125.md`）· C 电源「按需节点+休眠」（`reports/power-on-demand-20261125.md`）· D 长短边 USB 总账（**✅ `reports/usb-ports-consolidation-20261125.md`**：口位 ×10 维度事实表 / Q35 两支清单 / SDP→`be5e7367bceb`→backport 30 行口径 / 速查块 / 4 条冲突清单；父代理复核 `patches/upstream/charger-icl-20261125/upstream-be5e7367bceb.patch`、`scripts/{g7-mux-probe.sh,ncm-host-up.sh,acm-sh.py}` 均在位）。同轮从 vivo V2454A 提走两个目标 APK 备用（`~/apk-20261125/`：Limbus 1.118.0 三片分片包 1.34 GiB、小红书 9.49.1 单包 174 MiB，sha 账在 `MANIFEST.md`）。
-
 > **★2026-11-26 拆分**：本表只留「号 / 维度 / 状态 / 详情」；**开放项、需设备、权威指针逐行在 `TASKS/dim/D##.md`**
 > （每份 = 拆分前原行逐字；索引 = `TASKS/dim/README.md`）。要看某维度的现状全文就点进去，别在本表里塞长文。
-
-**★2026-11-25 夜轮 4 lane 全收口（父代理独立复核后回填）**：
-① **A（mail-io）** `reports/mobian-phosh-upstream-20261125.md` —— 增量窗口 01:45Z→11:25Z **人类评审 0 封**，机器人 3 条新意见：**dwc3 v15 得 2×`[Low]`**（1/3 的 `Changes since` 段要移到 `---` 下、else 分支 `port@0` 补 `$ref: graph.yaml#/properties/port`、then 分支 pattern 改 `[2-9a-f]`）⇒ 待出 **v16**；**elden 板 v8 得 2×`[Medium]`**（均已在 cover 声明，**不改 DT**，等维护者来信时引 cover）；新退信事实 = **`abel.vesa@linaro.org` 死地址**（R2 独退，下次用 `abel.vesa@oss.qualcomm.com`，本次不补发）；账错已修 = M11 ping 的 MID 记成了 dry-run id（现记实发 `<179559762994.96050.5…@mail.ustc.edu.cn>`）。Mobian 面：`droid-juicer !46` notes **1 全 system / 人类 0**、48.2 h 零变化，仓库 6 个 open MR（最早 !45 自 10-11）⇒ **队列慢，不必催**；`mobian-recipes`（salsa）`devices/qcom/{configs/wip.toml,packages,droid-juicer}` **三处仍空**、15 个 open MR 无我方 ⇒ 我们 MR-2 的硬前置（内核 deb）未变；**7.x staging 可用**（`mobian-sdm670-7.3` 11-24 仍在提交）且 **0 条 sm8750 分支** ⇒ 缺口只剩 `mobian-sm8750-7.4` + `debian/`。phosh 面：`!2005` `mergeable`、notes 6（人类 2）、pipeline manual/Blocked、**最新人类 note 仍是 guidog 11-14**；phoc `#125`（edge-swipe-back）自 2020 **仍无 MR**，14 个 open MR 无关 ⇒ 我们的 lisgd 路线仍是最优解；设备 phosh/phoc 0.58 对上游/sid 0.59 落后 1 minor。**外部门（需用户）**：IMAP 存储层自 11-25T03:44:39Z 起 INBOX/Junk/Sent 三处均无新件（配额/反垃圾/服务端延迟待确认），此前「INBOX 无退信」不可当结论。
-② **B（android-compat）** `reports/droidloom-app-compat-20261125.md`：J1=登录已验证/Integrity 免责/商店落 `uncertified`；J2=Limbus **现役 `0.1.0-30` 单 APK 装法起不来**（只有 split 包）；J3=小红书**预期能起**但相机/定位/中文输入/推送缺组件。父代理用真包追加 §7 实物核对：Limbus 1.118.0（非 APKPure 1.119.1）、Unity IL2CPP + `libvkquality`/`libswappy`/FMOD、**新发现 Firebase 12.6 + `credentials-play-services-auth`（无 GMS 时最可能先卡在 Application 初始化）**；小红书 157 个 `.so` 全 arm64，6 个风控库逐字命中。上游口径变化三条（`KNOWN_ISSUES.md` 已删须钉 commit、`linux-drm-syncobj` 变可选、upstream 已到 `0.1.0-49`）。
-③ **C（worker）** `reports/power-on-demand-20261125.md` 已合指进 PLAN 头与 D11（四个观测面 + 「`suspend_stats/*_hw_sleep` 恒 0 不可当驻留时长」）。
-④ **D（impl-worker）** USB 总账 + 派生的 **M12 口径更正**（日常线源码本就带可写 ICL，见 D14 行）。
-
-**★2026-11-23 晚增量（收尾块）**：① **dwc3 v13 已投**（新线程 4 封 250，cover MID `20261123110858.538884-1`，答 greg k-h changelog 历代要求；patch 与 v12 逐字节同，G1/G2 实跑，G4 重跑后延）；② **Mobian !46 英文化已推**（`ea9fe3d`，pipeline success，中文版留档）；③ **osk-stub rime 批 chroot 编译产物就绪**（`out/osk-stub-rime-20261123/`，设备窗一次 divert 收 H2 十条判据）；④ D2/D3 审计报告入库（Mobian 下一步三候选 / IME A·B 案上机差距清单）；⑤ 酷安进度三篇已发（`reports/coolapk-publish-20261123.md`）。D2 行的「dwc3 v11 投递」开放项作废（已至 v13）；D3 行开放项 ①④ 合并进「设备窗批」。
 
 | # | 维度 | 状态 | 详情 |
 |---|---|---|---|
@@ -86,8 +72,6 @@
 | **D22** | 核实「传感器驱动有问题」这个说法（用户 2026-11-26 要求单独 lane 核实） | ✅ | `TASKS/dim/D22.md` |
 | **D23** | 崩溃取证通道（用户 2026-11-26「先修取证」） | ⛔ | `TASKS/dim/D23.md` |
 | **D24** | droidloom 附属仓库整理 + 上游缺陷/社区分叉评估（用户 2026-11-26 设常设 lane；**首轮已收口 2026-11-26，待办见行内**） | 🟡 | `TASKS/dim/D24.md` |
-
-> **★2026-11-25 重启验收**：`systemctl reboot` 后新 `boot_id`、up 1 min，`lisgd-edge-swipe` **active + enabled**（lisgd 自动盯上真触屏 `event4`）、`wm.keybindings close` 仍是 `['<Alt>F4', 'XF86Back']`（dconf 持久）、`systemctl --failed` 仅已知 `qbootctl` ⇒ **常驻与持久化都成立**，不依赖会话手工启动。 另测**自愈**：`kill -9 lisgd` ⇒ 8 s 内被 systemd 重拉（新 pid，服务仍 active）⇒ `Restart=always` 生效。、`.pi/lanes/20261125-phosh-edge-swipe-back-brief.md` |
 
 **维度互斥/依赖**：D1 必须先于 D7（ESP 在机的面）；D3④ 与 D1 共用一次上机窗；D4 与 D1 争同一收发窗口（**分时**）；D2 的 G7 与 D4 不可同轮（都要 a/b 槽控制权）。
 

@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：715
+- 报告总数：716
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -68,6 +68,7 @@
 | `stale` | 3 | `stale-alpine-audit-docs-20261119.md` |
 | `t9` | 3 | `t9-sampler-restored-20261121.md` |
 | `tablet` | 3 | `tablet-night-runner-dryrun-20261031.md` |
+| `tasks` | 3 | `tasks-next-sink-20261127.md` |
 | `todo` | 3 | `todo-next-20261118.md` |
 | `aw86927` | 2 | `aw86927-series-20261027.md` |
 | `c1` | 2 | `c1-noworkaround-20261013.md` |
@@ -96,7 +97,6 @@
 | `shutdown` | 2 | `shutdown-console-spam-20261125.md` |
 | `t14` | 2 | `t14-s3s4s6-offline-verify-20261114.md` |
 | `t18` | 2 | `t18-charging-timing-20261111.md` |
-| `tasks` | 2 | `tasks-slim-20261107.md` |
 | `v4l2loopback` | 2 | `v4l2loopback-73-upgrade-20261112.md` |
 | `vk127` | 2 | `vk127-sampling-20261017.md` |
 | `vk163` | 2 | `vk163-modular-20261026.md` |
@@ -924,6 +924,12 @@
 - `tablet-dev-env-20261030.md` — 平板开发环境落地（tablet-offload，2026-10-30）
 - `tablet-offload-plan-20261030.md` — 平板断电续作与分担方案（容量 / 同步 / 离线包 / 夜间运行）
 
+## `tasks`（3）
+
+- `tasks-next-sink-20261127.md` — §4.0 久积叙事下沉：`TASKS/NEXT.md` 28,906 → 21,107 B（6 块逐字搬走，零改写）
+- `tasks-slim-20261107.md` — tasks-slim-20261107 — 任务 C：10 个超长表格单元格下沉复核
+- `tasks-narrative-archive-20261019.md` — TASKS §1/§2「长叙事」归档（2026-10-19 表格结构修复时搬出）
+
 ## `todo`（3）
 
 - `todo-next-20261118.md` — 下一步单一可执行清单（2026-11-18 版）
@@ -1064,11 +1070,6 @@
 
 - `t18-charging-timing-20261111.md` — T18 补充：充电与开机时序（2026-11-11 深夜，用户提示「USB 不充电/充电和开机有关」）
 - `t18-usb-charging-triage-20261111.md` — T18 USB 充电图标/状态抖动 — 初查报告（只读）
-
-## `tasks`（2）
-
-- `tasks-slim-20261107.md` — tasks-slim-20261107 — 任务 C：10 个超长表格单元格下沉复核
-- `tasks-narrative-archive-20261019.md` — TASKS §1/§2「长叙事」归档（2026-10-19 表格结构修复时搬出）
 
 ## `v4l2loopback`（2）
 
