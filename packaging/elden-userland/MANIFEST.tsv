@@ -91,6 +91,7 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/sbin/wd-ctl.sh	script	1f6e7af9918fa8c6d34e5e2d7f3d0f103efe28adda8471b32a91cac38302a91d	5203	755	files/usr/local/sbin/wd-ctl.sh
 /usr/local/sbin/wd-restart.sh	script	166cca88642b85c74e1b4e7fc812a2d761bf962a5e3dbae46da33dd473fc0c6b	816	755	files/usr/local/sbin/wd-restart.sh
 /usr/local/sbin/wifi-scan-refresh.sh	script	c50e42c8f45b2071d2d04cf58106c738a716122b1d89648fc636b4b09fbce233	4524	755	files/usr/local/sbin/wifi-scan-refresh.sh
+/usr/local/sbin/elden-sensorproxy-sync.sh	script	3ddfaa2fec9e1e0fa6296a5d0bfc2a6a388cdc06f70ddc54492cc621ad918349	1844	755	files/usr/local/sbin/elden-sensorproxy-sync.sh
 /usr/share/applications/elden-keyboard-settings.desktop	data	916273cb7b1e85fb75b5475884e9cf162d6b2a5c91240bc96ea860fdbf9125e4	265	644	files/usr/share/applications/elden-keyboard-settings.desktop
 /usr/share/elden-pinyin/META.json	data	0a335765af01671246672ff1809de19f7ea4d4aee42fd5e7d7a3f1b4895569c7	139	644	files/usr/share/elden-pinyin/META.json
 /usr/share/elden-pinyin/shards/a.json	data	065b56eeabdb422fbb4bd5aeddbfaa08cfd194da9b6ea4df065e97050fac5f84	31552	644	files/usr/share/elden-pinyin/shards/a.json

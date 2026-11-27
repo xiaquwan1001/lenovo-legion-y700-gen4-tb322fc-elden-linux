@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：739
+- 报告总数：740
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -76,6 +76,7 @@
 | `c1` | 2 | `c1-noworkaround-20261013.md` |
 | `code` | 2 | `code-boundary-preinject-20261031.md` |
 | `comms` | 2 | `comms-track-20261127-c.md` |
+| `d16` | 2 | `d16-sensorproxy-sync-20261127.md` |
 | `d19` | 2 | `d19-apss-wdt-prep-20261125.md` |
 | `d3` | 2 | `d3-ime-userdir-fallback-20261124.md` |
 | `debian` | 2 | `debian-root-accounts-sensors-20261026.md` |
@@ -129,7 +130,6 @@
 | `coolapk` | 1 | `coolapk-publish-20261123.md` |
 | `counts` | 1 | `counts-gate-20261107.md` |
 | `d1` | 1 | `d1-host-side-20261123.md` |
-| `d16` | 1 | `d16-unit-deploy-classify-20261127.md` |
 | `daily` | 1 | `daily-linux-deploy-20261122.md` |
 | `desktop` | 1 | `desktop-chain-gate-20261119.md` |
 | `determinism` | 1 | `determinism-gap-and-q28-plan-20261023.md` |
@@ -986,6 +986,11 @@
 - `comms-track-20261127-c.md` — 通信跟踪 D10-c 增量（窗口 `2026-11-27T03:20Z` → `2026-11-27T12:32Z`）— 只读
 - `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
 
+## `d16`（2）
+
+- `d16-sensorproxy-sync-20261127.md` — D16 收尾：把「传感器出数后再起 iio-sensor-proxy」固化成单元（2026-11-27 晚，父代理上机）
+- `d16-unit-deploy-classify-20261127.md` — D16 — `verify.sh` 在线档 34 条「设备上不存在」逐条分类（2026-11-27）
+
 ## `d19`（2）
 
 - `d19-apss-wdt-prep-20261125.md` — D19 候选②：SM8750 APSS watchdog —— DT(+binding) 备料（2026-11-25，**不投递**）
@@ -1225,10 +1230,6 @@
 ## `d1`（1）
 
 - `d1-host-side-20261123.md` — D1 主机侧：hexagonrpcd 不进构建器 + 时间基线自愈（2026-11-23）
-
-## `d16`（1）
-
-- `d16-unit-deploy-classify-20261127.md` — D16 — `verify.sh` 在线档 34 条「设备上不存在」逐条分类（2026-11-27）
 
 ## `daily`（1）
 

@@ -874,6 +874,61 @@ else
 		|| no "装完仍不达标（${_ew_en:-?}/${_ew_ac:-?}；逐一对照 §18 四件判据）"
 fi
 
+# ---------------------------------------------------------------------------
+# 19) 传感器出数后再起 iio-sensor-proxy（D16 开机竞态；2026-11-27 vk197 实测）
+# 背景：`iio-sensor-proxy`(3.9 ssc) 先于 hexagonrpcd 的 SSC attach 起来 ⇒ HasAccelerometer
+#   恒 false；手工 `systemctl restart iio-sensor-proxy` 才三属性 true。固化件 =
+#   `rootfs/debian/units-extra/elden-sensorproxy-sync.service` +
+#   `packaging/elden-userland/files/usr/local/sbin/elden-sensorproxy-sync.sh`。
+# 判据四件：脚本 sha 与仓内一致 / unit sha 与 units-extra 一致 / unit enabled / 三属性 true。
+echo "== 19) 传感器出数后同步代理（elden-sensorproxy-sync）=="
+SPS_SCRIPT=$ROOT/packaging/elden-userland/files/usr/local/sbin/elden-sensorproxy-sync.sh
+SPS_UNIT=$ROOT/rootfs/debian/units-extra/elden-sensorproxy-sync.service
+SPS_DST=/usr/local/sbin/elden-sensorproxy-sync.sh
+SPS_UNIT_DST=/etc/systemd/system/elden-sensorproxy-sync.service
+for _f in "$SPS_SCRIPT" "$SPS_UNIT"; do
+	[ -f "$_f" ] || { no "缺源件 $_f"; }
+done
+if [ -f "$SPS_SCRIPT" ] && [ -f "$SPS_UNIT" ]; then
+	SPS_SHA=$(sha256sum "$SPS_SCRIPT" | cut -d' ' -f1)
+	SPS_USHA=$(sha256sum "$SPS_UNIT" | cut -d' ' -f1)
+	_sps_sha=$("${SSH[@]}" "sha256sum $SPS_DST 2>/dev/null | cut -d' ' -f1" 2>/dev/null || true)
+	_sps_usha=$("${SSH[@]}" "sha256sum $SPS_UNIT_DST 2>/dev/null | cut -d' ' -f1" 2>/dev/null || true)
+	_sps_en=$("${SSH[@]}" 'systemctl is-enabled elden-sensorproxy-sync.service 2>/dev/null' 2>/dev/null || true)
+	_sps_acc=$("${SSH[@]}" "busctl get-property net.hadess.SensorProxy /net/hadess/SensorProxy net.hadess.SensorProxy HasAccelerometer 2>/dev/null | awk '{print \$2}'" 2>/dev/null || true)
+	if [ "$MODE" = check ]; then
+		[ "$_sps_sha" = "$SPS_SHA" ] && ok "elden-sensorproxy-sync.sh 与仓内一致" \
+			|| no "elden-sensorproxy-sync.sh 缺或与仓内不一致（设备 ${_sps_sha:-缺}）⇒ 重跑本脚本"
+		[ "$_sps_usha" = "$SPS_USHA" ] && ok "elden-sensorproxy-sync.service 与 units-extra 一致" \
+			|| no "elden-sensorproxy-sync.service 缺或与 units-extra 不一致（设备 ${_sps_usha:-缺}）⇒ 重跑本脚本"
+		[ "$_sps_en" = enabled ] && ok "elden-sensorproxy-sync enabled（重启后仍会跑）" \
+			|| no "elden-sensorproxy-sync 状态 = ${_sps_en:-?}（要 enabled）"
+		[ "$_sps_acc" = true ] && ok "HasAccelerometer=true（传感器链已在报数）" \
+			|| no "HasAccelerometer=${_sps_acc:-?}（要 true：查 elden-sensorspd / SSC attach / 本单元 journal）"
+	else
+		if [ "$_sps_sha" != "$SPS_SHA" ]; then
+			"${SCP[@]}" "$SPS_SCRIPT" "$TAB:$SPS_DST" && "${SSH[@]}" "chmod 755 $SPS_DST" && fix "已装 $SPS_DST" || no "装 $SPS_DST 失败"
+		fi
+		if [ "$_sps_usha" != "$SPS_USHA" ]; then
+			"${SCP[@]}" "$SPS_UNIT" "$TAB:$SPS_UNIT_DST" && "${SSH[@]}" "chmod 644 $SPS_UNIT_DST; systemctl daemon-reload" && fix "已装 $SPS_UNIT_DST" || no "装 $SPS_UNIT_DST 失败"
+		fi
+		"${SSH[@]}" 'systemctl enable elden-sensorproxy-sync.service >/dev/null 2>&1; systemctl is-enabled elden-sensorproxy-sync.service' >/dev/null 2>&1 \
+			&& fix "elden-sensorproxy-sync 已 enabled（不 --now：本轮的 restart 会打断正在用的键盘/旋转）" \
+			|| no "enable elden-sensorproxy-sync 失败"
+		if [ "$_sps_acc" != true ]; then
+			"${SSH[@]}" 'systemctl start elden-sensorproxy-sync.service' >/dev/null 2>&1 \
+				&& fix "已立即跑一次同步器（等到出数会自行 restart 代理）" || no "启动同步器失败"
+		fi
+		_sps_sha=$("${SSH[@]}" "sha256sum $SPS_DST 2>/dev/null | cut -d' ' -f1" 2>/dev/null || true)
+		_sps_usha=$("${SSH[@]}" "sha256sum $SPS_UNIT_DST 2>/dev/null | cut -d' ' -f1" 2>/dev/null || true)
+		_sps_en=$("${SSH[@]}" 'systemctl is-enabled elden-sensorproxy-sync.service 2>/dev/null' 2>/dev/null || true)
+		_sps_acc=$("${SSH[@]}" "busctl get-property net.hadess.SensorProxy /net/hadess/SensorProxy net.hadess.SensorProxy HasAccelerometer 2>/dev/null | awk '{print \$2}'" 2>/dev/null || true)
+		{ [ "$_sps_sha" = "$SPS_SHA" ] && [ "$_sps_usha" = "$SPS_USHA" ] && [ "$_sps_en" = enabled ]; } \
+			&& ok "同步器就绪（两件 sha 一致 + enabled）" || no "装完仍不达标（${_sps_en:-?}）"
+		[ "$_sps_acc" = true ] && ok "HasAccelerometer=true" || no "HasAccelerometer=${_sps_acc:-?}（同步器要等 SSC 出数，最多 150 s）"
+	fi
+fi
+
 echo
 if [ "$missing" -eq 0 ]; then echo "结果: 达标（MISS=0）"; exit 0; fi
 echo "结果: 未达标（MISS=$missing）"; exit 1

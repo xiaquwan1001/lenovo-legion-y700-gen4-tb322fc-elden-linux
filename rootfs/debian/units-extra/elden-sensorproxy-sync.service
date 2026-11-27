@@ -1,0 +1,15 @@
+# elden-sensorproxy-sync.service — 传感器出数后重启一次 iio-sensor-proxy（D16 开机竞态）
+# Why: iio-sensor-proxy(3.9 ssc) 先于 SSC attach 起来 ⇒ HasAccelerometer 恒 false；
+#      手工 restart 才恢复。本单元把「等到真出数再 restart」固化（2026-11-27 vk197 实测）。
+# 注意：故意不写 After=elden-sensorspd.service（那是跑常驻 daemon 的 oneshot，永不 start 完成）。
+[Unit]
+Description=Restart iio-sensor-proxy once the SSC accelerometer streams (D16 boot race)
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/elden-sensorproxy-sync.sh
+TimeoutStartSec=240
+
+[Install]
+WantedBy=multi-user.target
