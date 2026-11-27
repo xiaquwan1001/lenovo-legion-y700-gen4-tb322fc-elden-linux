@@ -1,0 +1,1200 @@
+From 315158e3ebbd9abe9ae991a104567025915e2258 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 27 Nov 2026 10:26:59 +0800
+Subject: [PATCH 3/6] hexagonrpcd: serve DSP writes from a copy-up overlay
+
+The mapped HexagonFS backend is read-only, so a firmware that rewrites its
+sensor registry on attach either fails or gets a silent lie.  Add a writable
+layer to the HexagonFS instead of special-casing writes in apps_std:
+
+- The overlay is a real directory (-O, e.g. /var/lib/hexagonrpcd) that
+  mirrors the DSP-visible paths.  The -R tree stays read-only.
+- hexagonfs_openat() serves a file from the overlay when it exists there, so
+  the DSP sees what it wrote; everything else still comes from -R, including
+  directories and the virtual entries.
+- hexagonfs_openat_write() copies the -R file into the overlay first (the
+  copy-up), then opens the overlay file read/write.  Files that only exist
+  below -R cannot be removed or renamed; the call fails with EPERM.
+- File descriptors carry their DSP-visible path (hexagonfs_fd.vpath) and the
+  backends allocate them zeroed, so the path can be maintained centrally.
+
+apps_std then just forwards fwrite, fsync, fremove, frename and the
+open-for-write case to the HexagonFS.  Without -O, opening a file for
+writing fails with the same error as before and the write side stays off.
+
+Verified on a TB322FC (SM8750P) with the sensors PD: the DSP writes its
+registry for real (~18 KiB cam_registry_dump.txt, ~14 KiB fstempfile,
+sns_reg_version) and iio-sensor-proxy then reports a working accelerometer,
+ambient light and proximity sensor.
+
+This change was prepared with AI assistance (pi); the author reviewed the code,
+reproduced the measurements on the hardware and takes responsibility for it.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ hexagonrpcd/apps_std.c           | 246 +++++++++++++++++++-------
+ hexagonrpcd/hexagonfs.c          | 286 ++++++++++++++++++++++++++++++-
+ hexagonrpcd/hexagonfs.h          |  20 +++
+ hexagonrpcd/hexagonfs_mapped.c   |   2 +-
+ hexagonrpcd/hexagonfs_overlay.c  | 164 ++++++++++++++++++
+ hexagonrpcd/hexagonfs_virt_dir.c |   2 +-
+ hexagonrpcd/meson.build          |   2 +
+ hexagonrpcd/overlay.c            | 174 +++++++++++++++++++
+ hexagonrpcd/overlay.h            |  32 ++++
+ tests/meson.build                |   2 +
+ 10 files changed, 857 insertions(+), 73 deletions(-)
+ create mode 100644 hexagonrpcd/hexagonfs_overlay.c
+ create mode 100644 hexagonrpcd/overlay.c
+ create mode 100644 hexagonrpcd/overlay.h
+
+diff --git a/hexagonrpcd/apps_std.c b/hexagonrpcd/apps_std.c
+index 7172bf0..05e5ef2 100644
+--- a/hexagonrpcd/apps_std.c
++++ b/hexagonrpcd/apps_std.c
+@@ -20,6 +20,7 @@
+  */
+ 
+ #include <errno.h>
++#include <fcntl.h>
+ #include <libhexagonrpc/error.h>
+ #include <stdio.h>
+ #include <stdint.h>
+@@ -120,6 +121,120 @@ static uint32_t apps_std_fread(void *data,
+ 	return 0;
+ }
+ 
++static uint32_t apps_std_fwrite(void *data,
++				const struct fastrpc_io_buffer *inbufs,
++				struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	const struct {
++		uint32_t fd;
++		uint32_t buf_size;
++	} *first_in = inbufs[0].p;
++	struct {
++		uint32_t written;
++		uint32_t is_eof;
++	} *first_out = outbufs[0].p;
++	ssize_t ret;
++
++	ret = hexagonfs_write(ctx->fds, first_in->fd, first_in->buf_size,
++			      inbufs[1].p);
++	if (ret < 0) {
++		/*
++		 * Without a writable overlay there is nothing to write to; the
++		 * firmware is happy as long as the write is accepted.
++		 */
++		if (ret == -ENOSYS) {
++			first_out->written = first_in->buf_size;
++			first_out->is_eof = 0;
++
++			return 0;
++		}
++
++		fprintf(stderr, "Could not write file: %s\n", strerror(-ret));
++		return AEE_EFAILED;
++	}
++
++#ifdef HEXAGONRPC_VERBOSE
++	printf("write(%u, %u) -> %ld\n", first_in->fd, first_in->buf_size, ret);
++#endif
++
++	first_out->written = ret;
++	first_out->is_eof = 0;
++
++	return 0;
++}
++
++static uint32_t apps_std_fopen_fd(void *data,
++				  const struct fastrpc_io_buffer *inbufs,
++				  struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	uint32_t *out = outbufs[0].p;
++	int fd;
++
++	fd = hexagonfs_openat(ctx->fds, ctx->rootfd, ctx->rootfd, inbufs[0].p);
++	if (fd < 0) {
++		fprintf(stderr, "Could not open %s: %s\n",
++				(const char *) inbufs[0].p, strerror(errno));
++		return AEE_EFAILED;
++	}
++
++	out[0] = fd;
++	out[1] = 0;
++
++	return 0;
++}
++
++static uint32_t apps_std_fclose_fd(void *data,
++				   const struct fastrpc_io_buffer *inbufs,
++				   struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	const uint32_t *fd = inbufs[0].p;
++
++	return hexagonfs_close(ctx->fds, *fd) ? AEE_EFAILED : 0;
++}
++
++static uint32_t apps_std_fopen_with_env_fd(void *data,
++					   const struct fastrpc_io_buffer *inbufs,
++					   struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	uint32_t *out = outbufs[0].p;
++	char rw_mode;
++	int dirfd, fd;
++
++	rw_mode = ((const char *) inbufs[3].p)[0];
++	if (rw_mode == 'w' || rw_mode == 'a')
++		fprintf(stderr, "Opening %s for writing (writes are discarded)\n",
++				(const char *) inbufs[2].p);
++
++	if (!strcmp(inbufs[0].p, "ADSP_LIBRARY_PATH")) {
++		dirfd = ctx->adsp_library_dirfd;
++	} else if (!strcmp(inbufs[0].p, "ADSP_AVS_CFG_PATH")) {
++		dirfd = ctx->adsp_avs_cfg_dirfd;
++	} else {
++		fprintf(stderr, "Unknown search directory %s\n",
++				(const char *) inbufs[0].p);
++		return AEE_EBADPARM;
++	}
++
++	if (dirfd < 0)
++		return AEE_EFAILED;
++
++	fd = hexagonfs_openat(ctx->fds, ctx->rootfd, dirfd, inbufs[2].p);
++	if (fd < 0) {
++		fprintf(stderr, "Could not open %s: %s\n",
++				(const char *) inbufs[2].p, strerror(errno));
++		return AEE_EFAILED;
++	}
++
++	out[0] = fd;
++	out[1] = 0;
++
++	return 0;
++}
++
+ static uint32_t apps_std_fseek(void *data,
+ 			       const struct fastrpc_io_buffer *inbufs,
+ 			       struct fastrpc_io_buffer *outbufs)
+@@ -167,9 +282,21 @@ static uint32_t apps_std_fopen_with_env(void *data,
+ 
+ 	rw_mode = ((const char *) inbufs[4].p)[0];
+ 	if (rw_mode == 'w' || rw_mode == 'a') {
+-		fprintf(stderr, "Tried to open %s for writing\n",
+-				(const char *) inbufs[3].p);
+-		return AEE_EUNSUPPORTED;
++		if (!hexagonfs_overlay_enabled())
++			return AEE_EUNSUPPORTED;
++
++		fd = hexagonfs_openat_write(ctx->fds, ctx->rootfd, ctx->rootfd,
++					    inbufs[3].p,
++					    rw_mode == 'a' ? O_APPEND : 0);
++		if (fd < 0) {
++			fprintf(stderr, "Could not open %s for writing: %s\n",
++					(const char *) inbufs[3].p,
++					strerror(-fd));
++			return AEE_EFAILED;
++		}
++
++		*out = (uint32_t) fd;
++		return 0;
+ 	}
+ 
+ 	if (!strcmp(inbufs[1].p, "ADSP_LIBRARY_PATH")) {
+@@ -405,70 +532,63 @@ void fastrpc_apps_std_deinit(struct fastrpc_interface *iface)
+ 	free(iface);
+ }
+ 
++static uint32_t apps_std_fsync(void *data,
++			       const struct fastrpc_io_buffer *inbufs,
++			       struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	const uint32_t *fd = inbufs[0].p;
++
++	return hexagonfs_fsync(ctx->fds, *fd) ? AEE_EFAILED : 0;
++}
++
++static uint32_t apps_std_fremove(void *data,
++				 const struct fastrpc_io_buffer *inbufs,
++				 struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	const char *path = inbufs[0].p;
++
++	if (hexagonfs_remove(ctx->fds, ctx->rootfd, ctx->rootfd, path))
++		return AEE_EFAILED;
++
++	return 0;
++}
++
++static uint32_t apps_std_frename(void *data,
++				 const struct fastrpc_io_buffer *inbufs,
++				 struct fastrpc_io_buffer *outbufs)
++{
++	struct apps_std_ctx *ctx = data;
++	const char *from = inbufs[0].p;
++	const char *to = inbufs[1].p;
++
++	return hexagonfs_rename(ctx->fds, ctx->rootfd, ctx->rootfd, from, to)
++		? AEE_EFAILED : 0;
++}
++
+ static const struct fastrpc_function_impl apps_std_procs[] = {
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{
+-		.def = &apps_std_fflush_def,
+-		.impl = apps_std_fflush,
+-	},
+-	{
+-		.def = &apps_std_fclose_def,
+-		.impl = apps_std_fclose,
+-	},
+-	{
+-		.def = &apps_std_fread_def,
+-		.impl = apps_std_fread,
+-	},
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{
+-		.def = &apps_std_fseek_def,
+-		.impl = apps_std_fseek,
+-	},
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{
+-		.def = &apps_std_fopen_with_env_def,
+-		.impl = apps_std_fopen_with_env,
+-	},
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{
+-		.def = &apps_std_opendir_def,
+-		.impl = apps_std_opendir,
+-	},
+-	{
+-		.def = &apps_std_closedir_def,
+-		.impl = apps_std_closedir,
+-	},
+-	{
+-		.def = &apps_std_readdir_def,
+-		.impl = apps_std_readdir,
+-	},
+-	{ .def = NULL, .impl = NULL, },
+-	{ .def = NULL, .impl = NULL, },
+-	{
+-		.def = &apps_std_stat_def,
+-		.impl = apps_std_stat,
+-	},
++	[2] = { .def = &apps_std_fflush_def, .impl = apps_std_fflush },
++	[3] = { .def = &apps_std_fclose_def, .impl = apps_std_fclose },
++	[4] = { .def = &apps_std_fread_def, .impl = apps_std_fread },
++	[5] = { .def = &apps_std_fwrite_def, .impl = apps_std_fwrite },
++	[9] = { .def = &apps_std_fseek_def, .impl = apps_std_fseek },
++	[19] = { .def = &apps_std_fopen_with_env_def, .impl = apps_std_fopen_with_env },
++	[23] = { .def = &apps_std_fsync_def, .impl = apps_std_fsync },
++	[24] = { .def = &apps_std_fremove_def, .impl = apps_std_fremove },
++	[26] = { .def = &apps_std_opendir_def, .impl = apps_std_opendir },
++	[27] = { .def = &apps_std_closedir_def, .impl = apps_std_closedir },
++	[28] = { .def = &apps_std_readdir_def, .impl = apps_std_readdir },
++	[31] = { .def = &apps_std_stat_def, .impl = apps_std_stat },
++	[33] = { .def = &apps_std_frename_def, .impl = apps_std_frename },
++	[34] = { .def = &apps_std_fopen_fd_def, .impl = apps_std_fopen_fd },
++	[35] = { .def = &apps_std_fclose_fd_def, .impl = apps_std_fclose_fd },
++	[36] = { .def = &apps_std_fopen_with_env_fd_def, .impl = apps_std_fopen_with_env_fd },
+ };
+ 
++
+ const struct fastrpc_interface apps_std_interface = {
+ 	.name = "apps_std",
+-	.n_procs = 32,
++	.n_procs = 37, /* = table length; indexes follow the AOSP apps_std IDL */
+ 	.procs = apps_std_procs,
+ };
+diff --git a/hexagonrpcd/hexagonfs.c b/hexagonrpcd/hexagonfs.c
+index bd9f353..369eebd 100644
+--- a/hexagonrpcd/hexagonfs.c
++++ b/hexagonrpcd/hexagonfs.c
+@@ -20,14 +20,18 @@
+  */
+ 
+ #include <errno.h>
++#include <fcntl.h>
++#include <limits.h>
+ #include <stdbool.h>
+ #include <stddef.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/types.h>
++#include <unistd.h>
+ 
+ #include "hexagonfs.h"
++#include "overlay.h"
+ 
+ static char *copy_segment_and_advance(const char *path,
+ 				      bool *trailing_slash,
+@@ -105,24 +109,40 @@ static void destroy_file_descriptor(struct hexagonfs_fd *fd)
+ 	while (curr != NULL && !curr->is_assigned) {
+ 		next = curr->up;
+ 		curr->ops->close(curr->data);
++		free(curr->vpath);
+ 		free(curr);
+ 
+ 		curr = next;
+ 	}
+ }
+ 
++int hexagonfs_set_overlay(const char *dir)
++{
++	return overlay_init(dir);
++}
++
++bool hexagonfs_overlay_enabled(void)
++{
++	return overlay_enabled();
++}
++
+ int hexagonfs_open_root(struct hexagonfs_fd **fds, struct hexagonfs_dirent *root)
+ {
+ 	struct hexagonfs_fd *fd;
+ 	int ret;
+ 
+-	fd = malloc(sizeof(struct hexagonfs_fd));
++	fd = calloc(1, sizeof(struct hexagonfs_fd));
+ 	if (fd == NULL)
+ 		return -ENOMEM;
+ 
+ 	fd->is_assigned = false;
+ 	fd->up = NULL;
+ 	fd->ops = root->ops;
++	fd->vpath = strdup("");
++	if (fd->vpath == NULL) {
++		ret = -ENOMEM;
++		goto err_free_fd;
++	}
+ 
+ 	ret = root->ops->from_dirent(root->u.ptr, true, &fd->data);
+ 	if (ret)
+@@ -135,28 +155,93 @@ int hexagonfs_open_root(struct hexagonfs_fd **fds, struct hexagonfs_dirent *root
+ 	return ret;
+ 
+ err:
+-	destroy_file_descriptor(fd);
++	free(fd->vpath);
++err_free_fd:
++	free(fd);
+ 	return ret;
+ }
+ 
+-int hexagonfs_openat(struct hexagonfs_fd **fds, int rootfd, int dirfd, const char *name)
++static int path_init(char *path, size_t size, struct hexagonfs_fd **fds,
++		     int dirfd, const char *name)
++{
++	const char *base = "";
++
++	if (*name != '/' && fds[dirfd] != NULL && fds[dirfd]->vpath != NULL)
++		base = fds[dirfd]->vpath;
++
++	if (snprintf(path, size, "%s", base) >= (int) size)
++		return -ENAMETOOLONG;
++
++	return 0;
++}
++
++static int path_append(char *path, size_t size, const char *segment)
++{
++	size_t len = strlen(path);
++
++	if (snprintf(path + len, size - len, "/%s", segment)
++	    >= (int) (size - len))
++		return -ENAMETOOLONG;
++
++	return 0;
++}
++
++static void path_pop(char *path)
++{
++	char *slash = strrchr(path, '/');
++
++	if (slash != NULL)
++		*slash = '\0';
++}
++
++/*
++ * Files written by the DSP live in the overlay; if one of them is opened for
++ * reading, serve the overlay copy instead of the read-only tree.
++ */
++static int open_maybe_overlaid(struct hexagonfs_fd *dir, const char *vpath,
++			       const char *segment, bool expect_dir,
++			       struct hexagonfs_fd **out)
++{
++	struct stat st;
++	int ret;
++
++	if (!expect_dir && overlay_enabled()
++	    && overlay_stat(vpath, &st) == 0 && S_ISREG(st.st_mode)) {
++		ret = hexagonfs_overlay_open(vpath, O_RDONLY, out);
++		if (ret)
++			return ret;
++
++		(*out)->up = dir;
++
++		return 0;
++	}
++
++	return dir->ops->openat(dir, segment, expect_dir, out);
++}
++
++static int walk_openat(struct hexagonfs_fd **fds, int rootfd, int dirfd,
++		       const char *name)
+ {
+ 	struct hexagonfs_fd *fd;
++	char path[PATH_MAX];
+ 	const char *curr = name;
+ 	char *segment;
+ 	bool expect_dir;
+-	int selected = dirfd;
+ 	int ret = 0;
+ 
++	ret = path_init(path, sizeof(path), fds, dirfd, name);
++	if (ret)
++		return ret;
++
+ 	if (*curr == '/') {
+-		selected = rootfd;
++		fd = fds[rootfd];
+ 
+ 		while (*curr == '/')
+ 			curr++;
++	} else {
++		fd = fds[dirfd];
+ 	}
+ 
+-	fd = fds[selected];
+-
+ 	while (*curr != '\0' && !ret) {
+ 		segment = copy_segment_and_advance(curr, &expect_dir, &curr);
+ 		if (segment == NULL) {
+@@ -168,8 +253,26 @@ int hexagonfs_openat(struct hexagonfs_fd **fds, int rootfd, int dirfd, const cha
+ 			goto next;
+ 		} else if (!strcmp(segment, "..")) {
+ 			fd = pop_dir(fd, fds[rootfd]);
++			path_pop(path);
++
++			free(fd->vpath);
++			fd->vpath = strdup(path);
++			if (fd->vpath == NULL)
++				ret = -ENOMEM;
+ 		} else {
+-			ret = fd->ops->openat(fd, segment, expect_dir, &fd);
++			ret = path_append(path, sizeof(path), segment);
++			if (ret) {
++				free(segment);
++				goto err;
++			}
++
++			ret = open_maybe_overlaid(fd, path, segment, expect_dir,
++						  &fd);
++			if (!ret && fd->vpath == NULL) {
++				fd->vpath = strdup(path);
++				if (fd->vpath == NULL)
++					ret = -ENOMEM;
++			}
+ 		}
+ 
+ 	next:
+@@ -191,6 +294,103 @@ err:
+ 	return ret;
+ }
+ 
++int hexagonfs_openat(struct hexagonfs_fd **fds, int rootfd, int dirfd,
++		     const char *name)
++{
++	return walk_openat(fds, rootfd, dirfd, name);
++}
++
++/*
++ * Build the DSP-visible path for a name, so that the overlay can address the
++ * file the same way the DSP does.
++ */
++static int overlay_vpath(struct hexagonfs_fd **fds, int dirfd, const char *name,
++			 char *vpath, size_t size)
++{
++	const char *base = "";
++	int ret;
++
++	if (*name != '/' && fds[dirfd] != NULL && fds[dirfd]->vpath != NULL)
++		base = fds[dirfd]->vpath;
++
++	ret = snprintf(vpath, size, "%s/%s", base, name);
++	if (ret < 0 || (size_t) ret >= size)
++		return -ENAMETOOLONG;
++
++	while (*vpath == '/')
++		memmove(vpath, vpath + 1, strlen(vpath));
++
++	return 0;
++}
++
++/*
++ * Make sure the overlay holds a copy of the file, so the DSP can modify it
++ * without touching the read-only tree.
++ */
++static int copy_up(struct hexagonfs_fd **fds, int rootfd, int dirfd,
++		   const char *vpath)
++{
++	char buf[4096];
++	ssize_t n;
++	int src, dst, ret = 0;
++
++	if (overlay_exists(vpath))
++		return 0;
++
++	src = hexagonfs_openat(fds, rootfd, dirfd, vpath);
++	if (src < 0)
++		return 0;	/* the DSP is creating a new file */
++
++	dst = overlay_open(vpath, O_WRONLY | O_CREAT | O_EXCL, 0644);
++	if (dst < 0) {
++		hexagonfs_close(fds, src);
++		return dst;
++	}
++
++	while ((n = hexagonfs_read(fds, src, sizeof(buf), buf)) > 0) {
++		if (write(dst, buf, n) != n) {
++			ret = -errno;
++			break;
++		}
++	}
++
++	close(dst);
++	hexagonfs_close(fds, src);
++
++	return ret;
++}
++
++int hexagonfs_openat_write(struct hexagonfs_fd **fds, int rootfd, int dirfd,
++			   const char *name, int flags)
++{
++	struct hexagonfs_fd *fd;
++	char vpath[PATH_MAX];
++	int ret;
++
++	if (!overlay_enabled())
++		return -EROFS;
++
++	ret = overlay_vpath(fds, dirfd, name, vpath, sizeof(vpath));
++	if (ret)
++		return ret;
++
++	ret = copy_up(fds, rootfd, dirfd, vpath);
++	if (ret)
++		return ret;
++
++	ret = hexagonfs_overlay_open(vpath, O_RDWR | O_CREAT | flags, &fd);
++	if (ret)
++		return ret;
++
++	fd->up = fds[dirfd];
++
++	ret = allocate_file_number(fds, fd);
++	if (ret)
++		destroy_file_descriptor(fd);
++
++	return ret;
++}
++
+ int hexagonfs_close(struct hexagonfs_fd **fds, int fileno)
+ {
+ 	struct hexagonfs_fd *fd;
+@@ -277,3 +477,73 @@ int hexagonfs_fstat(struct hexagonfs_fd **fds, int fileno, struct stat *stats)
+ 
+ 	return fd->ops->stat(fd, stats);
+ }
++
++ssize_t hexagonfs_write(struct hexagonfs_fd **fds, int fileno, size_t size,
++			const void *ptr)
++{
++	struct hexagonfs_fd *fd;
++
++	if (fileno < 0 || fileno >= HEXAGONFS_MAX_FD)
++		return -EBADF;
++
++	fd = fds[fileno];
++	if (fd == NULL)
++		return -EBADF;
++
++	if (fd->ops->write == NULL)
++		return -ENOSYS;
++
++	return fd->ops->write(fd, size, ptr);
++}
++
++int hexagonfs_fsync(struct hexagonfs_fd **fds, int fileno)
++{
++	struct hexagonfs_fd *fd;
++
++	if (fileno < 0 || fileno >= HEXAGONFS_MAX_FD)
++		return -EBADF;
++
++	fd = fds[fileno];
++	if (fd == NULL)
++		return -EBADF;
++
++	if (fd->ops->fsync == NULL)
++		return 0;
++
++	return fd->ops->fsync(fd);
++}
++
++int hexagonfs_remove(struct hexagonfs_fd **fds, int rootfd, int dirfd,
++		     const char *name)
++{
++	int ret, fd;
++
++	if (!overlay_enabled())
++		return -EROFS;
++
++	ret = overlay_remove(name);
++	if (ret != -ENOENT)
++		return ret;
++
++	/* The file exists in the read-only tree only: refuse to delete it. */
++	fd = hexagonfs_openat(fds, rootfd, dirfd, name);
++	if (fd >= 0) {
++		hexagonfs_close(fds, fd);
++		return -EPERM;
++	}
++
++	return -ENOENT;
++}
++
++int hexagonfs_rename(struct hexagonfs_fd **fds, int rootfd, int dirfd,
++		     const char *from, const char *to)
++{
++	(void) fds;
++	(void) rootfd;
++	(void) dirfd;
++
++	if (!overlay_enabled())
++		return -EROFS;
++
++	return overlay_rename(from, to);
++}
+diff --git a/hexagonrpcd/hexagonfs.h b/hexagonrpcd/hexagonfs.h
+index 7682604..6d0c95a 100644
+--- a/hexagonrpcd/hexagonfs.h
++++ b/hexagonrpcd/hexagonfs.h
+@@ -40,8 +40,10 @@ struct hexagonfs_file_ops {
+ 		      struct hexagonfs_fd **out);
+ 	int (*readdir)(struct hexagonfs_fd *fd, size_t size, char *out);
+ 	ssize_t (*read)(struct hexagonfs_fd *fd, size_t size, void *ptr);
++	ssize_t (*write)(struct hexagonfs_fd *fd, size_t size, const void *ptr);
+ 	int (*stat)(struct hexagonfs_fd *fd, struct stat *stats);
+ 	int (*seek)(struct hexagonfs_fd *fd, off_t off, int whence);
++	int (*fsync)(struct hexagonfs_fd *fd);
+ };
+ 
+ struct hexagonfs_dirent {
+@@ -58,6 +60,8 @@ struct hexagonfs_dirent {
+ struct hexagonfs_fd {
+ 	bool is_assigned;
+ 	struct hexagonfs_fd *up;
++	/* Path of the file relative to the root of the served tree. */
++	char *vpath;
+ 	void *data;
+ 
+ 	struct hexagonfs_file_ops *ops;
+@@ -69,13 +73,29 @@ extern struct hexagonfs_file_ops hexagonfs_mapped_sysfs_ops;
+ extern struct hexagonfs_file_ops hexagonfs_plat_subtype_name_ops;
+ extern struct hexagonfs_file_ops hexagonfs_virt_dir_ops;
+ 
++int hexagonfs_set_overlay(const char *dir);
++bool hexagonfs_overlay_enabled(void);
++
+ int hexagonfs_open_root(struct hexagonfs_fd **fds, struct hexagonfs_dirent *root);
+ int hexagonfs_openat(struct hexagonfs_fd **fds, int rootfd, int dirfd, const char *name);
++int hexagonfs_openat_write(struct hexagonfs_fd **fds, int rootfd, int dirfd,
++			   const char *name, int flags);
+ int hexagonfs_close(struct hexagonfs_fd **fds, int fileno);
+ 
+ int hexagonfs_fstat(struct hexagonfs_fd **fds, int fileno, struct stat *stats);
+ int hexagonfs_lseek(struct hexagonfs_fd **fds, int fileno, off_t pos, int whence);
+ int hexagonfs_readdir(struct hexagonfs_fd **fds, int fileno, size_t size, char *name);
+ ssize_t hexagonfs_read(struct hexagonfs_fd **fds, int fileno, size_t size, void *ptr);
++ssize_t hexagonfs_write(struct hexagonfs_fd **fds, int fileno, size_t size,
++			const void *ptr);
++
++int hexagonfs_fsync(struct hexagonfs_fd **fds, int fileno);
++int hexagonfs_remove(struct hexagonfs_fd **fds, int rootfd, int dirfd,
++		     const char *name);
++int hexagonfs_rename(struct hexagonfs_fd **fds, int rootfd, int dirfd,
++		     const char *from, const char *to);
++
++int hexagonfs_overlay_open(const char *vpath, int flags,
++			   struct hexagonfs_fd **out);
+ 
+ #endif
+diff --git a/hexagonrpcd/hexagonfs_mapped.c b/hexagonrpcd/hexagonfs_mapped.c
+index fd28c8c..dd0e451 100644
+--- a/hexagonrpcd/hexagonfs_mapped.c
++++ b/hexagonrpcd/hexagonfs_mapped.c
+@@ -93,7 +93,7 @@ static int mapped_openat(struct hexagonfs_fd *dir,
+ 	if (ctx == NULL)
+ 		return -ENOMEM;
+ 
+-	fd = malloc(sizeof(struct hexagonfs_fd));
++	fd = calloc(1, sizeof(struct hexagonfs_fd));
+ 	if (fd == NULL) {
+ 		ret = -ENOMEM;
+ 		goto err;
+diff --git a/hexagonrpcd/hexagonfs_overlay.c b/hexagonrpcd/hexagonfs_overlay.c
+new file mode 100644
+index 0000000..2851b5a
+--- /dev/null
++++ b/hexagonrpcd/hexagonfs_overlay.c
+@@ -0,0 +1,164 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++/*
++ * HexagonFS file operations for files served from the writable overlay.
++ */
++#include <errno.h>
++#include <fcntl.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <unistd.h>
++
++#include "hexagonfs.h"
++#include "overlay.h"
++
++struct overlay_file {
++	int fd;
++};
++
++static void ovl_close(void *fd_data)
++{
++	struct overlay_file *file = fd_data;
++
++	close(file->fd);
++	free(file);
++}
++
++static ssize_t ovl_read(struct hexagonfs_fd *fd, size_t size, void *out)
++{
++	struct overlay_file *file = fd->data;
++	ssize_t ret;
++
++	ret = read(file->fd, out, size);
++	if (ret < 0)
++		return -errno;
++
++	return ret;
++}
++
++static ssize_t ovl_write(struct hexagonfs_fd *fd, size_t size,
++			     const void *ptr)
++{
++	struct overlay_file *file = fd->data;
++	const char *buf = ptr;
++	size_t done = 0;
++	ssize_t ret;
++
++	while (done < size) {
++		ret = write(file->fd, buf + done, size - done);
++		if (ret < 0)
++			return -errno;
++		done += ret;
++	}
++
++	return done;
++}
++
++static int ovl_seek(struct hexagonfs_fd *fd, off_t off, int whence)
++{
++	struct overlay_file *file = fd->data;
++
++	if (lseek(file->fd, off, whence) == (off_t) -1)
++		return -errno;
++
++	return 0;
++}
++
++static int ovl_stat(struct hexagonfs_fd *fd, struct stat *stats)
++{
++	struct overlay_file *file = fd->data;
++	struct stat phys;
++	int ret;
++
++	ret = fstat(file->fd, &phys);
++	if (ret)
++		return -errno;
++
++	stats->st_size = phys.st_size;
++
++	stats->st_dev = 0;
++	stats->st_rdev = 0;
++
++	stats->st_ino = 0;
++	stats->st_nlink = 0;
++
++	stats->st_mode = S_IFREG | S_IRUSR | S_IWUSR
++		       | S_IRGRP | S_IROTH;
++
++	stats->st_atim.tv_sec = phys.st_atim.tv_sec;
++	stats->st_atim.tv_nsec = phys.st_atim.tv_nsec;
++	stats->st_ctim.tv_sec = phys.st_ctim.tv_sec;
++	stats->st_ctim.tv_nsec = phys.st_ctim.tv_nsec;
++	stats->st_mtim.tv_sec = phys.st_mtim.tv_sec;
++	stats->st_mtim.tv_nsec = phys.st_mtim.tv_nsec;
++
++	return 0;
++}
++
++static int ovl_fsync(struct hexagonfs_fd *fd)
++{
++	struct overlay_file *file = fd->data;
++
++	if (fsync(file->fd) < 0)
++		return -errno;
++
++	return 0;
++}
++
++struct hexagonfs_file_ops hexagonfs_overlay_ops = {
++	.close = ovl_close,
++	.read = ovl_read,
++	.write = ovl_write,
++	.seek = ovl_seek,
++	.stat = ovl_stat,
++	.fsync = ovl_fsync,
++};
++
++int hexagonfs_overlay_open(const char *vpath, int flags,
++			   struct hexagonfs_fd **out)
++{
++	struct hexagonfs_fd *fd;
++	struct overlay_file *file;
++	int ret;
++
++	fd = calloc(1, sizeof(struct hexagonfs_fd));
++	if (fd == NULL)
++		return -ENOMEM;
++
++	file = malloc(sizeof(struct overlay_file));
++	if (file == NULL) {
++		ret = -ENOMEM;
++		goto err_free_fd;
++	}
++
++	ret = overlay_open(vpath, flags, 0644);
++	if (ret < 0)
++		goto err_free_file;
++
++	file->fd = ret;
++
++	fd->is_assigned = false;
++	fd->up = NULL;
++	fd->vpath = strdup(vpath);
++	if (fd->vpath == NULL) {
++		ret = -ENOMEM;
++		goto err_close;
++	}
++
++	fd->ops = &hexagonfs_overlay_ops;
++	fd->data = file;
++
++	*out = fd;
++
++	return 0;
++
++err_close:
++	close(file->fd);
++err_free_file:
++	free(file);
++err_free_fd:
++	free(fd);
++
++	return ret;
++}
+diff --git a/hexagonrpcd/hexagonfs_virt_dir.c b/hexagonrpcd/hexagonfs_virt_dir.c
+index eaba520..491ade9 100644
+--- a/hexagonrpcd/hexagonfs_virt_dir.c
++++ b/hexagonrpcd/hexagonfs_virt_dir.c
+@@ -74,7 +74,7 @@ static int virt_dir_openat(struct hexagonfs_fd *dir,
+ 	if (ent == NULL)
+ 		return -ENOENT;
+ 
+-	fd = malloc(sizeof(struct hexagonfs_fd));
++	fd = calloc(1, sizeof(struct hexagonfs_fd));
+ 	if (fd == NULL)
+ 		return -ENOMEM;
+ 
+diff --git a/hexagonrpcd/meson.build b/hexagonrpcd/meson.build
+index 11244ef..f2ebfb5 100644
+--- a/hexagonrpcd/meson.build
++++ b/hexagonrpcd/meson.build
+@@ -7,7 +7,9 @@ executable('hexagonrpcd',
+   'interface/apps_std.c',
+   'hexagonfs.c',
+   'hexagonfs_mapped.c',
++  'hexagonfs_overlay.c',
+   'hexagonfs_plat_subtype_name.c',
++  'overlay.c',
+   'hexagonfs_virt_dir.c',
+   'iobuffer.c',
+   'listener.c',
+diff --git a/hexagonrpcd/overlay.c b/hexagonrpcd/overlay.c
+new file mode 100644
+index 0000000..1e5a6e7
+--- /dev/null
++++ b/hexagonrpcd/overlay.c
+@@ -0,0 +1,174 @@
++// SPDX-License-Identifier: GPL-3.0-or-later
++/*
++ * Writable overlay for hexagonrpcd.
++ *
++ * Paths are addressed exactly like the DSP addresses them: relative to the
++ * root of the served tree, e.g. /persist/sensors/registry/sns_reg_version.
++ * The same relative path is used below the overlay directory.
++ */
++#include <errno.h>
++#include <fcntl.h>
++#include <limits.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <unistd.h>
++
++#include "overlay.h"
++
++static char *overlay_root;
++
++static const char *relative(const char *vpath)
++{
++	while (*vpath == '/')
++		vpath++;
++
++	return vpath;
++}
++
++int overlay_init(const char *dir)
++{
++	if (dir == NULL || dir[0] == '\0')
++		return -EINVAL;
++
++	overlay_root = realpath(dir, NULL);
++	if (overlay_root == NULL) {
++		if (mkdir(dir, 0755) < 0 && errno != EEXIST)
++			return -errno;
++		overlay_root = realpath(dir, NULL);
++		if (overlay_root == NULL)
++			return -errno;
++	}
++
++	return 0;
++}
++
++bool overlay_enabled(void)
++{
++	return overlay_root != NULL;
++}
++
++int overlay_phys_path(const char *vpath, char *buf, size_t size)
++{
++	int ret;
++
++	if (!overlay_enabled())
++		return -ENOSYS;
++
++	ret = snprintf(buf, size, "%s/%s", overlay_root, relative(vpath));
++	if (ret < 0 || (size_t) ret >= size)
++		return -ENAMETOOLONG;
++
++	return 0;
++}
++
++/* Create all parent directories of an overlay path, like mkdir -p. */
++static int mkdir_parents(const char *vpath)
++{
++	char path[PATH_MAX];
++	char *slash;
++	int ret;
++
++	ret = overlay_phys_path(vpath, path, sizeof(path));
++	if (ret)
++		return ret;
++
++	for (slash = path; (slash = strchr(slash + 1, '/')); slash++) {
++		*slash = '\0';
++		if (mkdir(path, 0755) < 0 && errno != EEXIST) {
++			*slash = '/';
++			return -errno;
++		}
++		*slash = '/';
++	}
++
++	return 0;
++}
++
++int overlay_open(const char *vpath, int flags, mode_t mode)
++{
++	char path[PATH_MAX];
++	int ret;
++
++	if (flags & (O_CREAT | O_WRONLY | O_RDWR)) {
++		ret = mkdir_parents(vpath);
++		if (ret)
++			return ret;
++	}
++
++	ret = overlay_phys_path(vpath, path, sizeof(path));
++	if (ret)
++		return ret;
++
++	ret = open(path, flags, mode);
++	if (ret < 0)
++		return -errno;
++
++	return ret;
++}
++
++bool overlay_exists(const char *vpath)
++{
++	char path[PATH_MAX];
++
++	if (overlay_phys_path(vpath, path, sizeof(path)))
++		return false;
++
++	return access(path, F_OK) == 0;
++}
++
++int overlay_stat(const char *vpath, struct stat *st)
++{
++	char path[PATH_MAX];
++	int ret;
++
++	ret = overlay_phys_path(vpath, path, sizeof(path));
++	if (ret)
++		return ret;
++
++	if (stat(path, st) < 0)
++		return -errno;
++
++	return 0;
++}
++
++int overlay_remove(const char *vpath)
++{
++	char path[PATH_MAX];
++	int ret;
++
++	ret = overlay_phys_path(vpath, path, sizeof(path));
++	if (ret)
++		return ret;
++
++	if (unlink(path) < 0)
++		return -errno;
++
++	return 0;
++}
++
++int overlay_rename(const char *from, const char *to)
++{
++	char from_path[PATH_MAX];
++	char to_path[PATH_MAX];
++	int ret;
++
++	ret = overlay_phys_path(from, from_path, sizeof(from_path));
++	if (ret)
++		return ret;
++
++	ret = mkdir_parents(to);
++	if (ret)
++		return ret;
++
++	ret = overlay_phys_path(to, to_path, sizeof(to_path));
++	if (ret)
++		return ret;
++
++	if (rename(from_path, to_path) < 0)
++		return -errno;
++
++	return 0;
++}
+diff --git a/hexagonrpcd/overlay.h b/hexagonrpcd/overlay.h
+new file mode 100644
+index 0000000..ae5b2b4
+--- /dev/null
++++ b/hexagonrpcd/overlay.h
+@@ -0,0 +1,32 @@
++/* SPDX-License-Identifier: GPL-3.0-or-later */
++#ifndef OVERLAY_H
++#define OVERLAY_H
++
++#include <stdbool.h>
++#include <stddef.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++
++/*
++ * Writable overlay for the HexagonFS.
++ *
++ * The DSP-visible tree served through -R is read-only, but the sensors PD
++ * opens its registry for writing.  The overlay is a real directory (given by
++ * -O) that mirrors the DSP-visible paths: the first write to a file copies
++ * the -R file into the overlay, and from then on the overlay version is what
++ * the DSP sees.
++ */
++int overlay_init(const char *dir);
++bool overlay_enabled(void);
++
++/* Map a DSP-visible path to the path below the overlay directory. */
++int overlay_phys_path(const char *vpath, char *buf, size_t size);
++
++int overlay_open(const char *vpath, int flags, mode_t mode);
++bool overlay_exists(const char *vpath);
++int overlay_stat(const char *vpath, struct stat *st);
++
++int overlay_remove(const char *vpath);
++int overlay_rename(const char *from, const char *to);
++
++#endif /* OVERLAY_H */
+diff --git a/tests/meson.build b/tests/meson.build
+index 70fd8ee..b0300ad 100644
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -20,6 +20,8 @@ test_hexagonfs = executable('test_hexagonfs',
+   'test_hexagonfs.c',
+   '../hexagonrpcd/hexagonfs.c',
+   '../hexagonrpcd/hexagonfs_mapped.c',
++  '../hexagonrpcd/hexagonfs_overlay.c',
++  '../hexagonrpcd/overlay.c',
+   c_args : cflags,
+   include_directories : include,
+ )
+-- 
+2.53.0
+

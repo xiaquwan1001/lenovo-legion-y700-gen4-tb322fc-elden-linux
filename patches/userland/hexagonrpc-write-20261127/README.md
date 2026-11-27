@@ -38,3 +38,5 @@
 
 实测（设备，`2026-11-27`）：`elden-sensorspd` active、`NRestarts=0`、三属性 true、`ssccli` 连续出值；
 overlay 里出现真实写入 —— `cam_registry_dump.txt` 18.6 KB、`fstempfile` 14.3 KB、`sns_reg_version` 9 B、`registry/DIR` 3 B。
+
+> **已被 `../hexagonrpc-pr31-20261127/` 取代（2026-11-27）**：本目录两枚补丁是本地草稿（overlay 在 `apps_std` 层、无读回落、无单测），现已整理为上游 PR #31 的 6 个提交。保留作证据。

@@ -1,0 +1,142 @@
+From 9875cd6fdbff4195c507ccea592391e11540c48e Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 27 Nov 2026 10:26:27 +0800
+Subject: [PATCH 1/6] interface/apps_std: declare the file methods the sensors
+ PD uses
+
+The Sensor Core firmware needs more of the apps_std file service than we
+declare today: fwrite (5), fsync (23), fremove (24), frename (33),
+fopen_fd (34), fclose_fd (35) and fopen_with_env_fd (36).
+
+Add the method definitions with the argument layouts verified on hardware.
+Note for fwrite: the size word of the input sequence<byte> travels inline in
+the primitive buffer right after the FILE word, so the definition is
+WORD + BLOB_SEQ + OUT_BLOB + OUT_BLOB; declaring an extra WORD makes every
+call fail with 'Method invoked with less arguments than expected'.
+
+This change was prepared with AI assistance (pi); the author reviewed the code,
+reproduced the measurements on the hardware and takes responsibility for it.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ hexagonrpcd/interface/apps_std.c | 78 ++++++++++++++++++++++++++++++++
+ hexagonrpcd/interface/apps_std.h |  8 ++++
+ 2 files changed, 86 insertions(+)
+
+diff --git a/hexagonrpcd/interface/apps_std.c b/hexagonrpcd/interface/apps_std.c
+index 67b3ace..9ccb2b2 100644
+--- a/hexagonrpcd/interface/apps_std.c
++++ b/hexagonrpcd/interface/apps_std.c
+@@ -75,6 +75,84 @@ const struct hrpc_method_def_interp4 apps_std_fread_def = {
+ 	.inner_types = NULL,
+ };
+ 
++static struct hrpc_arg_def_interp4 apps_std_fwrite_args[] = {
++	/* prim buffer: [fd][buf_size]; then one extra input buffer holds data */
++	{ HRPC_ARG_WORD, sizeof(uint32_t) },
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) },
++	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) },
++};
++
++const struct hrpc_method_def_interp4 apps_std_fwrite_def = {
++	.msg_id = 5,
++	.n_args = HRPC_ARRAY_SIZE(apps_std_fwrite_args),
++	.args = apps_std_fwrite_args,
++	.n_inner_types = 0,
++	.inner_types = NULL,
++};
++
++static struct hrpc_arg_def_interp4 apps_std_fopen_fd_args[] = {
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) },
++	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) },
++};
++
++const struct hrpc_method_def_interp4 apps_std_fopen_fd_def = {
++	.msg_id = 34,
++	.n_args = HRPC_ARRAY_SIZE(apps_std_fopen_fd_args),
++	.args = apps_std_fopen_fd_args,
++	.n_inner_types = 0,
++	.inner_types = NULL,
++};
++
++static struct hrpc_arg_def_interp4 apps_std_fclose_fd_args[] = {
++	{ HRPC_ARG_WORD, sizeof(uint32_t) },
++};
++
++const struct hrpc_method_def_interp4 apps_std_fclose_fd_def = {
++	.msg_id = 35,
++	.n_args = HRPC_ARRAY_SIZE(apps_std_fclose_fd_args),
++	.args = apps_std_fclose_fd_args,
++	.n_inner_types = 0,
++	.inner_types = NULL,
++};
++
++static struct hrpc_arg_def_interp4 apps_std_fopen_with_env_fd_args[] = {
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_BLOB_SEQ, sizeof(char) },
++	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) },
++	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) },
++};
++
++const struct hrpc_method_def_interp4 apps_std_fopen_with_env_fd_def = {
++	.msg_id = 36,
++	.n_args = HRPC_ARRAY_SIZE(apps_std_fopen_with_env_fd_args),
++	.args = apps_std_fopen_with_env_fd_args,
++	.n_inner_types = 0,
++	.inner_types = NULL,
++};
++
++#define APPS_STD_SIMPLE_DEF(sym, id, ...)				\
++	static struct hrpc_arg_def_interp4 sym##_args[] = { __VA_ARGS__ };	\
++	const struct hrpc_method_def_interp4 sym##_def = {			\
++		.msg_id = id,							\
++		.n_args = HRPC_ARRAY_SIZE(sym##_args),				\
++		.args = sym##_args,						\
++		.n_inner_types = 0,						\
++		.inner_types = NULL,						\
++	}
++
++#define W	{ HRPC_ARG_WORD, sizeof(uint32_t) }
++#define S	{ HRPC_ARG_BLOB_SEQ, sizeof(char) }
++#define O	{ HRPC_ARG_OUT_BLOB, sizeof(uint32_t) }
++
++APPS_STD_SIMPLE_DEF(apps_std_fsync, 23, W);
++APPS_STD_SIMPLE_DEF(apps_std_fremove, 24, S);
++APPS_STD_SIMPLE_DEF(apps_std_frename, 33, S, S);
++
+ static struct hrpc_arg_def_interp4 apps_std_fseek_args[] = {
+ 	{ HRPC_ARG_WORD, sizeof(uint32_t) },
+ 	{ HRPC_ARG_WORD, sizeof(uint32_t) },
+diff --git a/hexagonrpcd/interface/apps_std.h b/hexagonrpcd/interface/apps_std.h
+index b80a1ca..a6b49f5 100644
+--- a/hexagonrpcd/interface/apps_std.h
++++ b/hexagonrpcd/interface/apps_std.h
+@@ -28,6 +28,7 @@ extern struct hrpc_method_def_interp4 apps_std_freopen_def;
+ extern struct hrpc_method_def_interp4 apps_std_fflush_def;
+ extern struct hrpc_method_def_interp4 apps_std_fclose_def;
+ extern struct hrpc_method_def_interp4 apps_std_fread_def;
++extern struct hrpc_method_def_interp4 apps_std_fwrite_def;
+ extern struct hrpc_method_def_interp4 apps_std_fseek_def;
+ extern struct hrpc_method_def_interp4 apps_std_fopen_with_env_def;
+ extern struct hrpc_method_def_interp4 apps_std_opendir_def;
+@@ -35,5 +36,12 @@ extern struct hrpc_method_def_interp4 apps_std_closedir_def;
+ extern struct hrpc_method_def_interp4 apps_std_readdir_def;
+ extern struct hrpc_method_def_interp4 apps_std_mkdir_def;
+ extern struct hrpc_method_def_interp4 apps_std_stat_def;
++extern struct hrpc_method_def_interp4 apps_std_fsync_def;
++extern struct hrpc_method_def_interp4 apps_std_fremove_def;
++extern struct hrpc_method_def_interp4 apps_std_mkdir_def;
++extern struct hrpc_method_def_interp4 apps_std_frename_def;
++extern struct hrpc_method_def_interp4 apps_std_fopen_fd_def;
++extern struct hrpc_method_def_interp4 apps_std_fclose_fd_def;
++extern struct hrpc_method_def_interp4 apps_std_fopen_with_env_fd_def;
+ 
+ #endif /* INTERFACE_APPS_STD_H */
+-- 
+2.53.0
+

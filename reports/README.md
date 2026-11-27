@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：705
+- 报告总数：706
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -57,6 +57,7 @@
 | `c3` | 3 | `c3-spic-verdict-20261115.md` |
 | `external` | 3 | `external-scan-20261112.md` |
 | `grub` | 3 | `grub-rehash-20261115.md` |
+| `hexagonrpcd` | 3 | `hexagonrpcd-heap-oob-20261127.md` |
 | `kexec` | 3 | `kexec-target-boots-20261024.md` |
 | `m12` | 3 | `m12-charger-upstream-20261125.md` |
 | `m2` | 3 | `m2-a2-vendor-qbg-20261028.md` |
@@ -79,7 +80,6 @@
 | `f2fs` | 2 | `f2fs-host-bench-20261025.md` |
 | `fastrpc` | 2 | `fastrpc-nonsecure-evidence-20261113.md` |
 | `g3` | 2 | `g3-steam-screenshot-paths-20261029.md` |
-| `hexagonrpcd` | 2 | `hexagonrpcd-heap-oob-20261127.md` |
 | `integrity` | 2 | `integrity-h2-20261111.md` |
 | `kernel` | 2 | `kernel-rebase-cost-20261107.md` |
 | `lanes` | 2 | `lanes-consolidated-20261101.md` |
@@ -850,6 +850,12 @@
 - `grub-project-scan-20261111.md` — GRUB 项目扫描（上游 2.14 线 + 同机型社区）——在「EFI-stub 直启 ~60–70 s 硬件掉电」这个新事实下
 - `grub-direct-vs-secondstage-20261110.md` — 直接 GRUB → EFI-stub 内核 为什么掉电，而「二级 Loader」没事
 
+## `hexagonrpcd`（3）
+
+- `hexagonrpcd-heap-oob-20261127.md` — 堆/全局越界定位并修好（ASan）：`apps_std` 方法表**按索引 dispatch**，新增方法必须占对下标
+- `hexagonrpcd-overlay-hexagonfs-20261127.md` — hexagonrpcd 可写 overlay：整理成上游 PR #31 并在 hexagonfs 层次上机复验
+- `hexagonrpcd-writable-overlay-20261127.md` — ★ 可写 overlay 落地：DSP 的 registry 写入**真落盘**（+ 传感器仍全绿）
+
 ## `kexec`（3）
 
 - `kexec-target-boots-20261024.md` — kexec 目标其实**启动到了用户态**：冷/暖/kexec 这条轴的真正断点在 GIC ITS，不在显示 — 2026-10-24
@@ -970,11 +976,6 @@
 
 - `g3-steam-screenshot-paths-20261029.md` — G3 Steam 判据②「截图」路径清单 + captive-portal 绕过草案（2026-10-29，纯主机）
 - `g3-steam-20261028.md` — G3 第一批：Steam 客户端起到登录界面（2026-10-28，持设备）
-
-## `hexagonrpcd`（2）
-
-- `hexagonrpcd-heap-oob-20261127.md` — 堆/全局越界定位并修好（ASan）：`apps_std` 方法表**按索引 dispatch**，新增方法必须占对下标
-- `hexagonrpcd-writable-overlay-20261127.md` — ★ 可写 overlay 落地：DSP 的 registry 写入**真落盘**（+ 传感器仍全绿）
 
 ## `integrity`（2）
 

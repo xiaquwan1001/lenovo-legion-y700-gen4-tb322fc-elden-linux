@@ -1,0 +1,106 @@
+From 1ebd3898dacebd28925a9d8920cdda253f696857 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Fri, 27 Nov 2026 10:27:07 +0800
+Subject: [PATCH 4/6] hexagonrpcd: add -O DIR for the writable overlay
+
+Document it in the man page together with the copy-up rules: the -R tree is
+never modified, files written by the DSP are read back from the overlay, and
+files that only exist below -R cannot be removed or renamed.
+
+This change was prepared with AI assistance (pi); the author reviewed the code,
+reproduced the measurements on the hardware and takes responsibility for it.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+---
+ hexagonrpcd/hexagonrpcd.1 | 14 ++++++++++++++
+ hexagonrpcd/rpcd.c        | 14 +++++++++++++-
+ 2 files changed, 27 insertions(+), 1 deletion(-)
+
+diff --git a/hexagonrpcd/hexagonrpcd.1 b/hexagonrpcd/hexagonrpcd.1
+index 05add18..56f15c6 100644
+--- a/hexagonrpcd/hexagonrpcd.1
++++ b/hexagonrpcd/hexagonrpcd.1
+@@ -25,6 +25,11 @@ Run client program with shared file descriptor
+ \fB\-R \fIDIR\fP
+ Root directory of served files (default: /usr/share/qcom/)
+ .TP
++\fB\-O \fIDIR\fP
++Writable overlay directory for files the DSP opens for writing
++(default: writes are accepted but discarded)\&. The directory must exist
++and be writable by the user hexagonrpcd runs as\&.
++.TP
+ \fB\-s\fP
+ Attach to sensorspd
+ .TP
+@@ -55,6 +60,15 @@ socinfo                 /sys/devices/soc0
+ These files and directories should be populated with files from your device's
+ Android firmware.
+ 
++The tree below \fB-R\fP is never modified\&. If the DSP opens a file for
++writing (the sensors PD does this for its registry), hexagonrpcd copies the
++file into the \fB-O\fP directory, keeping the path relative to the root, and
++serves the write there instead\&. Files that exist in the overlay are then
++also served for reading, so the DSP sees what it wrote; files that only exist
++below \fB-R\fP are still read from there\&. A file that exists only below
++\fB-R\fP cannot be removed or renamed\&. Without \fB-O\fP writes are
++reported as successful but not persisted\&.
++
+ If you can pass the -R option, the convention is to pass -R
+ /usr/share/qcom/SOC/VENDOR/DEVICE, where SOC is the SoC name in lowercase,
+ VENDOR is the capitalized name of the device vendor, and DEVICE is the device
+diff --git a/hexagonrpcd/rpcd.c b/hexagonrpcd/rpcd.c
+index 600237b..e132e7f 100644
+--- a/hexagonrpcd/rpcd.c
++++ b/hexagonrpcd/rpcd.c
+@@ -77,6 +77,7 @@ static void print_usage(const char *argv0)
+ 	       "\t-f DEVICE\tFastRPC device node to attach to\n"
+ 	       "\t-p PROGRAM\tRun client program with shared file descriptor\n"
+ 	       "\t-R DIR\t\tRoot directory of served files (default: /usr/share/qcom/)\n"
++	       "\t-O DIR\t\tWritable overlay directory for DSP file writes\n"
+ 	       "\t-s\t\tAttach to sensorspd\n"
+ 	       "\t-h\t\tPrint help and exit\n");
+ }
+@@ -350,6 +351,7 @@ int main(int argc, char* argv[])
+ 	const char *device_dir = "/usr/share/qcom/";
+ 	const char *dsp = "";
+ 	const char *create_shell = NULL;
++	const char *overlay_dir = NULL;
+ 	const char *guessed_device_dir;
+ 	const char **progs;
+ 	pid_t *pids;
+@@ -373,7 +375,7 @@ int main(int argc, char* argv[])
+ 	if (guessed_device_dir != NULL)
+ 		device_dir = guessed_device_dir;
+ 
+-	while ((opt = getopt(argc, argv, "c:d:f:p:R:sh")) != -1) {
++	while ((opt = getopt(argc, argv, "c:d:f:p:R:O:sh")) != -1) {
+ 		switch (opt) {
+ 			case 'c':
+ 				create_shell = optarg;
+@@ -391,6 +393,9 @@ int main(int argc, char* argv[])
+ 			case 'R':
+ 				device_dir = optarg;
+ 				break;
++			case 'O':
++				overlay_dir = optarg;
++				break;
+ 			case 's':
+ 				attach_sns = true;
+ 				break;
+@@ -417,6 +422,13 @@ int main(int argc, char* argv[])
+ 		goto err_free_pids;
+ 	}
+ 
++	if (overlay_dir != NULL) {
++		ret = hexagonfs_set_overlay(overlay_dir);
++		if (ret)
++			fprintf(stderr, "Could not initialize write overlay %s: %s\n",
++					overlay_dir, strerror(-ret));
++	}
++
+ 	if (attach_sns)
+ 		ret = ioctl(fd, FASTRPC_IOCTL_INIT_ATTACH_SNS, NULL);
+ 	else if (create_shell != NULL)
+-- 
+2.53.0
+
