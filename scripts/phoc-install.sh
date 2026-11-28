@@ -50,11 +50,21 @@ check() {
     else
         say "    hold:   *** 缺失 *** ⇒ 版本升级会换掉 .dpkg-dist"
     fi
-    # 行为判据：我们的件广告 syncobj，上游件不广告
-    if grep -q "linux_drm_syncobj" "$BIN" 2>/dev/null; then
-        say "    补丁:   syncobj 串存在于二进制（= 我们的件）"
-    else
-        say "    补丁:   *** 无 syncobj 串 *** ⇒ 装的是上游件"
+    # 行为判据：自编件里必有我们补丁留下的串（上游件没有）。
+    # 不同补丁线留下的标记不同，故按「命中任一即算我们的件」判，并逐条列出：
+    #   linux_drm_syncobj          = 0.59~rc1 那批本地补丁（syncobj 广告）
+    #   phoc-gesture-edge-swipe    = 0.46 edge-swipe back 手势（T35/#125）
+    hit=0
+    for m in linux_drm_syncobj phoc-gesture-edge-swipe; do
+        if grep -qa -- "$m" "$BIN" 2>/dev/null; then
+            say "    补丁:   $m 存在"
+            hit=$((hit+1))
+        else
+            say "    补丁:   $m 缺失"
+        fi
+    done
+    if [ "$hit" = 0 ]; then
+        say "    *** 一个补丁标记都没有 ⇒ 装的是发行版原件，不是我们的件 ***"
     fi
 }
 

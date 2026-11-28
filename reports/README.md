@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：768
+- 报告总数：770
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -39,12 +39,12 @@
 | `comms` | 6 | `comms-track-20261128-b.md` |
 | `device` | 6 | `device-window-20261121-night.md` |
 | `disk` | 6 | `disk-audit-20261126.md` |
+| `build` | 5 | `build-env-cross-vs-podman-20261128.md` |
 | `dwc3` | 5 | `dwc3-v16-20261125.md` |
 | `git` | 5 | `git-slim-exec-20261113.md` |
 | `usb` | 5 | `usb-charging-dualport-20261126.md` |
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
 | `bl` | 4 | `bl-stuck-20261118-forensics.md` |
-| `build` | 4 | `build-env-podman-eval-20261128.md` |
 | `c5` | 4 | `c5-u7-sf-skimage-20261029.md` |
 | `g7` | 4 | `g7-flip-ondevice-20261123.md` |
 | `host` | 4 | `host-stability-20261023.md` |
@@ -190,6 +190,7 @@
 | `patch` | 1 | `patch-delivery-audit-20261107.md` |
 | `patches` | 1 | `patches-uefi-grading-20261106.md` |
 | `pcie` | 1 | `pcie-l2-static-20261020.md` |
+| `phoc` | 1 | `phoc-046-edge-swipe-deploy-20261128.md` |
 | `pmic` | 1 | `pmic-pon-reset-reason-20261127.md` |
 | `power` | 1 | `power-on-demand-20261125.md` |
 | `project` | 1 | `project-audit-20261111.md` |
@@ -770,6 +771,14 @@
 - `disk-cleanup-20261116.md` — 磁盘清理第二轮执行账 — 2026-11-16（承接 `reports/disk-cleanup-20261115.md`）
 - `disk-cleanup-20261115.md` — 磁盘清理评估与执行账 — 2026-11-15（第二轮，承接 `.pi/reports/disk-audit-2026-11-15.md`）
 
+## `build`（5）
+
+- `build-env-cross-vs-podman-20261128.md` — 交叉编 sysroot vs podman：长期手动管理负担评估（2026-11-28，用户提问）
+- `build-env-podman-eval-20261128.md` — 本机是否要装 podman —— 构建环境路线评估（2026-11-28，用户提问）
+- `build-residue-verify-20261125.md` — `build/` 对象残渣可重建性 —— 只读复核（2026-11-25）
+- `build-kernel-dsi-guard-20261124.md` — D5⑤：build-kernel.sh DSI 守卫 pristine 上游树假阳性 — 修复回执（2026-11-24）
+- `build-stage-no-danger-units-20261120.md` — lane C：构建器 stage 不装危险件（P0-2，2026-11-20）
+
 ## `dwc3`（5）
 
 - `dwc3-v16-20261125.md` — dwc3 v16 备料处置报告（2026-11-25）——**未投递，等放行**
@@ -807,13 +816,6 @@
 - `bl-stuck-20261117-device-window.md` — 设备窗口 2026-11-17 16:02–16:50：卡 BL 恢复尝试全账（**未恢复，已停手保留现场**）
 - `bl-stuck-20261116.md` — 2026-11-16 夜：设备卡 fastboot（两槽都不能起）—— 只读取证与排除表
 - `bl-history-and-playbook.md` — 卡 bootloader（卡 BL / 落 fastboot）历史案例与排查手册
-
-## `build`（4）
-
-- `build-env-podman-eval-20261128.md` — 本机是否要装 podman —— 构建环境路线评估（2026-11-28，用户提问）
-- `build-residue-verify-20261125.md` — `build/` 对象残渣可重建性 —— 只读复核（2026-11-25）
-- `build-kernel-dsi-guard-20261124.md` — D5⑤：build-kernel.sh DSI 守卫 pristine 上游树假阳性 — 修复回执（2026-11-24）
-- `build-stage-no-danger-units-20261120.md` — lane C：构建器 stage 不装危险件（P0-2，2026-11-20）
 
 ## `c5`（4）
 
@@ -1498,6 +1500,10 @@
 ## `pcie`（1）
 
 - `pcie-l2-static-20261020.md` — T9 阻塞项静态分析：qcom-pcie L2 进入超时（主机侧只读，未上机）
+
+## `phoc`（1）
+
+- `phoc-046-edge-swipe-deploy-20261128.md` — phoc 0.46+edge-swipe 与 droidloom T43 IME 缓解：设备部署记录（2026-11-28）
 
 ## `pmic`（1）
 

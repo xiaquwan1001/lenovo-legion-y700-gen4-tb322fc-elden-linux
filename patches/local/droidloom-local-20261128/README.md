@@ -80,3 +80,12 @@ sudo cp -a /usr/bin/droidloom-wayland /root/droidloom-backup-20261128-t43/` 再
 `cargo test -p droidloom-wayland`：101 + 8 全过，含新增
 `t38_withholds_disable_while_entered_and_holds_state`（抑制 disable + Leave 照旧收）。
 强制 re-enable 分支需 wayland resource，未做单测（fixture 无 resource），由设备验收覆盖。
+
+## 上机验收记录（2026-11-28，自动化；详见 `reports/phoc-046-edge-swipe-deploy-20261128.md` §2）
+
+- 部署：`/usr/bin/droidloom-wayland` = 本补丁件 7 955 888 B / sha `8908c37e…`（原件备份 `/root/droidloom-backup-20261128-t43/`，release 51 `01e3d30c…`）。
+- 已验：宿主 `ydotool` 点小红书号段框 ⇒ **宿主数字键盘弹出**；连输 10 位 ⇒ 框内 `151 2345 6789`、**键盘不自隐**（判据 1 的前半）。
+- 未验：收起后重弹、RIME 中文、真实触摸手感（判据 1 后半 + 判据 2），需真手指。
+- **测试陷阱**：`adb shell input tap` 点在 cell 内，宿主收不到 ⇒ droidloom 窗口拿不到 `wl_keyboard.enter` ⇒
+  `text_input.rs` 的 `focused_task=None` ⇒ **永不发 `enable`** ⇒ 宿主 OSK 不起（假阴性，`PITFALLS #761`）。
+  必须用宿主侧 `ydotool mousemove -a X Y` + `ydotool click 0x00` 拿焦点，再用 `grim` 看宿主截图 + `uiautomator dump` 读文本内容。
