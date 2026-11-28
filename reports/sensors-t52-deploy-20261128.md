@@ -13,7 +13,7 @@
 | ③ `ACCEL_MOUNT_MATRIX` 改为 `1,0,0; 0,1,0; 0,0,-1` | ✅ 设备 + 仓内副本 + skill 三处同步 | `udevadm info -q property /dev/fastrpc-adsp` 读回新值；平放 `AccelerometerTilt` 从 `face-down` → **`face-up`** |
 | ④ ALS 上报频次（0002 目标 ≤6 次/60 s） | ✅ 6 次/60 s（改前同一口径 282 次/60 s） | `journalctl … grep -c 'Emitted light changed'`；驱动样本 310/60 s（≈5 Hz）不变 |
 | ⑤ 背光写入（目标 ≤2 次/60 s） | ❌ **10 次/60 s**（未达标） | 见 §2：ALS 上报与背光写入**逐条 1:1 对应**，属**传感器噪声幅度过大**（静止环境 96↔352 lux，≈3.7 倍），0002 的 `max(20 lux, 5%)` 阈值必然放行 |
-| ⑥ 临时缓解 | `org.gnome.settings-daemon.plugins.power ambient-enabled` = **false**（原值 true，收口前恢复） | 与部署前**实际**行为等价（部署前 ALS 从不上报 ⇒ 自动亮度等同关闭），避免把用户的背光抖起来 |
+| ⑥ 临时缓解 | `ambient-enabled` 曾临时 false 止血；**0003 上机后已恢复 true** | 见 §4 |
 
 ## §1 关键原始输出
 
@@ -89,3 +89,22 @@ ssh elden 'sudo -n CONFIRM=yes sh /tmp/deploy-iio-sensor-proxy-patches.sh --appl
 # 回滚
 ssh elden 'sudo -n sh /tmp/deploy-iio-sensor-proxy-patches.sh --rollback'
 ```
+
+## §4 0003 平滑上机（2026-11-28 19:16，`3.9-3elden`）
+
+- 装 `3.9-3elden`（中值5 + EMA α=0.20 + 滞回 `max(60 lux,30%)` + 快通道 150 lux）：`dpkg -l` = `3.9-3elden`，NEEDED 9/9、max GLIBC 2.38。
+- 恢复 `ambient-enabled=true` 后，同一窗口实测：**背光写入 0 次 / 90 s**、`Emitted light changed` **0 次**（此前同口径 10 次背光写入）。
+- journal 可见平滑生效：`Emitted light changed: from 0.000000 to 0.000000 (first reading)` → `… to 218.766817 (hysteresis)`（小数 = EMA 平滑值，不再是 16 lux 量化台阶）。
+- 反演口径（子代理产出、我用真实 trace 复跑 `artifacts/sim-0003.py` 一致）：上报 worst-60 s **2**、背光写入 worst-60 s **2**；真实开关灯延迟 0.8–2.0 s。
+
+## §5 phosh 侧缺口（用户 2026-11-28 报「状态栏没有 auto 档位」）
+
+| 事实 | 证据 |
+|---|---|
+| **phosh 本 boot 从未 claim 加速度计** | 代理 journal 里 `ClaimAccelerometer` 只有 2 次，均为父代理 `sudo busctl … ClaimAccelerometer`（随后立即 Release）；phosh(pid 273289，18:04:41 启动) 一条都没有 |
+| phosh 因此停在「锁定方向」模式 | `AccelerometerOrientation` 恒 `undefined`；把 `orientation-lock` 置 false 也不触发 claim（只影响下次启动） |
+| 启动时的 `orientation-lock` = **true** | `gsettings get org.gnome.settings-daemon.peripherals.touchscreen orientation-lock`（子代理 §5 记录也显示原值 true） |
+| 亮度 auto 消失是**我方副作用** | 部署时临时 `ambient-enabled=false`；0003 上机后已恢复 `true`（`gsettings get` 复核） |
+
+⇒ 「状态栏没有 auto 档位」拆成两件事：**亮度 auto = 已恢复**；**方向 auto = phosh 0.46 不重连 SensorProxy**（代理重启/设置变更都不 re-claim，与 `#764` 同类：客户端侧缺重连）。
+</br>修法候选：① UI 点一次旋转图标（若 phosh 走自己的 action 会切 SENSOR 模式并 claim）；② 重启一次会话（已知副作用：droidloom 不自启 = `T46`、Q28 modeset 风险）；③ 给 phosh 打「name-owner 变化即重建 proxy + 重新 claim」的补丁（永久修复，需交叉编 phosh + 一次会话重启）。

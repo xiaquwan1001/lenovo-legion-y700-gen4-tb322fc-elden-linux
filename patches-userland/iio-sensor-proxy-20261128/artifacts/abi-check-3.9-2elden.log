@@ -1,0 +1,62 @@
+# ABI / artifact check (host, 2026-11-28T18:16:25+08:00)
+
+## file
+artifacts/iio-sensor-proxy-3.9-2elden-arm64.bin: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=35e140b6af3cbb0e67c295693ec1e03185f91ee2, for GNU/Linux 3.7.0, not stripped
+
+## max GLIBC symbol version (ours)
+GLIBC_2.17
+GLIBC_2.34
+GLIBC_2.38
+
+## NEEDED (ours)
+  NEEDED               libgio-2.0.so.0
+  NEEDED               libgobject-2.0.so.0
+  NEEDED               libglib-2.0.so.0
+  NEEDED               libgudev-1.0.so.0
+  NEEDED               libm.so.6
+  NEEDED               libpolkit-gobject-1.so.0
+  NEEDED               libssc.so.2
+  NEEDED               libc.so.6
+  NEEDED               ld-linux-aarch64.so.1
+
+## NEEDED diff vs device (ssh elden read-only)
+IDENTICAL (9/9)
+
+## device reference
+iio-sensor-proxy 3.9-1, glibc 2.41-12+deb13u4, device max GLIBC symbol = GLIBC_2.38
+device binary sha256: dbe9ee038ce5811417fc4f5c1f302c4961c279da26cafb92fee607572ecc69e6
+
+## artifact sha256 (binary extracted from the deb, i.e. what dpkg will install)
+af9171823a2c3b1d396880552d02dc7abb827db5e2c99cc400e150b357513b05  artifacts/iio-sensor-proxy_3.9-2elden_arm64.deb
+e20e690d884aab7b8f889244e37e2c65bf9f387daddb3de23d28a83ecfcd584c  artifacts/iio-sensor-proxy-3.9-2elden-arm64.bin
+
+## deb control
+Package: iio-sensor-proxy
+Version: 3.9-2elden
+Architecture: arm64
+Depends: libc6 (>= 2.38), libglib2.0-0t64 (>= 2.68.0), libgudev-1.0-0 (>= 234), libpolkit-gobject-1-0 (>= 0.99), libssc2 (>= 0.4.2)
+
+## deb content
+./
+./usr/
+./usr/bin/
+./usr/bin/monitor-sensor
+./usr/lib/
+./usr/lib/systemd/
+./usr/lib/systemd/system/
+./usr/lib/systemd/system/iio-sensor-proxy.service
+./usr/lib/udev/
+./usr/lib/udev/rules.d/
+./usr/lib/udev/rules.d/80-iio-sensor-proxy.rules
+./usr/libexec/
+./usr/libexec/iio-sensor-proxy
+./usr/share/
+./usr/share/dbus-1/
+./usr/share/dbus-1/system.d/
+./usr/share/dbus-1/system.d/net.hadess.SensorProxy.conf
+./usr/share/lintian/
+./usr/share/lintian/overrides/
+./usr/share/lintian/overrides/iio-sensor-proxy
+./usr/share/polkit-1/
+./usr/share/polkit-1/actions/
+./usr/share/polkit-1/actions/net.hadess.SensorProxy.policy

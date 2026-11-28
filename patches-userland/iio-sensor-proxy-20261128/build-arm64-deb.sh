@@ -25,7 +25,7 @@ SRC_TREE="${SRC_TREE:-/tmp/ssc-prep/iio-sensor-proxy}"
 SYSROOT="${SYSROOT:-$REPO/out/sysroot-trixie-arm64}"
 EXTRA_SYSROOT="${EXTRA_SYSROOT:-/tmp/ssc-prep/sysroot-work/sysroot}"
 JOBS="${JOBS:-8}"
-VERSION="3.9-2elden"
+VERSION="3.9-3elden"
 TAG="3.9"
 
 [ -d "$SRC_TREE/.git" ] || { echo "!! no git checkout at $SRC_TREE (clone tag $TAG first)" >&2; exit 1; }
@@ -41,7 +41,7 @@ mkdir srctmp
 git -C "$SRC_TREE" archive --format=tar "$TAG" | tar -x -C srctmp
 mv srctmp src
 [ -f src/meson.build ] || { echo "!! source extraction failed" >&2; exit 1; }
-for p in "$SELF"/0001-*.patch "$SELF"/0002-*.patch; do
+for p in "$SELF"/0001-*.patch "$SELF"/0002-*.patch "$SELF"/0003-*.patch; do
 	echo "  apply $(basename "$p")"
 	patch -p1 -d src -s <"$p"
 done
@@ -126,8 +126,9 @@ Section: utils
 Priority: optional
 Homepage: https://gitlab.freedesktop.org/hadess/iio-sensor-proxy
 Description: IIO sensors to D-Bus proxy (local cross build, elden patches)
- Upstream 3.9 plus two local patches: Claim() deferral until sensor
- discovery finished, and deadband/rate limiting of LightLevel reports.
+ Upstream 3.9 plus three local patches: Claim() deferral until sensor
+ discovery finished, rate limiting of LightLevel reports, and median+EMA
+ smoothing with a stronger hysteresis on top of it.
  Built for Debian trixie arm64 from tag $TAG.
 EOF
 cat >"$D/DEBIAN/postinst" <<'EOF'

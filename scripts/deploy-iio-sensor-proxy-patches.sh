@@ -1,16 +1,22 @@
 #!/bin/sh
 # deploy-iio-sensor-proxy-patches.sh — install / verify / roll back the patched
-# iio-sensor-proxy 3.9 (elden patches 0001 Claim deferral + 0002 light deadband).
+# iio-sensor-proxy 3.9 (elden patches 0001 Claim deferral + 0002 light rate limit
+# + 0003 median/EMA smoothing).
 #
 # Runs ON THE DEVICE (elden, Debian trixie arm64). Copy it and the .deb over first:
-#   scp patches-userland/iio-sensor-proxy-20261128/artifacts/iio-sensor-proxy_3.9-2elden_arm64.deb \
+#   scp patches-userland/iio-sensor-proxy-20261128/artifacts/iio-sensor-proxy_3.9-3elden_arm64.deb \
 #       scripts/deploy-iio-sensor-proxy-patches.sh root@elden:/root/
 # then, on the device:
 #   sh /root/deploy-iio-sensor-proxy-patches.sh --check            # read-only, no root needed
 #   sh /root/deploy-iio-sensor-proxy-patches.sh --apply             # needs root + CONFIRM=yes
 #   sh /root/deploy-iio-sensor-proxy-patches.sh --rollback          # back to 3.9-1
-# Options: --deb <path> (default /root/iio-sensor-proxy_3.9-2elden_arm64.deb),
+# Options: --deb <path> (default /root/iio-sensor-proxy_3.9-3elden_arm64.deb),
 #          --expect-sha256 <hex> (refuse to install a different file).
+#
+# Package versions: this script installs 3.9-3elden and rolls back to the distro
+# 3.9-1. The intermediate local build 3.9-2elden (0002 only, i.e. rate limit
+# without the 0003 smoothing) can be skipped: 3.9-3elden is a plain superset of
+# 0001+0002 and dpkg installs it straight over 3.9-1 or over 3.9-2elden.
 #
 # Modes
 #   --check     read-only self-test: architecture, package state, running binary,
@@ -27,15 +33,15 @@
 # the ones the distro package already installed).
 set -eu
 
-DEB=/root/iio-sensor-proxy_3.9-2elden_arm64.deb
+DEB=/root/iio-sensor-proxy_3.9-3elden_arm64.deb
 EXPECT_SHA256=${EXPECT_SHA256:-}
 MODE=
-TARGET_VERSION=3.9-2elden
+TARGET_VERSION=3.9-3elden
 BASE_VERSION=3.9-1
 BIN=/usr/libexec/iio-sensor-proxy
 
 usage () {
-	sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'
+	sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'
 	exit 2
 }
 
@@ -80,6 +86,10 @@ show_state () {
 	say "proxy unit active          : $(systemctl is-active iio-sensor-proxy 2>/dev/null || echo unknown)"
 	say "backend strings in binary  : $(for s in ssc-light ssc-accel ssc-proximity ssc-compass; do
 		strings -a "$BIN" 2>/dev/null | grep -qx "$s" && printf '%s ' "$s"; done)"
+	# 0003 tags every report with its cause ("first reading"/"step"/"hysteresis"/"stale"),
+	# so the journal says why a level went out.
+	say "smoothing (0003) in binary  : $(strings -a "$BIN" 2>/dev/null | grep -q '(%s)' &&
+		strings -a "$BIN" 2>/dev/null | grep -q 'hysteresis' && echo present || echo absent)"
 }
 
 show_criteria () {

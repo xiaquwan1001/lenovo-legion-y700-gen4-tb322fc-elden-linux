@@ -1,0 +1,346 @@
+From 0000000000000000000000000000000000000003 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 28 Nov 2026 19:40:00 +0800
+Subject: [PATCH 3/3] main: smooth the ambient light level before reporting it
+
+0002 bounded the report *rate* but not the value: the SSC light sensor
+dithers over several hundred lux around a static level (16 lux quantum,
+~5 samples/s, measured std 91 lux, range 0-544 lux in one static
+environment), and a deadband of max(20 lux, 5%) is far below that, so
+every sample still left the band. On the device the backlight followed
+1:1: 10 ALS reports in 60 s produced 10 writes to
+/sys/class/backlight/aw99706-backlight/brightness, i.e. 0002 alone does
+not stop the flicker (gsd-power 48.1 has no deadband of its own, only an
+ambient-enabled switch).
+
+Filter the value itself, in three stages, before the report decision:
+
+  1. sliding median over the last five samples, which drops the
+     single-sample outliers;
+  2. an EMA (alpha 0.20) on the median, which removes the rest of the
+     per-sample noise instead of passing it on;
+  3. hysteresis against the last *reported* value: the smoothed value has
+     to leave max(60 lux, 30% of it) and stay out for three seconds, or
+     stand more than 25 lux off for twenty seconds, before it is sent.
+
+Replaying the recorded device trace (1507 real samples / 301 s) through
+the three policies gives: 3.9 -> 290 reports in the busiest 60 s window,
+0002 -> 6, 0003 -> 2 (and 2 backlight writes), with three distinct levels
+reported instead of 31.
+
+A real light change is not delayed by the filter: when the median is
+150 lux away from the median of the last two seconds for three samples in
+a row (0.6 s) both filters are snapped onto the new plateau and the level
+is reported at once. Measured on the same trace with a synthetic step on
+top of the real noise, a +300 lux switch reaches the client in 0.8 s, a
+-300 lux switch in 2.0 s, and the 150 lux detector produced no false
+trigger in the 302 s of static noise (at 130 lux it fires once, at
+120 lux three times - hence the cutoff).
+
+Everything 0002 established stays: the first reading is always reported
+(Claim() is answered only after it), a unit change is reported at once,
+max(60 lux, 30%) replaces the deadband numbers, the 10 s spacing and the
+hard six-reports-per-minute budget still cap the report rate from
+construction, and the startup-finished notification is untouched.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Assisted-by: pi coding agent (LLM)
+---
+ src/iio-sensor-proxy.c | 237 ++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 195 insertions(+), 42 deletions(-)
+
+diff --git a/src/iio-sensor-proxy.c b/src/iio-sensor-proxy.c
+index 9f28188..1a868ea 100644
+--- a/src/iio-sensor-proxy.c
++++ b/src/iio-sensor-proxy.c
+@@ -34,13 +34,20 @@
+ 
+ #define NUM_SENSOR_TYPES DRIVER_TYPE_PROXIMITY + 1
+ 
+-/* Ambient light report limiting, see light_changed_func(). */
+-#define LIGHT_DEADBAND_MIN_LUX		20.0	/* relative: also 5% of the last value */
+-#define LIGHT_SMALL_STEP_LUX		10.0	/* a sustained small step still counts */
+-#define LIGHT_HOLD_TIME_US		(1 * G_USEC_PER_SEC)
++/* Ambient light smoothing and report limiting, see light_changed_func(). */
++#define LIGHT_MEDIAN_WINDOW		5	/* sliding median, sensor runs at ~5 Hz */
++#define LIGHT_MEDIAN_HISTORY		16	/* (time, median) ring, >= 2 s at 5 Hz */
++#define LIGHT_EMA_ALPHA			0.20	/* EMA on top of the median, per sample */
++#define LIGHT_DEADBAND_MIN_LUX		60.0	/* |smooth - reported|: absolute floor */
++#define LIGHT_DEADBAND_REL		0.30	/* ... or 30% of the reported value */
++#define LIGHT_SLOW_STEP_LUX		25.0	/* smaller deviations are pure sensor noise */
++#define LIGHT_HYSTERESIS_DWELL_US	(3 * G_USEC_PER_SEC)
++#define LIGHT_STALE_US			(20 * G_USEC_PER_SEC)
++#define LIGHT_FAST_JUMP_LUX		150.0	/* a real light change: report at once */
++#define LIGHT_FAST_JUMP_RUN		3	/* ... once it lasted 3 samples (0.6 s) */
++#define LIGHT_FAST_REF_US		(2 * G_USEC_PER_SEC)
++#define LIGHT_FAST_MIN_INTERVAL_US	(1 * G_USEC_PER_SEC)
+ #define LIGHT_EMIT_MIN_INTERVAL_US	(10 * G_USEC_PER_SEC) /* <= 6 reports/min */
+-#define LIGHT_FAST_STEP_LUX		100.0	/* a real light change, report sooner */
+-#define LIGHT_FAST_STEP_INTERVAL_US	(2 * G_USEC_PER_SEC)
+ #define LIGHT_MAX_EMITS_PER_MINUTE	6
+ 
+ /* A Claim() that arrived before the sensor type it refers to was
+@@ -74,11 +81,23 @@ typedef struct {
+ 	Tilt          previous_tilt;
+ 
+ 	/* Light */
+-	gdouble previous_level;
++	gdouble previous_level;         /* last *reported* (smoothed) level */
+ 	gboolean uses_lux;
+ 	gboolean light_level_emitted;   /* at least one LightLevel was sent */
+ 	gint64   light_level_emitted_us; /* monotonic time of the last emission */
+ 	gint64   light_level_window_us[LIGHT_MAX_EMITS_PER_MINUTE]; /* emission timestamps */
++	gdouble  light_samples[LIGHT_MEDIAN_WINDOW]; /* stage 1: sliding median */
++	guint    light_samples_len;
++	gdouble  light_ema;             /* stage 2: median -> EMA */
++	gboolean light_ema_valid;
++	gdouble  light_median_hist[LIGHT_MEDIAN_HISTORY]; /* (median, time) ring for
++							  * the fast-path reference */
++	gint64   light_median_hist_us[LIGHT_MEDIAN_HISTORY];
++	guint    light_median_hist_len;
++	guint    light_median_hist_next;
++	guint    light_fast_run;        /* consecutive samples beyond the fast step */
++	gint64   light_hyst_since_us;   /* out-of-deadband since, 0 = inside */
++	gint64   light_stale_since_us;  /* > SLOW_STEP_LUX since, 0 = smaller */
+ 
+ 	/* Compass */
+ 	gdouble previous_heading;
+@@ -1069,6 +1088,73 @@ accel_changed_func (SensorDevice *sensor_device,
+ 	maybe_notify_sensor_startup_finished (data, DRIVER_TYPE_ACCEL);
+ }
+ 
++/* Median of values[0..n-1]. Sorts the caller's scratch copy in place; n is at
++ * most LIGHT_MEDIAN_HISTORY, so an insertion sort is the cheapest thing here. */
++static gdouble
++light_median_of (gdouble *values,
++		 guint    n)
++{
++	guint i, j;
++
++	for (i = 1; i < n; i++) {
++		gdouble key = values[i];
++
++		for (j = i; j > 0 && values[j - 1] > key; j--)
++			values[j] = values[j - 1];
++		values[j] = key;
++	}
++
++	return values[n / 2];
++}
++
++/* Stage 1: push one driver sample and return the median of the window. */
++static gdouble
++light_median_push (SensorData *data,
++		   gdouble     level)
++{
++	gdouble copy[LIGHT_MEDIAN_WINDOW];
++	guint i;
++
++	for (i = 1; i < data->light_samples_len; i++)
++		data->light_samples[i - 1] = data->light_samples[i];
++	data->light_samples[data->light_samples_len] = level;
++	if (data->light_samples_len < LIGHT_MEDIAN_WINDOW - 1)
++		data->light_samples_len++;
++
++	memcpy (copy, data->light_samples, sizeof (gdouble) * data->light_samples_len);
++	return light_median_of (copy, data->light_samples_len);
++}
++
++/* Keep (median, time) so that the fast path can compare against the median of
++ * the last LIGHT_FAST_REF_US instead of against a single noisy sample. */
++static void
++light_median_history_push (SensorData *data,
++			   gdouble     median,
++			   gint64      now)
++{
++	data->light_median_hist[data->light_median_hist_next] = median;
++	data->light_median_hist_us[data->light_median_hist_next] = now;
++	data->light_median_hist_next = (data->light_median_hist_next + 1) % LIGHT_MEDIAN_HISTORY;
++	if (data->light_median_hist_len < LIGHT_MEDIAN_HISTORY)
++		data->light_median_hist_len++;
++}
++
++static gdouble
++light_median_history_median (SensorData *data,
++			     gint64      now)
++{
++	gdouble copy[LIGHT_MEDIAN_HISTORY];
++	guint i, n = 0;
++
++	for (i = 0; i < data->light_median_hist_len; i++) {
++		if (now - data->light_median_hist_us[i] <= LIGHT_FAST_REF_US)
++			copy[n++] = data->light_median_hist[i];
++	}
++
++	/* The sample that just arrived is always fresh, so n >= 1. */
++	return light_median_of (copy, n);
++}
++
+ static gboolean
+ light_emit_budget_available (SensorData *data,
+ 			     gint64      now)
+@@ -1108,62 +1194,129 @@ light_changed_func (SensorDevice *sensor_device,
+ {
+ 	SensorData *data = user_data;
+ 	LightReadings *readings = (LightReadings *) readings_data;
+-	gboolean emit = FALSE;
++	const gchar *cause = NULL;
++	gboolean bypass_budget = FALSE;
++	gdouble median, smooth;
++	gint64 now;
+ 
+ 	//FIXME handle errors
+ 	g_debug ("Light level sent by driver (quirk applied): %lf (unit: %s)",
+ 		 readings->level, data->uses_lux ? "lux" : "vendor");
+ 
++	now = g_get_monotonic_time ();
++
++	/* Stage 1: sliding median over the last LIGHT_MEDIAN_WINDOW samples.
++	 * The SSC light sensor dithers by several hundred lux around a static
++	 * level (16 lux quantum, ~5 samples/s), so a plain low pass still
++	 * wobbles; the median removes single-sample outliers first. */
++	median = light_median_push (data, readings->level);
++
++	/* Stage 2: EMA on top of the median, which removes what is left of the
++	 * per-sample noise instead of passing it on. */
++	if (!data->light_ema_valid) {
++		data->light_ema = median;
++		data->light_ema_valid = TRUE;
++	} else {
++		data->light_ema += LIGHT_EMA_ALPHA * (median - data->light_ema);
++	}
++	smooth = data->light_ema;
++
++	light_median_history_push (data, median, now);
++
+ 	if (!data->light_level_emitted) {
+ 		/* The first reading is always reported: Claim() is only answered
+ 		 * after it and clients take it as their initial value. */
+-		emit = TRUE;
++		cause = "first reading";
+ 	} else if (data->uses_lux != readings->uses_lux) {
+-		emit = TRUE;
++		cause = "unit change";
++		bypass_budget = TRUE; /* one-off, cannot repeat per sensor */
+ 	} else {
+-		gdouble delta, threshold;
+-		gint64 now, elapsed;
+-
+-		/* Deadband: below max(20 lux, 5% of the last reported value)
+-		 * nothing is reported, so an ambient light sensor which dithers
+-		 * around a value (SSC samples at ~5 Hz with a 16 lux quantum)
+-		 * no longer turns into one backlight write per sample. */
+-		delta = ABS (readings->level - data->previous_level);
+-		threshold = MAX (LIGHT_DEADBAND_MIN_LUX,
+-				 ABS (data->previous_level) * 0.05);
+-
+-		now = g_get_monotonic_time ();
+-		elapsed = now - data->light_level_emitted_us;
+-
+-		if (delta >= threshold ||
+-		    (delta >= LIGHT_SMALL_STEP_LUX && elapsed > LIGHT_HOLD_TIME_US)) {
+-			/* Rate limit: at most one report every 10 s, so a minute
+-			 * never contains more than LIGHT_MAX_EMITS_PER_MINUTE of
+-			 * them. A genuine light change (>= 100 lux) goes out after
+-			 * 2 s instead, and the window below caps those as well. */
+-			if ((elapsed >= LIGHT_EMIT_MIN_INTERVAL_US ||
+-			     (delta >= LIGHT_FAST_STEP_LUX &&
+-			      elapsed >= LIGHT_FAST_STEP_INTERVAL_US)) &&
+-			    light_emit_budget_available (data, now))
+-				emit = TRUE;
++		gdouble reference;
++
++		/* Stage 3a: a genuine light change is recognised against the
++		 * median of the last LIGHT_FAST_REF_US, not against the previous
++		 * sample: this sensor cannot fake a >= 150 lux step for three
++		 * samples in a row (0 false triggers in 302 s of its own noise),
++		 * while a light switch crosses it in 0.6-0.8 s. */
++		reference = light_median_history_median (data, now);
++		if (ABS (median - reference) >= LIGHT_FAST_JUMP_LUX)
++			data->light_fast_run++;
++		else
++			data->light_fast_run = 0;
++
++		if (data->light_fast_run >= LIGHT_FAST_JUMP_RUN) {
++			/* Snap median and EMA onto the new plateau so the report
++			 * carries the new level instead of a value that is still
++			 * ramping towards it. */
++			data->light_samples[0] = median;
++			data->light_samples_len = 1;
++			data->light_ema = median;
++			smooth = median;
++			data->light_median_hist_len = 0;
++			data->light_median_hist_next = 0;
++			light_median_history_push (data, median, now);
++			data->light_fast_run = 0;
++			if (now - data->light_level_emitted_us >= LIGHT_FAST_MIN_INTERVAL_US)
++				cause = "step";
++		} else {
++			gdouble delta, threshold;
++
++			/* Stage 3b: hysteresis around the last reported value. The
++			 * amplitude has to leave max(60 lux, 30%) *and* stay out
++			 * for LIGHT_HYSTERESIS_DWELL_US: amplitude alone still
++			 * lets a slow random walk of this sensor through. */
++			delta = ABS (smooth - data->previous_level);
++			threshold = MAX (LIGHT_DEADBAND_MIN_LUX,
++					 ABS (data->previous_level) * LIGHT_DEADBAND_REL);
++
++			if (delta > threshold) {
++				if (data->light_hyst_since_us == 0)
++					data->light_hyst_since_us = now;
++			} else {
++				data->light_hyst_since_us = 0;
++			}
++
++			/* A deviation below the deadband but above the noise floor
++			 * is reported once it has been standing for LIGHT_STALE_US,
++			 * so a genuinely dimmer room cannot leave clients with a
++			 * value that is 25-60 lux off forever. */
++			if (delta > LIGHT_SLOW_STEP_LUX) {
++				if (data->light_stale_since_us == 0)
++					data->light_stale_since_us = now;
++			} else {
++				data->light_stale_since_us = 0;
++			}
++
++			if (data->light_hyst_since_us != 0 &&
++			    now - data->light_hyst_since_us >= LIGHT_HYSTERESIS_DWELL_US &&
++			    (now - data->light_level_emitted_us >= LIGHT_EMIT_MIN_INTERVAL_US ||
++			     (delta >= LIGHT_FAST_JUMP_LUX &&
++			      now - data->light_level_emitted_us >= LIGHT_FAST_MIN_INTERVAL_US)))
++				cause = "hysteresis";
++			else if (data->light_stale_since_us != 0 &&
++				 now - data->light_stale_since_us >= LIGHT_STALE_US)
++				cause = "stale";
+ 		}
+ 	}
+ 
+-	if (emit) {
+-		gdouble tmp;
+-		gint64 now = g_get_monotonic_time ();
++	if (cause != NULL && !bypass_budget &&
++	    !light_emit_budget_available (data, now))
++		cause = NULL;
+ 
+-		tmp = data->previous_level;
+-		data->previous_level = readings->level;
++	if (cause != NULL) {
++		gdouble tmp = data->previous_level;
+ 
++		data->previous_level = smooth;
+ 		data->uses_lux = readings->uses_lux;
+ 		data->light_level_emitted = TRUE;
+ 		data->light_level_emitted_us = now;
++		data->light_hyst_since_us = 0;
++		data->light_stale_since_us = 0;
+ 		light_emit_record (data, now);
+ 
+ 		send_dbus_event (data, PROP_LIGHT_LEVEL);
+-		g_debug ("Emitted light changed: from %lf to %lf",
+-			 tmp, data->previous_level);
++		g_debug ("Emitted light changed: from %lf to %lf (%s)",
++			 tmp, data->previous_level, cause);
+ 	}
+ 
+ 	maybe_notify_sensor_startup_finished (data, DRIVER_TYPE_LIGHT);

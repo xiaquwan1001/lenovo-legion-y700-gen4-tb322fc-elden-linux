@@ -257,13 +257,143 @@ ssh root@elden 'EXPECT_SHA256=af917182… CONFIRM=yes sh /root/deploy-iio-sensor
 patches-userland/iio-sensor-proxy-20261128/
   0001-claim-race-defer-Claim-until-discovery-finished.patch   +188/-14
   0002-light-deadband-rate-limit-light-level-reports.patch     +85/-2
+  0003-light-smoothing-median-ema.patch                        +195/-42
   README.md
   build-arm64-deb.sh
   artifacts/iio-sensor-proxy_3.9-2elden_arm64.deb              45788 B  af917182…
   artifacts/iio-sensor-proxy-3.9-2elden-arm64.bin             156552 B  e20e690d…（= deb 内文件）
-  artifacts/abi-check.log
+  artifacts/abi-check.log（3.9-3elden）/ abi-check-3.9-2elden.log（上一轮，保留）
+  artifacts/iio-sensor-proxy_3.9-3elden_arm64.deb              47412 B  e4ab7668…
+  artifacts/iio-sensor-proxy-3.9-3elden-arm64.bin             156664 B  893bc7cc…
+  artifacts/sim-0003.py + sim-0003-output.txt                  0003 反演脚本与输出
   artifacts/trace-before-device-20261128.txt                   1507 条真实 lux 样本
   artifacts/sim-real-trace.py / sim-deadband.py                反演脚本
 scripts/deploy-iio-sensor-proxy-patches.sh
 reports/iio-proxy-patches-20261128.md（本文件）
 ```
+
+---
+
+## §9 0003 平滑：中值 + EMA + 更强滞回
+
+> 编号说明：派工单称这一节为「§7」，但本文件 §7 已被「残留风险」占用，故顺延为 §9。
+> 边界：本轮**零设备写入**（`ssh elden` 只做 `sha256sum/objdump/dpkg-query/ldd --version` 只读查询），
+> `--apply` **未执行**；`org.gnome.settings-daemon.plugins.power ambient-enabled` 仍是父代理临时设的 `false`，
+> 收口时须恢复 `true`（见 §9.5 判据 0）。无 git commit。
+
+### 9.1 现场事实（父代理实测，本节不重推）
+
+0001 已在机成功（`Turning deferred claim … into a real claim`，ALS 开始出数）；0002 已在机把**上报**压到
+6 次/60 s。但背光仍抖：同一 60 s 窗口背光写入 **10 次**，且与 `Emitted light changed` 1:1 对齐
+（19:01:23 160→352 / BL 446→810 …）。⇒ 根因不是频率，而是**值**：这颗 SSC light 的噪声幅度
+（真实 trace：raw mean 168 lux、**std 91 lux**、range **0–544 lux**、16 lux 量化、5 Hz）远大于
+`max(20 lux, 5%)` 的死区，gsd-power 48.1 又没有自己的死区（只有 `ambient-enabled` 开关），
+所以只能在代理层**平滑值**。
+
+### 9.2 改法（`0003-light-smoothing-median-ema.patch`，`+195/-42`，仅 `src/iio-sensor-proxy.c`）
+
+| 级 | 规则 | 常量 | 作用 |
+|---|---|---|---|
+| 1 | **滑动中值**，窗口 5 | `LIGHT_MEDIAN_WINDOW 5` | 先丢掉单样本离群点（这颗传感器一次就能跳 300 lux） |
+| 2 | **EMA**，α=0.20/样本 | `LIGHT_EMA_ALPHA 0.20` | 去掉残余逐样本噪声；0.15 实测更差（见 9.3 α 扫描） |
+| 3a | **幅度滞回**：`|smooth − last_reported| > max(60 lux, 30%)` **且持续 ≥3 s** | `LIGHT_DEADBAND_MIN_LUX 60` / `LIGHT_DEADBAND_REL 0.30` / `LIGHT_HYSTERESIS_DWELL_US 3 s` | 只有幅度不够：这颗传感器的慢随机游走能长时间待在 60 lux 带外，所以**加时间滞回** |
+| 3b | **陈旧兜底**：`>25 lux` 的偏离持续 **20 s** 也放行 | `LIGHT_SLOW_STEP_LUX 25` / `LIGHT_STALE_US 20 s` | 保证「比噪声大、比死区小」的真实渐变不会永远不上报 |
+| — | **大跳变快通道**：`median5` 与「最近 2 s 的中值的中值」相差 **≥150 lux** 连续 **3 个样本（0.6 s）** | `LIGHT_FAST_JUMP_LUX 150` / `LIGHT_FAST_JUMP_RUN 3` / `LIGHT_FAST_REF_US 2 s` | 真开关灯立刻放行**并把中值+EMA 直接 snap 到新平台**（上报的是新电平，不是还在爬坡的中间值） |
+| — | 首读无条件上报、单位切换立即上报、10 s 间隔 + **6 次/60 s 硬预算** | 沿用 0002 | claim 首读 / `startup-finished` 语义不变；上限从构造上封死 |
+
+`g_debug("Emitted light changed: … (%s)")` 现在带**放行原因**（`first reading` / `step` / `hysteresis` / `stale` / `unit change`），
+上机时 `grep "Emitted light changed"` 的既有判据仍照旧匹配。
+
+### 9.3 真实 trace 反演（`artifacts/sim-0003.py`，输入 = 设备 journal 的 1507 条真实样本 / 301 s）
+
+```
+# 1507 samples / 302 s (5 Hz, 16 lux quantum); raw mean 168, std 91, range 0-544, 31 distinct values
+
+| policy         | reports | per 60s | worst60 | worst60 BL | uniq vals |
+|----------------|---------|---------|---------|------------|-----------|
+| 3.9 passthru   |    1410 |    280.3 |     290 |         13 |        31 |
+| 0002 deadband  |      31 |      6.2 |       6 |          6 |        16 |
+| 0003 a=0.20    |       3 |      0.6 |       2 |          2 |         3 |
+```
+
+`worst60` = 任意 60 s 滑动窗口内的**最多**上报数（比「平均值」严格）；`worst60 BL` = 同一窗口内按
+gsd 曲线映射后的**背光写入**次数。⇒ **0003：上报 ≤2/60 s、背光写入 ≤2/60 s**，正是要的目标。
+
+α 扫描（同一 trace）：0.15 → 8 次（worst60 4）；**0.18 / 0.20 / 0.22 / 0.25 → 3 次（worst60 2）**。
+取 **0.20**：与 0.25 结果相同而噪声通过更少，处在派工单给的 0.15–0.25 区间中部。
+
+快通道判别力（**这段 trace 是静止环境，任何 `step` 放行都是误报**）：
+
+| 快通道阈值 | 误报 `step` 次数 | 总上报 | worst60 |
+|---|---|---|---|
+| 100 lux | 11 | 21 | 6 |
+| 120 lux | 3 | 7 | 2 |
+| 130 lux | 1 | 7 | 4 |
+| **150 lux** | **0** | 3 | **2** |
+| 180 lux | 0 | 3 | 2 |
+
+### 9.4 为什么不会把「真的开灯/关灯」拖成几秒延迟
+
+在**同一段真实噪声**上叠加阶跃后再跑（延迟 = 阶跃到第一条正确上报的时间）：
+
+| 阶跃 | 3.9 | 0002 | 0003 α=0.20 |
+|---|---|---|---|
+| +300 lux 开灯 @60 s | 0.00 s | 0.00 s | **0.80 s**（`step`） |
+| −300 lux 关灯 @120 s | 0.00 s | 0.00 s | **2.00 s**（`hysteresis`） |
+| +144 lux 弱光 @180 s | 0.00 s | 0.00 s | **0.80 s**（`step`） |
+| +96 lux 台灯 @240 s | 0.00 s | 0.00 s | **0.80 s**（`step`） |
+| −64 lux 遮光 @30 s | 0.00 s | 30.00 s | 38.60 s ⇒ **本来就该静默**：新电平 160 lux 仍在「已上报 128 lux」的 60 lux 死区内 |
+
+论证链：
+
+1. 大跳变**绕过**三级滤波：判据是「中值 vs 最近 2 s 的中值的中值 ≥150 lux 连续 3 样本」，一旦命中就把
+   **中值缓冲与 EMA 直接 snap 到新平台**并立即上报 —— 所以滤波器的时间常数（中值 5 样本 ≈1 s、EMA ≈0.8 s）
+   **不进入**真实开关灯的延迟里；实测 0.8 s（+300/+144/+96）、2.0 s（−300，落到幅度滞回分支）。
+2. **为什么阈值必须是 150 lux 而不是 100**：这颗传感器 raw std 91 lux，100 lux 的快通道在 302 s 静止噪声里
+   误报 11 次（上表）；150 lux 是**实测的零误报点**，再往上是浪费灵敏度。
+3. **小于阈值的真实变化**（60–150 lux）走 3 s 时间滞回 ⇒ 最坏 3–6 s（含 EMA 爬坡）。这不是「迟疑」，而是
+   这个信噪比下唯一能区分「真变化」与「噪声游走」的手段：不加时间滞回时，同一段静止 trace 就有
+   5–6 次/60 s 的纯噪声上报（= 0002 现状）。
+4. **小于死区的变化**（<60 lux）交给 3b 的 20 s 陈旧兜底，最坏 20 s；对照：慢渐变 +5 lux/s 的合成场景
+   实测 ~15 s 内上报（会先撞上 60 lux 死区）。派工单原文写「持续 >3 s 且变化 >25 lux」，**实测这个字面阈值
+   在这颗传感器上不可用**：3 s 驻留会被噪声本身触发（302 s 内 15 次上报、worst60 5），所以把「持续」这一维
+   从 3 s 抬到 20 s 并保留 25 lux 作为下限 —— 这是**有意偏离字面值**，数字见 9.3 表与方法论一致的自检。
+5. 首读仍无条件上报 ⇒ `Claim()` 首读握手与 `maybe_notify_sensor_startup_finished()` 不受影响（与 0002 同）。
+
+### 9.5 ABI 对照与产物（原始输出见 `artifacts/abi-check.log`）
+
+| 项 | 3.9-3elden | 判据 |
+|---|---|---|
+| `file` | ELF 64-bit LSB pie, **ARM aarch64**, interpreter `/lib/ld-linux-aarch64.so.1` | aarch64 ✔ |
+| 最高 GLIBC 符号 | **GLIBC_2.38**（+2.17 / 2.34） | ≤ 2.41（设备 `2.41-12+deb13u4`）✔ |
+| `NEEDED` | gio / gobject / glib / gudev / m / polkit-gobject-1 / ssc.2 / c.6 / ld-linux **9 项**，与设备 `/usr/libexec/iio-sensor-proxy` **diff 无输出 = 9/9 一致** | 一致 ✔ |
+| `RUNPATH` | **无**（meson 安装时剥掉 sysroot runpath；`build/src` 里那份带 runpath，**不是**上机件） | 无污染 ✔ |
+| qemu 烟测 | `--help` rc=0（`monitor-sensor --help` rc=0） | 可执行 ✔ |
+| 数据文件 | udev 规则 / systemd unit / dbus conf / polkit policy 与在机件 **sha256 全同** | 只换二进制 ✔ |
+| 包 | `iio-sensor-proxy_3.9-3elden_arm64.deb` **47412 B** `e4ab7668…`；内部二进制 `893bc7cc…` 156664 B | — |
+
+构建：`build-slot take y700-elden:iio-proxy3 --jobs 8`（id `190859-211769-…`）→ `JOBS=8 bash build-arm64-deb.sh`
+（rc=0，无 warning）→ `build-slot drop`。部署脚本默认值已改 `3.9-3elden`，`--rollback` 仍回 `3.9-1`，
+并注明**中间版本 `3.9-2elden` 可跳过**。
+
+### 9.6 上机一次要验的 3 条判据（本轮未执行）
+
+0. **前置**：`gsettings set org.gnome.settings-daemon.plugins.power ambient-enabled true`（恢复父代理临时关掉的值），
+   否则 ALS 上报不会落到背光，判据 2 必然为 0。
+1. **平滑生效**：`sudo journalctl -u iio-sensor-proxy --since "-1min" | grep -c "Emitted light changed"` **≤2**，
+   且日志里带原因的 `(hysteresis)` / `(step)` 出现、`(first reading)` 只在启动后第一条出现。
+2. **背光不抖**：100 ms 轮询 `/sys/class/backlight/aw99706-backlight/brightness` 60 s，写入 **≤2**（现状 10）。
+3. **真变化不迟钝**：开/关房间灯，`journalctl -f | grep "Emitted light changed"` 应在 **≤1 s** 内出现一条
+   `(... (step))`，值跳到新电平；再 `busctl … LightLevel` 应等于该值。
+
+失败即回滚：`sh /root/deploy-iio-sensor-proxy-patches.sh --rollback`（回 `3.9-1`）。
+
+### 9.7 本节新增的残留风险
+
+1. **反演 ≠ 上机**：`worst60=2` 是真实 trace 的主机重放，**不是**设备实测（`--apply` 未执行）。
+2. **有意偏离字面阈值**：「持续 >3 s 且变化 >25 lux」实际实现为 **20 s + 25 lux**（理由与数字见 9.4 第 4 条）；
+   若父代理要求严格 3 s，代价是回退到 ~5–6 次/60 s。
+3. **`-300 lux` 关灯 2.0 s**（快通道阈值 150 只覆盖 ≥150 的方向；关灯幅度不足时落到 3 s 时间滞回）。
+   若实测觉得慢，把 `LIGHT_FAST_JUMP_LUX` 降到 130（代价：302 s 静止噪声里 1 次误报）。
+4. **α / 中值窗口是这台设备的经验值**：换传感器或 SSC 采样率变化时需要重跑 `artifacts/sim-0003.py` 重新定参。
+5. **trace 时间戳只有 1 s 分辨率**，反演把同秒 5 个样本均匀铺开；真实毫秒级节奏会略有出入（量级不变）。

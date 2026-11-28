@@ -1,12 +1,14 @@
-# ABI / artifact check (host, 2026-11-28T18:16:25+08:00)
+# ABI / artifact check — iio-sensor-proxy 3.9-3elden (0001 + 0002 + 0003)
+# host cross build, 2026-11-28T19:09+08:00, build-slot 190859-211769-y700-elden_iio-proxy3
+# previous round's log (3.9-2elden) kept next to this file as abi-check-3.9-2elden.log
 
 ## file
-artifacts/iio-sensor-proxy-3.9-2elden-arm64.bin: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=35e140b6af3cbb0e67c295693ec1e03185f91ee2, for GNU/Linux 3.7.0, not stripped
+artifacts/iio-sensor-proxy-3.9-3elden-arm64.bin: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=ecb7ef80ce0c1da1b5e6902c5be91b88ac0a2440, for GNU/Linux 3.7.0, not stripped
 
 ## max GLIBC symbol version (ours)
 GLIBC_2.17
 GLIBC_2.34
-GLIBC_2.38
+GLIBC_2.38            <- device glibc 2.41-12+deb13u4 (ldd 2.41) => 2.38 <= 2.41 OK
 
 ## NEEDED (ours)
   NEEDED               libgio-2.0.so.0
@@ -19,20 +21,43 @@ GLIBC_2.38
   NEEDED               libc.so.6
   NEEDED               ld-linux-aarch64.so.1
 
-## NEEDED diff vs device (ssh elden read-only)
+## NEEDED diff vs device (ssh elden, read-only)
 IDENTICAL (9/9)
 
-## device reference
-iio-sensor-proxy 3.9-1, glibc 2.41-12+deb13u4, device max GLIBC symbol = GLIBC_2.38
-device binary sha256: dbe9ee038ce5811417fc4f5c1f302c4961c279da26cafb92fee607572ecc69e6
+## RUNPATH / RPATH in the packaged binary
+none (0 occurrences). meson strips the build-time sysroot runpath at install time, so the
+copy in build/src/ still carries /tmp/iio-patch-20261128/sysroot/... and is NOT the
+artifact; the .bin in artifacts/ is the installed copy taken out of the .deb.
 
-## artifact sha256 (binary extracted from the deb, i.e. what dpkg will install)
-af9171823a2c3b1d396880552d02dc7abb827db5e2c99cc400e150b357513b05  artifacts/iio-sensor-proxy_3.9-2elden_arm64.deb
-e20e690d884aab7b8f889244e37e2c65bf9f387daddb3de23d28a83ecfcd584c  artifacts/iio-sensor-proxy-3.9-2elden-arm64.bin
+## qemu-aarch64 smoke test
+$ qemu-aarch64 -L /tmp/iio-patch-20261128/sysroot \
+    -E LD_LIBRARY_PATH=/tmp/ssc-prep/sysroot-work/sysroot/usr/lib/aarch64-linux-gnu \
+    artifacts/iio-sensor-proxy-3.9-3elden-arm64.bin --help
+Usage: iio-sensor-proxy-3.9-3elden-arm64.bin [OPTION...] / -h -v -r ; rc=0
+$ qemu-aarch64 ... usr/bin/monitor-sensor --help ; rc=0
+
+## data files in the deb vs the ones already on the device (sha256 compare)
+  same: usr/share/dbus-1/system.d/net.hadess.SensorProxy.conf
+  same: usr/lib/udev/rules.d/80-iio-sensor-proxy.rules
+  same: usr/lib/systemd/system/iio-sensor-proxy.service
+  same: usr/share/polkit-1/actions/net.hadess.SensorProxy.policy
+=> installing 3.9-3elden replaces the binary only; udev rule, unit, polkit policy untouched
+
+## device reference at build time (ssh, read-only, nothing written)
+iio-sensor-proxy installed : 3.9-2elden
+/usr/libexec/iio-sensor-proxy sha256 : e20e690d884aab7b8f889244e37e2c65bf9f387daddb3de23d28a83ecfcd584c
+kernel : 7.3.1-debug-vk189-suspend-g4da9a8b69fc8-dirty
+glibc  : 2.41-12+deb13u4
+(the 9/9 NEEDED list is unchanged from 3.9-2elden, whose list was diffed against the
+distro 3.9-1 binary in the previous round — same 9 entries, same order)
+
+## artifact sha256 (binary = the file inside the deb, i.e. what dpkg will install)
+e4ab766883f8af2a954524eb25551aa45c571e168be369236189ff7b2272ea2d  artifacts/iio-sensor-proxy_3.9-3elden_arm64.deb   (47412 B)
+893bc7ccee0b9a1ddcde94388c9d4c46e5c5b2a0b2d2bb9171bdb41bc27a3e4d  artifacts/iio-sensor-proxy-3.9-3elden-arm64.bin   (156664 B)
 
 ## deb control
 Package: iio-sensor-proxy
-Version: 3.9-2elden
+Version: 3.9-3elden
 Architecture: arm64
 Depends: libc6 (>= 2.38), libglib2.0-0t64 (>= 2.68.0), libgudev-1.0-0 (>= 234), libpolkit-gobject-1-0 (>= 0.99), libssc2 (>= 0.4.2)
 
@@ -55,8 +80,6 @@ Depends: libc6 (>= 2.38), libglib2.0-0t64 (>= 2.68.0), libgudev-1.0-0 (>= 234), 
 ./usr/share/dbus-1/system.d/
 ./usr/share/dbus-1/system.d/net.hadess.SensorProxy.conf
 ./usr/share/lintian/
-./usr/share/lintian/overrides/
 ./usr/share/lintian/overrides/iio-sensor-proxy
 ./usr/share/polkit-1/
-./usr/share/polkit-1/actions/
 ./usr/share/polkit-1/actions/net.hadess.SensorProxy.policy

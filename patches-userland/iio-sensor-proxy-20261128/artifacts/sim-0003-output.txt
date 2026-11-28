@@ -1,0 +1,39 @@
+# trace: trace-before-device-20261128.txt
+# 1507 samples / 302 s (5 Hz, 16 lux quantum); raw mean 168, std 91, range 0-544, 31 distinct values
+
+| policy         | reports | per 60s | worst60 | worst60 BL | uniq vals |
+|----------------|---------|---------|---------|------------|-----------|
+| 3.9 passthru   |    1410 |    280.3 |     290 |         13 |        31 |
+| 0002 deadband  |      31 |      6.2 |       6 |          6 |        16 |
+| 0003 a=0.20    |       3 |      0.6 |       2 |          2 |         3 |
+
+# worst60 = reports inside the busiest 60 s sliding window,
+# worst60 BL = backlight writes (gsd-like lux->percent) in the busiest window
+
+# alpha sweep (median 5 -> EMA(alpha) per sample, dwell 3 s, stale cap 20 s)
+  alpha=0.15: reports= 8 worst60=4 worst60BL=2 causes={'first': 1, 'hysteresis': 7}
+  alpha=0.18: reports= 3 worst60=2 worst60BL=2 causes={'first': 1, 'hysteresis': 2}
+  alpha=0.20: reports= 3 worst60=2 worst60BL=2 causes={'first': 1, 'hysteresis': 2}
+  alpha=0.22: reports= 3 worst60=2 worst60BL=2 causes={'first': 1, 'hysteresis': 2}
+  alpha=0.25: reports= 3 worst60=2 worst60BL=2 causes={'first': 1, 'hysteresis': 2}
+
+# fast-path robustness on the static trace: any 'fast' report here is a
+# false trigger (this 302 s window contains no deliberate light change)
+  fast cutoff 100 lux: reports=21  false fast reports=11  worst60=6
+  fast cutoff 120 lux: reports= 7  false fast reports=3  worst60=2
+  fast cutoff 130 lux: reports= 7  false fast reports=1  worst60=4
+  fast cutoff 150 lux: reports= 3  false fast reports=0  worst60=2
+  fast cutoff 180 lux: reports= 3  false fast reports=0  worst60=2
+
+# genuine light change added on top of the real noise, and its latency
+| step                                 | 3.9     | 0002     | 0003 a=0.20 |
+|--------------------------------------|---------|----------|-------------|
+| +300 lux (light on)   @ 60 s         |  0.00 s  |  0.00 s  |     0.80 s  |
+| -300 lux (light off)  @ 120 s        |  0.00 s  |  0.00 s  |     2.00 s  |
+| +144 lux (dim light)  @ 180 s        |  0.00 s  |  0.00 s  |     0.80 s  |
+| +96 lux  (lamp)       @ 240 s        |  0.00 s  |  0.00 s  |     0.80 s  |
+| -64 lux  (shade)      @ 30 s         |  0.00 s  | 30.00 s  |    38.60 s  |  <- new level 160 lux stays inside the deadband of the reported 128 lux, so silence is the right answer
+
+# the first report is unconditional in all three policies, so the
+# Claim() -> first-measurement handshake and the startup-finished
+# notification are unaffected.
