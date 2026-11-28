@@ -6,6 +6,7 @@
 > - 驱动/DT 面 = `reports/hw-capability-drivers-20261127.md`（vendor DT 枚举 × 主线对照 × 五桶）
 > - 固件面 = `reports/hw-capability-firmware-20261127.md`（27 条请求路径 × 本机 × linux-firmware × 可否分发）
 > - 单元/镜像状态 = `DEVICE/README.md` §1.1/§1.2；任务台账 = `TASKS/GAPS.md`（Q34/Q36…）
+> - 驱动面 11-27 三份审计原件 = `reports/driver-gap-device-audit-20261127.md`（设备侧只读 /sys 缺口枚举）、`reports/driver-upstream-audit-20261127.md`（上游化四列对照）、`reports/drivers-build-iris-20261127.md`（主机侧编译 + iris 三次零写盘上机）
 > **为什么要这张表**：`DEVICE/README.md` 记「设备是什么」，`TASKS/` 记「要做什么」，本表记**「哪些硬件能力还没接通、为什么」**——查漏补缺时先看这里，再进报告。
 
 ## 0. 数字（现查自两张报告 §0）
@@ -64,6 +65,7 @@
   ⚠ 先 `make olddefconfig` 再读符号：在机 `build/daily/.config` 是 **11-16** 生成的，而 `st21nfca` 文件 **11-25** 才进树 ⇒ 现在跑 `grep ST21NFCA .config` 是 `(absent)`，属于「config 早于树内容」而不是「树里没驱动」（`scripts/capability-audit.sh` 已把这两种成因分开提示）。
 - ~~NFC~~：**不投入** —— 本机无 NFC 硬件（G1-10 已取消）。别再因为「DT 里有 `nfc@8` 节点」去开 CONFIG（那是多 SKU 共用模板，且 `&i2c0` 使能曾致硬关机 `PITFALLS #108`）。
 - **iris**：把工作树里 `&iris{okay}` 的板级覆盖提交进 DTS 系列，并换用上游 `vpu35_p4.mbn`（同文件名）后做一次上机验 TZ 签名（Q36 三件套的 ③）。
+- **iris 解码取证链（Q36）**：vk197 单变量上机（DT + 签名固件已活、真解码仍红）= `reports/dt-vk197-adsp-iris-20261127.md`；静态代码判读（根因层 = 驱动 DRC / 首帧前 IPSC，非 inst ERROR）= `reports/iris-decode-static-20261127.md`。
 - **固件门禁（已落地 2026-11-27）**：A2 曾因默认 `KDIR=build/vk151` 消失而**静默失效**（覆盖面 3/27）⇒ 现为 `MODULE_FIRMWARE ∪ required-firmware.tsv`（31 条），KDIR 三级解析、失败打 **`SKIP A2`**（不再假装通过），三态 `ok / MISS / MISS(vendor)`；门有牙齿已自测（删 `qca/tmel_peach_20.elf` ⇒ 恰好 1 条 MISS、rc=1）。清单 = `rootfs/debian/elden-firmware/required-firmware.tsv`（加硬件只改它），报告 `reports/firmware-gate-a2-20261127.md`。
 - **不投入（已有裁决，逐项理由与重开条件见 §5）**：TEE/SPU、Gunyah、PMIH010x、FM/ST54、NFC、Modem、SOCCOP、vendor `bl@11`/`bias@3e`、双口快充选口、suspend 掉电率量化。
 

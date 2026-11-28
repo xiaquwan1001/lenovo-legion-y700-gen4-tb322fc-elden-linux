@@ -100,6 +100,7 @@
 | API 双重限流（20 req/窗口 + $30/3h） | worker"干净退出"像崩溃 | 用 provider `deepseek`；并发 ≤3；见 `archive/topics/复盘-2026-10-02-swarm.md` |
 | vermagic 耦合 | 改 `CONFIG_LOCALVERSION` → 相机 `.ko` 全废 | 改内核版本必须整套重编 `.ko` |
 | 备份目录命名 | 历史 `backup/new-tablet/` 语义已废 | 新操作一律 `backup/<SN>-<容量档>/`；脚本默认值参数化（A16） |
+| systemd 单元自建后设备上没有（D16） | 传感器竞态「出数后再起 iio-sensor-proxy」曾裸奔：冷启 `HasAccelerometer=false` | ✅ 2026-11-27 晚固化成 `elden-sensorproxy-sync` 单元 + `deploy-desktop-shell.sh` §19 四件判据（真重启与失败路径双验）；全过程 = `reports/d16-sensorproxy-sync-20261127.md` |
 
 ---
 

@@ -39,3 +39,16 @@
 | 收件人 | To `linux-media`；Cc `linux-arm-msm`/Vikash/Dikshita/Abhinav/Bryan/Mauro/Hans/Stefan + `stable@vger`（Cc trailer 自动带入） |
 | lore 复核 | ✅ `GET /linux-media/<MID>/t.mbox.gz` **HTTP 200 / 15 377 B gzip**；线程 **6 封**（v1 cover+3 贴+Bryan 回帖+本 v2），Subject 未改写，`Fixes:`/`Cc: stable`/SoB 逐字在档 |
 | 正文要点 | v2 只留 colorspace 1 贴；明写 1/3 重复主线 `1facae9bc3c1`、3/3 被主线 s_fmt 无条件 crop seed 取代，请 drop；点名 `38fc8beaba55`（初始化）与 `b530b95de22c`（行为）两个 sha |
+
+## 2026-11-28 10:36 CST —— **v3 已实发（只改 commit message，代码 diff 与 v2 逐字节同）**
+
+| 项 | 值 |
+|---|---|
+| 起因 | media-ci `patchwork@media-ci.org`（2026-11-28T01:27:06Z）对我方 v2 判 `ERROR: Fails one or more mandatory checkpatch tests`；本机复现命令 = `perl scripts/checkpatch.pl --no-tree --strict`，v2 = **2E/4W**（`GIT_COMMIT_ID` 标题折行 + 行首 `Cc:` 前导空格） |
+| 备料 | `0003-v3-fill-default-colorspace.patch`（sha256 `713c41d2…`）+ `V3-SEND.md` + `logs/checkpatch-v2-v3-20261128.log`；代码区 `sed -n '/^diff --git/,$p'` 与 v2 逐字节相同（`diff` 空输出，diff 区 sha256 两边均 `8515c6c1…`） |
+| 门禁（父代理独立重跑） | v3 `--no-tree --strict` = **0 errors**（2 条 `Unknown commit id` 仅因复核用的 `/tmp/ktree` 无真 git 对象，非报文问题） |
+| 发送 | `git send-email --confirm=never … --in-reply-to=<v1 cover>`；**`Result: 250`**（日志 `out/mail-20261128/send-v3-iris-colorspace.log`） |
+| Message-ID | `<20261128023628.24408-1-xiaqinghuan@mail.ustc.edu.cn>` |
+| 收件人 | To `linux-media`；Cc `linux-arm-msm`/Vikash/Dikshita/Abhinav/Bryan/Mauro/Hans/Stefan + `stable@vger`（trailer 自动带入） |
+| lore 复核（父代理自查） | `GET /linux-media/<MID>/t.mbox.gz` **HTTP 200 / 16 939 B gzip / 57 949 B 解压**，线程 **7 封**（v1 cover+3 贴+Bryan 回帖+v2+v3），Subject 未改写，`Fixes: b530b95de22c` / `Link:` / `Cc: stable` 均在档 |
+| 正文实质 | ① 正面回应 Bryan：1/3 与主线 `1facae9bc3c1` 重复，**"there is nothing left to tag there now"**，请 drop；② 3/3 已被主线 `iris_vdec_s_fmt()` 无条件 crop seed 取代 ⇒ dropped；③ 声明「v3 只重写 commit message，diff = v2，未 rebase/未重测」；④ AI 披露在档 |

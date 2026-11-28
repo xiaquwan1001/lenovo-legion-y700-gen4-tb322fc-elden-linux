@@ -119,6 +119,7 @@
   实物模板：`y700四代工具/解BL/Y700 三代解锁工具箱by某贼.zip` → `bin/res/sn.img`（附 `HexTool.exe`/`hexconvetor.exe`）。
 - 并发 worker 的限流与 SIGPIPE 复盘：`archive/topics/复盘-2026-10-02-swarm.md`、全局 `~/.pi/agent/AGENTS.md`（ustc_ai 20 req/窗口 + $30/3h 预算；现用 provider `deepseek`）。⚠️ 该轮 harness `pi-messenger-swarm` 已卸载 → 脚本失效、结论有效（`archive/2026-10-04-retired-entrypoints/README.md` §3）。
 - 社区通用：`gsi-device-adaptation`、`qualcomm-*-flashing` 技能（`.pi/skills/`）。
+- 下载通道坑（GitHub release 302→Azure SAS 空等 0 字节；rayburst / aria2-next 三档 A/B 已做完、2026-11-28 裁决不再跟踪但留档）= `../reports/rayburst-redirect-ab-20261127.md`。
 
 ---
 

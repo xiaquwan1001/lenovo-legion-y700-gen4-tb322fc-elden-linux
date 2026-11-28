@@ -11,6 +11,9 @@
 > **★历次邮件增量（2026-11-07 → 11-14，5 块：11-08 sashiko 10 条 / mdss v5 回信 / 11-12 reviewer tag 3 个 / 11-11 wl2868c v10 已投 / 11-07 未答项现查）已下沉**：逐字原文在 `TASKS/sessions/2026-11-19-§7头增量块下沉.md`；当时结论均由 `reports/mail-triage-*.md`、`reports/upstream-status-20261113.md`、`patches/upstream/*/SENT.md` 覆盖。
 > **归档复核口径（2026-11-04 起）**：lore `/<list>/<mid>/raw` 返 Anubis 挑战页（HTTP 200 但非原文）⇒ **不得**用 `/raw 200` 当作档证据；一律 **patchwork API** + 按 MID 取 lore `/T/` 线程页，且「N/N 命中」口径 = 「非 cover N/N」。
 
+> **★ 通信跟踪（D10，每轮常设 lane）窗口留档**：11-27 03:20Z→12:32Z 九小时增量 = `reports/comms-track-20261127-c.md`（IMAP 与 glab 认证面被 keyring 锁死，改 lore 全域扫 79 线程）；11-26T22:02Z→11-27T22:17Z 二十四小时全窗 = `reports/comms-track-20261128.md`（末节收 Dmitry 给 M6 DSI-PHY v3 的 Reviewed-by）。
+> **★ kaanapali（SM8850）TNOC periphid = 停手留档（2026-11-27）**：缺口为真，但上游 2026-11-18 已投同型件（patchwork 14995781，Abel Vesa + Konrad Dybcio 双 R-b）且 next v7 改平台总线绑定 ⇒ 不发系列、只留否证证据；全过程 = `reports/kaanapali-tnoc-periphid-20261127.md`。
+> **★ v4l2-compliance 3 贴（series 1224591）残项核定（2026-11-28）**：Bryan 要求 1/3 补 `Fixes:` + `Cc: stable`；同份核定「1/3 与主线重复、3/3 已被 crop seed 取代」= `reports/v4l2-compliance-overlap-20261128.md`。
 > 审查已完成（2026-10-04，只审不改）：payload=相对主线 v7.2 的 **125 改 + 11 新文件（≈12.4k 行）**，
 > 分级 A/B/C/D 与推进顺序见 `archive/topics/UPSTREAM-REVIEW-2026-10-04.md`。机械检查全净
 > (checkpatch/DTC/dt-validate 仅 1 红点=usb@a600000)。

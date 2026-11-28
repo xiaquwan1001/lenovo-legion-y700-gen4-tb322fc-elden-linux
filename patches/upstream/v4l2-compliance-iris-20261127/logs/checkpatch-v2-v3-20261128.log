@@ -1,0 +1,50 @@
+### harness: /tmp/ktree (minimal Makefile VERSION=7.4.0 + scripts/ copied from repo linux/scripts + git refs emulating upstream commit ids)
+### date: Sat, 28 Nov 2026 10:34:36 +0800  host: Linux 7.0.0-44-generic  checkpatch: b319d9f58cd625f093e08aaa79b3cbef9949706bf665b797dc506c3c84f35e58
+
+===== [BEFORE] v2: perl scripts/checkpatch.pl --no-tree --strict 0002-v2-fill-default-colorspace.patch
+WARNING: Prefer a maximum 75 chars per line (possible unwrapped commit description?)
+#12: 
+A decoder cannot know the stream's colours before it parses a frame, but the
+
+ERROR: Please use git commit description style 'commit <12+ chars of sha1> ("<title line>")' - ie: 'commit f5e82779cf0c ("media: iris: Fix bus_info prefix in VIDIOC_QUERYCAP")'
+#27: 
+  commit 1facae9bc3c1 ("media: iris: Fix bus_info prefix in
+
+WARNING: Do not use whitespace before Cc:
+#29: 
+  Cc: stable@vger.kernel.org), which is already in mainline. My tree predates
+
+WARNING: email address 'stable@vger.kernel.org), which is already in mainline. My tree predates' might be better as 'stable@vger.kernel.org) which is already in mainline. My tree predates'
+#29: 
+  Cc: stable@vger.kernel.org), which is already in mainline. My tree predates
+
+WARNING: Invalid email format for stable: 'stable@vger.kernel.org), which is already in mainline. My tree predates', prefer 'stable@vger.kernel.org), # which is already in mainline. My tree predates'
+#29: 
+  Cc: stable@vger.kernel.org), which is already in mainline. My tree predates
+
+ERROR: Please use git commit description style 'commit <12+ chars of sha1> ("<title line>")' - ie: 'commit 3a1265417b4e ("media: iris: implement reqbuf ioctl with vb2_queue_setup")'
+#43: 
+38fc8beaba55 ("media: iris: implement reqbuf ioctl with vb2_queue_setup"), which
+
+total: 2 errors, 4 warnings, 0 checks, 43 lines checked
+
+NOTE: For some of the reported defects, checkpatch may be able to
+      mechanically convert to the typical style using --fix or --fix-inplace.
+
+/home/xuqianhui/y700-elden/patches/upstream/v4l2-compliance-iris-20261127/0002-v2-fill-default-colorspace.patch has style problems, please review.
+
+NOTE: If any of the errors are false positives, please report
+      them to the maintainer, see CHECKPATCH in MAINTAINERS.
+rc=1
+
+===== [AFTER] v3: perl scripts/checkpatch.pl --no-tree --strict 0003-v3-fill-default-colorspace.patch
+total: 0 errors, 0 warnings, 0 checks, 43 lines checked
+
+/home/xuqianhui/y700-elden/patches/upstream/v4l2-compliance-iris-20261127/0003-v3-fill-default-colorspace.patch has no obvious style problems and is ready for submission.
+rc=0
+
+===== [AFTER] v3: perl scripts/checkpatch.pl --no-tree (non-strict)
+total: 0 errors, 0 warnings, 43 lines checked
+
+/home/xuqianhui/y700-elden/patches/upstream/v4l2-compliance-iris-20261127/0003-v3-fill-default-colorspace.patch has no obvious style problems and is ready for submission.
+rc=0
