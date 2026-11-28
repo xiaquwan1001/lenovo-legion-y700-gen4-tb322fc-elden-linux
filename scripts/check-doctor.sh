@@ -46,6 +46,7 @@
 #   29-out-candidate-sha.sh 上机候选件 sha 账目（候选件 ↔ .sha256/SHA256SUMS）[全量]
 #   30-tasks-routing.py TASKS 章节路由门（§N→章文件漏号/悬空引用 + 6 类坏件自检）[全量+fast]
 #   32-userland-mirror.sh 用户态镜像一致性门（files↔scripts/rootfs 漂移 + verify.sh --offline）[全量]
+#   33-reports-orphan.sh reports/ 孤儿真值门（角度层语料 + 反作弊；§8f 只是粗筛）[全量]
 #
 # 验收用环境变量（正常使用无需设置）：
 #   ELF_ROOT=<dir>        被检查的树（默认 = 本脚本上一级）—— A/B 时指向主仓
@@ -62,7 +63,12 @@ SEC_TIMEOUT="${ELF_SEC_TIMEOUT:-600}"
 export ROOT HELPERS
 
 # 子门清单：按输出顺序排列（数字 = 与旧版 §N 对齐）。
-ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 12-modular.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py 17-shell-hygiene.sh 18-flashpkg-geometry.sh 19-slotattr-selftest.sh 20-rootfs-image.sh 21-write-precheck.sh 22-desktop-chain.py 23-out-manifest.sh 24-scripts-index.sh 25-out-status.sh 26-vbmeta-b-chain.sh 27-bootimg-cmdline.sh 28-soft-bl-selftest.sh 29-out-candidate-sha.sh 30-tasks-routing.py 31-reports-index.sh 32-userland-mirror.sh"
+ALL="04-retired.sh 05-vk.sh 05e-manifest.sh 05f-abi.sh 06-hygiene.sh s07-08-docs.py 09-sessions.sh 10-history.sh 11-hooks.sh 12-modular.sh 13-assets.sh 14-layout.sh 15-timeline.sh s16-tasks-counts.py 17-shell-hygiene.sh 18-flashpkg-geometry.sh 19-slotattr-selftest.sh 20-rootfs-image.sh 21-write-precheck.sh 22-desktop-chain.py 23-out-manifest.sh 24-scripts-index.sh 25-out-status.sh 26-vbmeta-b-chain.sh 27-bootimg-cmdline.sh 28-soft-bl-selftest.sh 29-out-candidate-sha.sh 30-tasks-routing.py 31-reports-index.sh 32-userland-mirror.sh 33-reports-orphan.sh"
+# 2026-11-28 加 33（doc-drift 审计 S7）：同一「reports/ 无孤儿」判据曾有两套实现、结论相反 ——
+#   §8f（s07-08-docs.py）语料 = 全仓任意 md/sh/py/tsv（连 reports/README.md 这个机器全量目录都算
+#   指针）⇒ 恒 [ok] 判别力≈0；专职门 reports-orphan-check.py 用角度层语料 + 反作弊 ⇒ 同时刻 rc=1。
+#   现在真值只认 §33（FAIL 级），§8f 在措辞上降级为「粗筛」（判据本体未改、仍只 WARN）。
+#   §33 实测 2.4 s（759 篇角度语料扫描）+ 0.04 s 自测 ⇒ 只进全量档（fast 总预算 6 s，加进来会恒响墙钟 WARN）。
 # 2026-11-27 加 32（arch-audit A9/A10）：用户态镜像一致性门 + packaging verify.sh --offline 接线，只进全量档。
 # 2026-11-26 加 31（架构审计 A17）：reports/README.md 生成索引过期门（694 篇的唯一查全入口，此前无门、实测漂 60 篇），--check 只读标题 ~1 s，只进全量档。
 # 2026-11-20 加 25（arch-audit P1#6）：out/ 生命周期账本门（active/verified/superseded/pending ↔ 磁盘），全量 du 一遍 out/ ~2 s，只进全量档。
@@ -120,7 +126,7 @@ trap 'rm -rf "$TMP"' EXIT
 
 if [ "$JSON" != 1 ]; then
   if [ "$PROFILE" = fast ] && [ -z "$ONLY" ]; then
-    echo "== elden check-doctor (--staged-fast: 纯文本档，跳过 §4/§5/§5d/§5e/§5f/§6/§12) — $ROOT =="
+    echo "== elden check-doctor (--staged-fast: 纯文本档，跳过 §4/§5/§5d/§5e/§5f/§6/§12/§33) — $ROOT =="
   else
     echo "== elden check-doctor — $ROOT =="
   fi

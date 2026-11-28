@@ -285,11 +285,17 @@ for rel in TBL_DOCS:
             TBL.append('%s:%d 表格行被换行拆开（该行及其后全部数据行会退化成纯文本）' % (rel, i + 1))
 emit('TBL', TBL)
 
-# ---- 8f. reports/ 不得有孤儿（AGENT-OPS §3「报告必须被引用」的机器版）----
+# ---- 8f. reports/ 不得有孤儿（AGENT-OPS §3「报告必须被引用」的**粗筛**版）----
 # 立此判据的原因：2026-10-15 实例——`reports/q24-causal-audit-20261015.md` 既未入 git
 # 也无人引用，结论随文件沉底。2026-10-19 复盘又查出 5 篇孤儿报告。
 # 判据：报告文件名必须出现在**自身以外**的 md/sh/py/tsv 里（含 glob 写法）。
 # 白名单 = reports/ 下的索引类文件（它们引用别人，不需要被别人引用）。
+# ★ 2026-11-28 降级（doc-drift 审计 S7）：本节的语料 = 全仓任意 md/sh/py/tsv（连
+#   `reports/README.md` 这个机器生成的全量目录都算指针，它收录每一篇）⇒ 判别力≈0、恒 [ok]，
+#   而同一次审计里专职门 `scripts/reports-orphan-check.py`（角度层语料 + 反作弊）rc=1。
+#   因此本节**降级为粗筛**（只 WARN，判据本体不动）：真值以 doctor **§33**
+#   （`scripts/doctor/33-reports-orphan.sh` → `reports-orphan-check.py --check`，FAIL 级）为准；
+#   本节变红仍要查，本节变绿**不能**当作「无孤儿」。
 ORPHANR = []
 RP = os.path.join(root, 'reports')
 if os.path.isdir(RP):
@@ -342,8 +348,8 @@ MSG = {
                '索引行超长（内容应搬进正文，索引留一段主题 + 链接）'),
     'TBL': ('bad', '入口文档表格结构完整（无被换行拆断的表格行）',
             '表格行被换行拆开（合并成一行，叙事搬去 reports/）'),
-    'ORPHANR': ('warn', 'reports/ 无孤儿报告（每篇都被至少一处引用）',
-                '报告无人引用（结论会随文件沉底，补一处指针到对应 README/TASKS 行）'),
+    'ORPHANR': ('warn', '§8f 粗筛：reports/ 无孤儿（任一 md/sh/py/tsv 出现过文件名即算；真值以 §33 reports-orphan-check.py 为准）',
+                '§8f 粗筛：报告无人引用（结论会随文件沉底；合规指针口径与真值以 §33 reports-orphan-check.py --check 为准）'),
 }
 GROUPS = [
     ('== 7. 入口文档完整性（围栏 / 截断 / 机器指针）==', ['FENCE', 'LEAK', 'TAIL']),
