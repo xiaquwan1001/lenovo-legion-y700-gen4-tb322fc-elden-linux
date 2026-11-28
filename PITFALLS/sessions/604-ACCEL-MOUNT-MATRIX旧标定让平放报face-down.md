@@ -23,7 +23,7 @@ sudo busctl --system get-property net.hadess.SensorProxy /net/hadess/SensorProxy
 带符号置换族（48 个）里**唯一解**：
 
 ```
-ENV{ACCEL_MOUNT_MATRIX}="1, 0, 0; 0, -1, 0; 0, 0, -1"      # ★2026-11-28 用户实机目视后的最终值
+ENV{ACCEL_MOUNT_MATRIX}="-1, 0, 0; 0, 1, 0; 0, 0, -1"     # ★2026-11-28 三轮目视后的最终值（det=+1）
 ```
 
 > 迭代过程（别重走）：先按两条口述约束解出 `diag(1,1,-1)`，用户实测「竖屏正常、**横屏 180° 颠倒**」⇒ 按 `orientation.c`

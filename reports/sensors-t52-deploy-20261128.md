@@ -147,3 +147,25 @@ ssh elden 'sudo -n sh /tmp/deploy-iio-sensor-proxy-patches.sh --rollback'
 - **诚实记录**：报告 §2.4 的候选表把 M_B（本值）预测成「画面仍 180° 反」，该预测**是错的**（当时把两条口述约束当成了充分条件）；现以用户实测 + `orientation.c` 源码为准。
 - 上线动作（按顺序，一次做完）：改设备 udev → `udevadm trigger` → `systemctl restart iio-sensor-proxy`（矩阵在 discovery 时读取，必须重启代理）→ **再 `systemctl restart greetd` 一次**让 phosh 重新 claim（否则方向 auto 依旧消失，见 §6）。
 - 复验状态：`phosh` 新 pid `322942`（19:45:44 启动）在 19:45:45 `ClaimAccelerometer` + 加速度计 continuous 出流；`droidloom` 已手工起到 `Android is ready`。**待用户目视**：横屏是否正立、竖屏是否仍正常。
+
+## §8 第三次修正并结项：`diag(-1,1,-1)`（用户 2026-11-28 19:53 确认「完成」）
+
+- 用户提示：**「横着是长边」**（本机面板原生 1904×3040 = 竖屏，横持时长边=面板 x-res 那条边水平）——
+  这条纠正了前两轮把"横"当成短边水平的误解。
+- 两轮目视数据的联立（不是再猜一次）：
+  | 矩阵 | 竖屏 | 横屏 |
+  |---|---|---|
+  | `diag(1,1,-1)` | 正确 | 180° 反 |
+  | `diag(1,-1,-1)` | **反了** | 反 |
+  ⇒ 翻 y 会把竖屏弄反 ⇒ **竖屏由 y 决定**；两次横屏都反且 x 未动过 ⇒ **横屏由 x 决定**。
+  ⇒ 只翻 x：**`diag(-1,1,-1)`**（`det=+1`，绕 Y 轴 180° 真旋转；第 3 行不变 ⇒ 平放仍 `face-up`）。
+  机理与代码一致：面板原生竖屏，竖持时重力沿长轴（y）⇒ `orientation_calc` 走 `landscape_rotation` 分支；
+  横持时重力沿短轴（x）⇒ 走 `portrait_rotation` 分支（`>0→left-up(90°)`、`<0→right-up(270°)`）。
+- 上线顺序（一次做完）：改设备 udev → `udevadm trigger` → 重启 `iio-sensor-proxy` → **重启 `greetd`**
+  让 phosh 重新 claim（代理重启必然丢 claim，见 §6）。
+- 最终在机状态（2026-11-28 19:53 现查）：
+  - `ACCEL_MOUNT_MATRIX=-1, 0, 0; 0, 1, 0; 0, 0, -1`（读回）
+  - phosh `329322`（19:53:13 启动）在 19:53:14 `ClaimAccelerometer` + 加速度计 continuous 出流
+  - `AccelerometerTilt` = `face-up`；`droidloomctl status` = `Android is ready`（cell `u1001`）
+  - 用户目视：**结项**。
+- 未修待办（不阻塞）：`T53` phosh 不监听 `notify::g-name-owner` ⇒ 每次重启代理都得再重启会话（本轮共 3 次）。
