@@ -319,3 +319,20 @@ for k,(n,last,who,tit) in sorted(res.items(), key=lambda kv: kv[1][1], reverse=T
 ```
 
 ■ 结束
+
+---
+
+## 2026-11-28 09:3x CST 增量（T32/D13/T33 轮，只读）
+
+窗口：2026-11-27T16:00Z → 2026-11-28T01:30Z（接上一节的 11-28 早轮）。
+
+| 面 | 结果 |
+|---|---|
+| **USTC INBOX（人类）** | **1 封**：`[10489] 2026-11-27T22:26:47+0200 Dmitry Baryshkov` `Re: [PATCH v3] drm/msm/dsi/phy: program PLL_SYSTEM_MUXES on the first PHY enable` ⇒ 正文末 **`Reviewed-by: Dmitry Baryshkov <dmitry.baryshkov@oss.qualcomm.com>`**（无技术异议）。**M6 首个维护者 Reviewed-by**。 |
+| **USTC INBOX（机器人）** | `[10490] Patchwork Integration` iris v2 colorspace 通知（= 我们 08:37 CST 自己发出的那贴） |
+| **其它未读** | 无（近 8 天 INBOX 最新即 10489/10490；Junk 无可疑；无退信） |
+| **hexagonrpc PR #31** | 仍 `OPEN` / `UNSTABLE` / `reviews=[]`，`updatedAt` 仍是 2026-11-27T03:09:39Z（零变化） |
+| **droidloom issues** | `#65` = OPEN、`updatedAt` 2026-11-27T14:01:51Z、**comments 0**；`#48` 最后一条仍是我们的 11-27 评论（`updatedAt` 14:45:11Z）⇒ 维护者未回复 |
+| **网络坑** | `gh` 默认走 `https_proxy` ⇒ `api.github.com` TLS handshake timeout；`env -u https_proxy …` 即正常（`curl --noproxy '*'` = 200 同证） |
+
+**本轮我方欠动作（0 项必须）**：M6 的 `Reviewed-by` 只需在下次修订（v4 或合入后）带进 commit trailer；不需要单独回帖（D10 只读口径）。

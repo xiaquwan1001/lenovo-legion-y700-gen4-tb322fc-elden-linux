@@ -21,6 +21,10 @@
 !/tools/avbtool.py
 !/tools/l2-extract/
 !/tools/gunyah-modules/
+!/tools/uinput-back.c
+!/tools/uinput-back-build.sh
+!/tools/uinput-touch.c
+!/tools/uinput-touch-build.sh
 /tools/gunyah-modules/*/*.dtb
 /tools/gunyah-modules/*/*.bin
 /tools/gunyah-modules/*/vmmtest

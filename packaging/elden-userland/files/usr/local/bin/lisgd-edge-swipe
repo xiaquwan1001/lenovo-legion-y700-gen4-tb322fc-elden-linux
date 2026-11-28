@@ -60,25 +60,39 @@ if ! command -v lisgd >/dev/null 2>&1; then
 	exit 1
 fi
 
-echo "lisgd-edge-swipe: node=$NODE geom=${W}x${H} threshold=${ELDEN_SWIPE_THRESHOLD:-60} timeout=${ELDEN_SWIPE_TIMEOUT_MS:-800}ms cmd=$BACK_CMD"
+echo "lisgd-edge-swipe: node=$NODE geom=${W}x${H} threshold=${ELDEN_SWIPE_THRESHOLD:-60} timeout=${ELDEN_SWIPE_TIMEOUT_MS:-800}ms leniency=${ELDEN_SWIPE_LENIENCY:-45} cmd=$BACK_CMD"
 
-# 手势表（2026-11-25 用户实测左边缘通过后加右边缘）：
-#   ① 单指 Left→Right、只认**左**边缘（edge=L）  = 返回
-#   ② 单指 Right→Left、只认**右**边缘（edge=R）  = 返回（左右手/左右持握都顺手）
-#   竖划（UD/DU）与屏幕中间的横划都不匹配 ⇒ 不误触滚动/翻页；判据见 TASKS §4 D13。
+# 手势表（2026-11-28 按用户真机反馈放宽：拇指弧形轨迹不被当“必须水平”）：
+#   lisgd 按**最近 45° 档**分类（-r <度> 是每档的宽容度，默认 15°、上限 45°）：
+#   0=DU(上) 45=DLUR(右上) 90=LR(右) 135=ULDR(右下) 180=UD(下)
+#   225=URDL(左下) 270=RL(左) 315=DRUL(左上)；**每档取第一个命中的**（if/else 链）。
+#   -r 15 时 15°–30° 是死区（拇指弧线弦角）⇒ 设 -r 45 后全场无死区，
+#   但相邻档位区间会重叠 ⇒ 按分类链实际切分（每档 45°）绑定，避免“一个动作多条命令”：
+#     左边缘（向右/上/下）= DU + DLUR + LR + ULDR  ⇒ 覆盖 315°..180°（排除向左 180..315）
+#     右边缘（向左/上/下）= UD + URDL + RL + DRUL + DU ⇒ 覆盖 135°..45°（排除向右 45..135）
 #   两侧都要时用 ELDEN_SWIPE_EDGES 控制（默认 LR = 左右都开；=L 只左；=R 只右）。
+LENIENCY=${ELDEN_SWIPE_LENIENCY:-45}
+case "$LENIENCY" in
+	''|*[!0-9]*) echo "lisgd-edge-swipe: ELDEN_SWIPE_LENIENCY=$LENIENCY 不是数字" >&2; exit 1 ;;
+esac
+[ "$LENIENCY" -ge 1 ] && [ "$LENIENCY" -le 45 ] || {
+	echo "lisgd-edge-swipe: ELDEN_SWIPE_LENIENCY 必须在 1..45（lisgd 上限 45），现值 $LENIENCY" >&2; exit 1
+}
 GARGS=""
 case "${ELDEN_SWIPE_EDGES:-LR}" in
-	*L*) GARGS="$GARGS -g 1,LR,L,*,R,$BACK_L" ;;
+	*L*)
+		for g in DU DLUR LR ULDR; do GARGS="$GARGS -g 1,$g,L,*,R,$BACK_L"; done ;;
 esac
 case "${ELDEN_SWIPE_EDGES:-LR}" in
-	*R*) GARGS="$GARGS -g 1,RL,R,*,R,$BACK_R" ;;
+	*R*)
+		for g in DU UD URDL RL DRUL; do GARGS="$GARGS -g 1,$g,R,*,R,$BACK_R"; done ;;
 esac
 [ -n "$GARGS" ] || { echo "lisgd-edge-swipe: ELDEN_SWIPE_EDGES=${ELDEN_SWIPE_EDGES} 不含 L/R" >&2; exit 1; }
 # shellcheck disable=SC2086  # GARGS 需要按空格拆成多组 -g
 exec lisgd \
 	-d "$NODE" \
 	-w "$W" -h "$H" \
+	-r "$LENIENCY" \
 	-t "${ELDEN_SWIPE_THRESHOLD:-60}" \
 	-m "${ELDEN_SWIPE_TIMEOUT_MS:-800}" \
 	$GARGS

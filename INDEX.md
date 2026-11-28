@@ -6,7 +6,13 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-28（06:3x CST 早轮：上游对账 + T28/T29 主机侧调研））
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-28（09:3x CST：T32 收口 + D13 放宽 + T33 素材））
+
+> **★ 2026-11-28 09:3x CST（T32 层次结论 + D13 手势放宽 + T33 gmobile 素材 + 默认 IME 回退）**：
+> ① **T32 收口**：droidloom 里「软键盘不出」在**宿主投影层**——图形 Android IME（Trime/Fossify 都复现）在 cell 内 `mInputShown=true`/`mImeWindowVis=3`、`adb screencap` 能看到键盘，但宿主 `grim` 无键盘（架构 `docs/architecture.md:419`「headless input method never shows a window」）。**`default_input_method` 已回退 `com.android.droidloom.ime/.HostInputMethod`**（宿主 phosh OSK，用户真机确认可输入）；残留 = 宿主 OSK 无中文 / 让 Trime 可见需上游特性。**T30 的验收是假绿**（`adb screencap` 判据）。`reports/trime-droidloom-keyboard-20261128.md`、`PITFALLS #753`。
+> ② **D13 落地**：lisgd 加 `-r 45` + 按分类链绑 `DU/DLUR/LR/ULDR`（左）/`DU/UD/URDL/RL/DRUL`（右）；`tools/uinput-touch` 新增 `hold-arc`。上机验收：左弧 44.7° / 右弧 315.1° / 原死区 20.8° 均触发并关窗，中部竖划不误触，水平 90° 无回归；`deploy --check` MISS=0、`verify --offline` FAIL=0、镜像门 35 对/0 漂移。残留 = lisgd 不 `EVIOCGRAB` ⇒ Firefox 误滚动，吞事件路线待裁。`reports/d13-gesture-leniency-20261128.md`。
+> ③ **T33 素材**：gmobile 条目键 = DT compatible **`lenovo,elden`**（`lenovo,elden.json`），只能重编 `libgmobile`/上游 MR；几何 = 1904×3040、8.8" 16:10、无挖孔、原厂有硬件圆角（`vendor.display.enable_rounded_corner=1`），唯一缺值 = 圆角半径（测量协议 + 候选带 96–136 px）。草稿 JSON + 构建步骤 + 验收 5 条：`reports/gmobile-panel-entry-prep-20261128.md`。
+> ④ **D10 增量**：**Dmitry Baryshkov 给 M6 DSI-PHY v3 `Reviewed-by`**（11-27T22:26+0200）；其余面零新回复（PR #31 / droidloom #48/#65 无变化）。`reports/comms-track-20261128.md` 末节。
 
 > **★ 2026-11-28 早轮（无人值守：上游机械对账 + phosh 两条调研）**：
 > ① **iris v4l2-compliance 系列对账（结论更正）**：v1 **已于 2026-11-27T15:20Z 外发 4 封**（lore 线程 4 封实证；INDEX 旧文「草稿未发」作废），**Bryan O'Donoghue 16:04Z 在 1/3 回帖要 `Fixes:` + `Cc: stable`**。对 mainline（v7.4-rc3）机械核对：**1/3 = 已合入主线的重复**（`1facae9bc3c1`，Vishnu Reddy 2026-09-29，同一行同一改法）、**3/3 = 被主线 `iris_vdec_s_fmt()` 无条件 seed `inst->crop` 取代**（`:271-274`/`:309-312`）、**只 2/3（colorspace 默认）仍成立** ⇒ v2 单贴已备（rebase v7.4-rc3，`Fixes: b530b95de22c` + `Cc: stable`，checkpatch 0E/0W/0C、模块编过、`git send-email --dry-run` OK），**2026-11-28 08:37 CST 用户登录后已实发（`Result: 250`，MID `<20261128003737.1300698-1-…>`；lore `/linux-media/` 线程 6 封、HTTP 200 / 15 377 B、Subject 未改写；`patches/upstream/v4l2-compliance-iris-20261127/SENT.md`）**，等 review。全账 `reports/v4l2-compliance-v2-20261128.md`。
