@@ -7,7 +7,8 @@
 ## 0. 一句话结论
 
 **现在不装。** 今天的真实卡点是「arm64 构建要 root chroot」，**不是缺容器**；先做更便宜的修法（meson 交叉编，
-不 chroot 也能出 aarch64 件），等同时满足「要重编 Android 镜像」或「几何级多发行版矩阵」再装 podman（那时它是必需品，不是可选项）。
+不 chroot 也能出 aarch64 件），等「多基线矩阵」或「子代理构建密度上来」再谈 podman。
+**★2026-11-28 用户追加裁决：AOSP / Android 镜像重编不属主线待办（需求下移）** ⇒ 原本唯一「podman 是必需品」的场景作废，本结论从「暂不装」变成**「没有安装理由」**。
 
 ## 1. 现查事实（可复核）
 
@@ -26,7 +27,7 @@
 |---|---|---|---|
 | **A. droidloom 4 个 C 依赖件 / T43 IME 迭代** | **不需要**：`scripts/build-droidloom-userland-crates.sh` 已 18 s 出件 | 每次改 T43 / 每次换 release（52、53…）≈ 每月 1–3 次 | 容器只买到「可复现、不污染宿主」，而我们已用 sysroot 隔离 |
 | **B. phoc / phosh 上游 MR 的设备件** | **当前需要 root chroot**，但这是**选择**：改成 meson 交叉编（sysroot + cross file）后**不需要容器也不需要 root** | 每个 MR 修订 1–3 次 | 缺的是 `libwlroots-0.18-dev` 等 dev 包进 trixie sysroot + 一个 cross file；**半天可验**（见 §3） |
-| **C. AOSP / Android 镜像重编**（001 WifiProvisioning 自愈、`#65` 的 `onShowInputRequested`） | **需要容器**（droidloom 官方流程就是 podman + AOSP） | 一旦立项 = 长期常驻 | 但**决定性成本不是 podman**：AOSP 首编 ≈ 120 GiB 磁盘 + 数小时，且要维护 patch。用户 2026-11-27 已裁「暂缓」 |
+| **C. AOSP / Android 镜像重编**（001 WifiProvisioning 自愈、`#65` 的 `onShowInputRequested`） | **需要容器**，但**已出列**：用户 2026-11-28 裁决「不是主线待办、需求下移」 | **0（不再排期）** | 该活已出列；本机可用性改由客户端侧补丁承担（`patches/local/droidloom-local-20261128/`） |
 | **D. Arch ARM sysroot / 其他发行版矩阵** | 不需要 | **已被用户裁决放弃**（T44：不走 Arch） | — |
 
 ## 3. 比装 podman 更便宜的修法（建议先做）
@@ -40,7 +41,7 @@
 
 ## 4. 装 podman 的触发条件（任一命中就装，别提前）
 
-- **① 决定重编 Android 镜像**（001 自愈 / `#65` 安卓侧修复）——此时 podman 是官方流程的一部分，先装；
+- ~~① 决定重编 Android 镜像~~ **已作废（2026-11-28 用户裁决需求下移）**；
 - **② 同时需要 ≥2 个不同发行版/glibc 基线的构建环境**（例如又要 trixie 2.41 又要更老基线），chroot 手工维护开始打架；
 - **③ 子代理构建需求密度上来**：一周内 ≥2 次因「要 root chroot」被迫由父代理串行接管（今天正好 2 次，但已有 §3 的替代修法，先看它落不落地）。
 
