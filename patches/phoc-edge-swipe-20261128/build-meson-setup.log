@@ -1,0 +1,460 @@
+The Meson build system
+Version: 1.10.1
+Source dir: /home/xuqianhui/elden-cache/build/phoc-mr-20261128
+Build dir: /home/xuqianhui/elden-cache/build/phoc-mr-20261128/build-host
+Build type: native build
+Project name: phoc
+Project version: 0.59.0
+C compiler for the host machine: /usr/bin/ccache cc (gcc 15.2.0 "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0")
+C linker for the host machine: cc ld.bfd 2.46
+Host machine cpu family: x86_64
+Host machine cpu: x86_64
+Found pkg-config: YES (/usr/bin/pkg-config) 2.5.1
+Run-time dependency gio-2.0 found: YES 2.88.0
+Run-time dependency glib-2.0 found: YES 2.88.0
+Run-time dependency gobject-2.0 found: YES 2.88.0
+Run-time dependency glesv2 found: YES 3.2
+Run-time dependency gnome-desktop-3.0 found: YES 44.5
+Run-time dependency gsettings-desktop-schemas found: YES 50.0
+Run-time dependency libinput found: YES 1.31.1
+Run-time dependency libudev found: YES 259
+Run-time dependency libdrm found: YES 2.4.131
+Run-time dependency pixman-1 found: YES 0.46.4
+Run-time dependency wayland-client found: YES 1.24.0
+Run-time dependency wayland-protocols found: YES 1.49
+Run-time dependency wayland-server found: YES 1.24.0
+Run-time dependency xkbcommon found: YES 1.13.1
+Library m found: YES
+Found CMake: /usr/bin/cmake (4.2.3)
+Run-time dependency gmobile found: NO (tried pkgconfig and cmake)
+Looking for a fallback subproject for the dependency gmobile
+
+Executing subproject gmobile 
+
+gmobile| Project name: gmobile
+gmobile| Project version: 0.6.0.beta1
+gmobile| C compiler for the host machine: /usr/bin/ccache cc (gcc 15.2.0 "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0")
+gmobile| C linker for the host machine: cc ld.bfd 2.46
+gmobile| Run-time dependency epoll-shim found: NO (tried pkgconfig and cmake)
+gmobile| Dependency glib-2.0 found: YES 2.88.0 (cached)
+gmobile| Dependency gio-2.0 found: YES 2.88.0 (cached)
+gmobile| Run-time dependency json-glib-1.0 found: NO (tried pkgconfig and cmake)
+gmobile| Looking for a fallback subproject for the dependency json-glib-1.0
+
+Executing subproject gmobile:json-glib
+
+json-glib| Project name: json-glib
+json-glib| Project version: 1.6.6
+json-glib| C compiler for the host machine: /usr/bin/ccache cc (gcc 15.2.0 "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0")
+json-glib| C linker for the host machine: cc ld.bfd 2.46
+json-glib| Dependency gio-2.0 found: YES 2.88.0 (cached)
+json-glib| Has header "unistd.h" : YES
+json-glib| Compiler for C supports arguments -Wcast-align: YES
+json-glib| Compiler for C supports arguments -Wlogical-op: YES
+json-glib| Compiler for C supports arguments -Wmissing-declarations: YES
+json-glib| Compiler for C supports arguments -Wmissing-format-attribute: YES
+json-glib| Compiler for C supports arguments -Wmissing-prototypes: YES
+json-glib| Compiler for C supports arguments -Wmissing-noreturn: YES
+json-glib| Compiler for C supports arguments -Wold-style-definition: YES
+json-glib| Compiler for C supports arguments -Wpointer-arith: YES
+json-glib| Compiler for C supports arguments -Wshadow: YES
+json-glib| Compiler for C supports arguments -Wstrict-prototypes: YES
+json-glib| Compiler for C supports arguments -Wunused: YES
+json-glib| Compiler for C supports arguments -Wno-discarded-qualifiers: YES
+json-glib| Compiler for C supports arguments -Wno-int-conversion: YES
+json-glib| Compiler for C supports arguments -fno-strict-aliasing: YES
+json-glib| Compiler for C supports arguments -Wno-uninitialized: YES
+json-glib| Compiler for C supports arguments -Werror=address: YES
+json-glib| Compiler for C supports arguments -Werror=array-bounds: YES
+json-glib| Compiler for C supports arguments -Werror=empty-body: YES
+json-glib| Compiler for C supports arguments -Werror=format=2: YES
+json-glib| Compiler for C supports arguments -Werror=implicit: YES
+json-glib| Compiler for C supports arguments -Werror=init-self: YES
+json-glib| Compiler for C supports arguments -Werror=int-to-pointer-cast: YES
+json-glib| Compiler for C supports arguments -Werror=main: YES
+json-glib| Compiler for C supports arguments -Werror=missing-braces: YES
+json-glib| Compiler for C supports arguments -Werror=nested-externs: YES
+json-glib| Compiler for C supports arguments -Werror=nonnull: YES
+json-glib| Compiler for C supports arguments -Werror=pointer-to-int-cast: YES
+json-glib| Compiler for C supports arguments -Werror=return-type: YES
+json-glib| Compiler for C supports arguments -Werror=sequence-point: YES
+json-glib| Compiler for C supports arguments -Werror=trigraphs: YES
+json-glib| Compiler for C supports arguments -Werror=undef: YES
+json-glib| Compiler for C supports arguments -Werror=write-strings: YES
+json-glib| Compiler for C supports arguments -fvisibility=hidden: YES
+json-glib| Compiler for C supports link arguments -Wl,-Bsymbolic: YES
+json-glib| Compiler for C supports link arguments -Wl,-z,relro: YES
+json-glib| Compiler for C supports link arguments -Wl,-z,now: YES
+json-glib| Compiler for C supports link arguments -Wl,--default-symver: YES
+json-glib| Program python3 found: YES (/usr/bin/python3)
+json-glib| Configuring config.h using configuration
+json-glib| Dependency glib-2.0 found: YES 2.88.0 (cached)
+json-glib| Program /usr/bin/glib-mkenums found: YES (/usr/bin/glib-mkenums)
+json-glib| Dependency glib-2.0 found: YES 2.88.0 (cached)
+json-glib| Program /usr/bin/glib-mkenums found: YES (/usr/bin/glib-mkenums)
+json-glib| Configuring json-version.h using configuration
+json-glib| Found pkg-config: YES (/usr/bin/pkg-config) 2.5.1
+json-glib| Program g-ir-scanner found: NO
+json-glib| Program msgfmt found: YES (/usr/bin/msgfmt)
+json-glib| Program msginit found: YES (/usr/bin/msginit)
+json-glib| Program msgmerge found: YES (/usr/bin/msgmerge)
+json-glib| Program xgettext found: YES (/usr/bin/xgettext)
+json-glib| Program xsltproc found: NO
+json-glib| Build targets in project: 93
+json-glib| Subproject json-glib finished.
+
+gmobile| Dependency json-glib-1.0 from subproject subprojects/json-glib found: YES 1.6.6
+gmobile| Compiler for C supports arguments -Wcast-align: YES (cached)
+gmobile| Compiler for C supports arguments -Wdate-time: YES
+gmobile| Compiler for C supports arguments -Wdeclaration-after-statement: YES
+gmobile| Compiler for C supports arguments -Werror=format-security -Werror=format=2: YES
+gmobile| Compiler for C supports arguments -Wendif-labels: YES
+gmobile| Compiler for C supports arguments -Werror=incompatible-pointer-types: YES
+gmobile| Compiler for C supports arguments -Werror=missing-declarations: YES
+gmobile| Compiler for C supports arguments -Werror=overflow: YES
+gmobile| Compiler for C supports arguments -Werror=return-type: YES (cached)
+gmobile| Compiler for C supports arguments -Werror=shift-count-overflow: YES
+gmobile| Compiler for C supports arguments -Werror=shift-overflow=2: YES
+gmobile| Compiler for C supports arguments -Werror=implicit-fallthrough=3: YES
+gmobile| Compiler for C supports arguments -Wfloat-equal: YES
+gmobile| Compiler for C supports arguments -Wformat-nonliteral: YES
+gmobile| Compiler for C supports arguments -Wformat-security: YES
+gmobile| Compiler for C supports arguments -Winit-self: YES
+gmobile| Compiler for C supports arguments -Wmaybe-uninitialized: YES
+gmobile| Compiler for C supports arguments -Wmissing-field-initializers: YES
+gmobile| Compiler for C supports arguments -Wmissing-include-dirs: YES
+gmobile| Compiler for C supports arguments -Wmissing-noreturn: YES (cached)
+gmobile| Compiler for C supports arguments -Wnested-externs: YES
+gmobile| Compiler for C supports arguments -Wno-missing-field-initializers: YES
+gmobile| Compiler for C supports arguments -Wno-sign-compare: YES
+gmobile| Compiler for C supports arguments -Wno-strict-aliasing: YES
+gmobile| Compiler for C supports arguments -Wno-unused-parameter: YES
+gmobile| Compiler for C supports arguments -Wold-style-definition: YES (cached)
+gmobile| Compiler for C supports arguments -Wpointer-arith: YES (cached)
+gmobile| Compiler for C supports arguments -Wredundant-decls: YES
+gmobile| Compiler for C supports arguments -Wshadow: YES (cached)
+gmobile| Compiler for C supports arguments -Wstrict-prototypes: YES (cached)
+gmobile| Compiler for C supports arguments -Wswitch-default: YES
+gmobile| Compiler for C supports arguments -Wswitch-enum: YES
+gmobile| Compiler for C supports arguments -Wtype-limits: YES
+gmobile| Compiler for C supports arguments -Wundef: YES
+gmobile| Compiler for C supports arguments -Wunused-function: YES
+gmobile| Compiler for C supports arguments -fstack-protector-strong: YES
+gmobile| Configuring gm-config.h using configuration
+gmobile| Dependency gio-2.0 found: YES 2.88.0 (cached)
+gmobile| Program /usr/bin/glib-compile-resources found: YES (/usr/bin/glib-compile-resources)
+gmobile| Library m found: YES
+gmobile| Library rt found: YES
+gmobile| Build targets in project: 97
+gmobile| Subproject gmobile finished.
+
+Dependency gmobile from subproject subprojects/gmobile found: YES 0.6.0.beta1
+
+Executing subproject gvdb 
+
+gvdb| Project name: gvdb
+gvdb| Project version: 0.0
+gvdb| C compiler for the host machine: /usr/bin/ccache cc (gcc 15.2.0 "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0")
+gvdb| C linker for the host machine: cc ld.bfd 2.46
+gvdb| Build targets in project: 97
+gvdb| Subproject gvdb finished.
+
+
+Executing subproject wlroots 
+
+wlroots| Project name: wlroots
+wlroots| Project version: 0.20.2
+wlroots| C compiler for the host machine: /usr/bin/ccache cc (gcc 15.2.0 "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0")
+wlroots| C linker for the host machine: cc ld.bfd 2.46
+wlroots| Compiler for C supports arguments -Wundef: YES (cached)
+wlroots| Compiler for C supports arguments -Wlogical-op: YES (cached)
+wlroots| Compiler for C supports arguments -Wmissing-include-dirs: YES (cached)
+wlroots| Compiler for C supports arguments -Wold-style-definition: YES (cached)
+wlroots| Compiler for C supports arguments -Wpointer-arith: YES (cached)
+wlroots| Compiler for C supports arguments -Winit-self: YES (cached)
+wlroots| Compiler for C supports arguments -Wstrict-prototypes: YES (cached)
+wlroots| Compiler for C supports arguments -Wimplicit-fallthrough=2: YES
+wlroots| Compiler for C supports arguments -Wendif-labels: YES (cached)
+wlroots| Compiler for C supports arguments -Wstrict-aliasing=2: YES
+wlroots| Compiler for C supports arguments -Woverflow: YES
+wlroots| Compiler for C supports arguments -Wmissing-prototypes: YES (cached)
+wlroots| Compiler for C supports arguments -Walloca: YES
+wlroots| Compiler for C supports arguments -Wno-missing-braces: YES
+wlroots| Compiler for C supports arguments -Wno-missing-field-initializers: YES (cached)
+wlroots| Compiler for C supports arguments -Wno-unused-parameter: YES (cached)
+wlroots| Compiler for C supports arguments -fmacro-prefix-map=/prefix/to/hide=: YES
+wlroots| Dependency wayland-server found: YES 1.24.0 (cached)
+wlroots| Dependency libdrm found: YES 2.4.131 (cached)
+wlroots| Dependency xkbcommon found: YES 1.13.1 (cached)
+wlroots| Dependency pixman-1 found: YES 0.46.4 (cached)
+wlroots| Library m found: YES
+wlroots| Library rt found: YES
+wlroots| Dependency wayland-protocols found: YES 1.49 (cached)
+wlroots| Build-time dependency wayland-scanner found: YES 1.24.0
+wlroots| Program /usr/bin/wayland-scanner found: YES (/usr/bin/wayland-scanner)
+wlroots| Has header "linux/dma-buf.h" : YES
+wlroots| Checking if define "DMA_BUF_IOCTL_IMPORT_SYNC_FILE" exists: YES
+wlroots| Has header "sys/eventfd.h" : YES
+wlroots| Has header "linux/sync_file.h" : YES
+wlroots| Run-time dependency egl found: YES 1.5
+wlroots| Fetching value of define "EGL_EGLEXT_VERSION" with dependency egl: 20211210
+wlroots| Run-time dependency gbm found: YES 26.0.8-1ubuntu0.3
+wlroots| Dependency glesv2 found: YES 3.2 (cached)
+wlroots| Program glslang found: YES (/usr/bin/glslang)
+wlroots| Program ./check.sh found: YES (/bin/sh -eu /home/xuqianhui/elden-cache/build/phoc-mr-20261128/subprojects/wlroots-0.20.x/render/gles2/shaders/./check.sh)
+wlroots| Program ./embed.sh found: YES (/home/xuqianhui/elden-cache/build/phoc-mr-20261128/subprojects/wlroots-0.20.x/render/gles2/shaders/./embed.sh)
+wlroots| Dependency pixman-1 found: YES 0.46.4 (cached)
+wlroots| Dependency gbm found: YES 26.0.8-1ubuntu0.3 (cached)
+wlroots| Checking for function "memfd_create" : YES
+wlroots| Checking if define "F_ADD_SEALS" exists: YES
+wlroots| Has header "linux/udmabuf.h" : YES
+wlroots| Run-time dependency lcms2 found: YES 2.17
+wlroots| Dependency libudev found: YES 259 (cached)
+wlroots| Run-time dependency libseat found: NO (tried pkgconfig and cmake)
+wlroots| Looking for a fallback subproject for the dependency libseat
+
+Executing subproject wlroots:seatd
+
+seatd| Project name: seatd
+seatd| Project version: 0.9.3
+seatd| C compiler for the host machine: /usr/bin/ccache cc (gcc 15.2.0 "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0")
+seatd| C linker for the host machine: cc ld.bfd 2.46
+seatd| Compiler for C supports arguments -Wundef: YES (cached)
+seatd| Compiler for C supports arguments -Wunused: YES (cached)
+seatd| Compiler for C supports arguments -Wlogical-op: YES (cached)
+seatd| Compiler for C supports arguments -Wmissing-include-dirs: YES (cached)
+seatd| Compiler for C supports arguments -Wold-style-definition: YES (cached)
+seatd| Compiler for C supports arguments -Wpointer-arith: YES (cached)
+seatd| Compiler for C supports arguments -Wstrict-aliasing: YES
+seatd| Compiler for C supports arguments -Wstrict-prototypes: YES (cached)
+seatd| Compiler for C supports arguments -Wimplicit-fallthrough: YES
+seatd| Compiler for C supports arguments -Wmissing-prototypes: YES (cached)
+seatd| Compiler for C supports arguments -Wno-unknown-warning-option: NO
+seatd| Compiler for C supports arguments -Wno-unused-command-line-argument: NO
+seatd| Compiler for C supports arguments -Wvla: YES
+seatd| Compiler for C supports arguments -Wno-hardened: YES
+seatd| Compiler for C supports arguments -fhardened: YES
+seatd| Compiler for C supports link arguments -Wl,--exclude-libs=ALL: YES
+seatd| Run-time dependency libelogind found: NO (tried pkgconfig and cmake)
+seatd| Run-time dependency libsystemd found: YES 259
+seatd| Library rt found: YES
+seatd| Build targets in project: 274
+seatd| Subproject seatd finished.
+
+wlroots| Dependency libseat found: YES 0.9.3 (overridden)
+wlroots| Build-time dependency hwdata found: YES 0.394
+wlroots| Run-time dependency libdisplay-info found: NO (tried pkgconfig and cmake)
+wlroots| Looking for a fallback subproject for the dependency libdisplay-info
+
+Executing subproject wlroots:libdisplay-info
+
+libdisplay-info| Project name: libdisplay-info
+libdisplay-info| Project version: 0.5.0-dev
+libdisplay-info| C compiler for the host machine: /usr/bin/ccache cc (gcc 15.2.0 "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0")
+libdisplay-info| C linker for the host machine: cc ld.bfd 2.46
+libdisplay-info| Dependency hwdata found: YES 0.394 (cached)
+libdisplay-info| Program tool/gen-search-table.py found: YES (/home/xuqianhui/elden-cache/build/phoc-mr-20261128/subprojects/libdisplay-info/tool/gen-search-table.py)
+libdisplay-info| Library m found: YES
+libdisplay-info| Compiler for C supports arguments -Wundef: YES (cached)
+libdisplay-info| Compiler for C supports arguments -Wmissing-prototypes: YES (cached)
+libdisplay-info| Compiler for C supports arguments -Walloca: YES (cached)
+libdisplay-info| Compiler for C supports arguments -Wdeclaration-after-statement: YES (cached)
+libdisplay-info| Compiler for C supports arguments -Wconversion: YES
+libdisplay-info| Compiler for C supports arguments -Wno-unused-parameter: YES (cached)
+libdisplay-info| Compiler for C supports arguments -Wno-missing-field-initializers: YES (cached)
+libdisplay-info| Compiler for C supports arguments -Werror=implicit: YES (cached)
+libdisplay-info| Program ./edid-decode-check.sh found: YES (/home/xuqianhui/elden-cache/build/phoc-mr-20261128/subprojects/libdisplay-info/test/./edid-decode-check.sh)
+libdisplay-info| Program ./di-print-check.sh found: YES (/home/xuqianhui/elden-cache/build/phoc-mr-20261128/subprojects/libdisplay-info/test/./di-print-check.sh)
+libdisplay-info| Program ./edid-decode-gen.sh found: YES (/home/xuqianhui/elden-cache/build/phoc-mr-20261128/subprojects/libdisplay-info/test/./edid-decode-gen.sh)
+libdisplay-info| Program ./di-print-gen.sh found: YES (/bin/sh -eu /home/xuqianhui/elden-cache/build/phoc-mr-20261128/subprojects/libdisplay-info/test/./di-print-gen.sh)
+libdisplay-info| Program edid-decode found: NO
+libdisplay-info| Build targets in project: 278
+libdisplay-info| Subproject libdisplay-info finished.
+
+wlroots| Dependency libdisplay-info found: YES 0.5.0-dev (overridden)
+wlroots| Run-time dependency libliftoff found: NO (tried pkgconfig and cmake)
+wlroots| Looking for a fallback subproject for the dependency libliftoff
+
+Executing subproject wlroots:libliftoff
+
+libliftoff| Project name: libliftoff
+libliftoff| Project version: 0.6.0-dev
+libliftoff| C compiler for the host machine: /usr/bin/ccache cc (gcc 15.2.0 "cc (Ubuntu 15.2.0-16ubuntu1) 15.2.0")
+libliftoff| C linker for the host machine: cc ld.bfd 2.46
+libliftoff| Compiler for C supports arguments -Wundef: YES (cached)
+libliftoff| Compiler for C supports arguments -Wmissing-prototypes: YES (cached)
+libliftoff| Compiler for C supports arguments -Walloca: YES (cached)
+libliftoff| Compiler for C supports arguments -Wdeclaration-after-statement: YES (cached)
+libliftoff| Compiler for C supports arguments -Wfloat-conversion: YES
+libliftoff| Compiler for C supports arguments -Wsign-conversion: YES
+libliftoff| Compiler for C supports arguments -Wno-missing-braces: YES (cached)
+libliftoff| Compiler for C supports arguments -Wno-unused-parameter: YES (cached)
+libliftoff| Dependency libdrm found: YES 2.4.131 (cached)
+libliftoff| Build targets in project: 291
+libliftoff| Subproject libliftoff finished.
+
+wlroots| Dependency libliftoff found: YES 0.6.0-dev (overridden)
+wlroots| Dependency libinput found: YES 1.31.1 (cached)
+wlroots| Run-time dependency xcb found: YES 1.17.0
+wlroots| Run-time dependency xcb-dri3 found: YES 1.17.0
+wlroots| Run-time dependency xcb-present found: YES 1.17.0
+wlroots| Run-time dependency xcb-render found: YES 1.17.0
+wlroots| Run-time dependency xcb-renderutil found: NO (tried pkgconfig and cmake)
+wlroots| Message: Required for X11 backend support.
+wlroots| Dependency wayland-client found: YES 1.24.0 (cached)
+wlroots| Dependency xwayland skipped: feature xwayland disabled
+wlroots| Configuring config.h using configuration
+wlroots| Configuring version.h using configuration
+wlroots| Configuring config.h using configuration
+wlroots| Build targets in project: 293
+wlroots| Subproject wlroots finished.
+
+Run-time dependency sysprof-capture-4 found: YES 50.0
+Compiler for C supports arguments -fanalyzer: YES 
+Compiler for C supports arguments -Wcast-align: YES (cached)
+Compiler for C supports arguments -Wdate-time: YES (cached)
+Compiler for C supports arguments -Werror=format-security: YES 
+Compiler for C supports arguments -Werror=format=2: YES (cached)
+Compiler for C supports arguments -Wendif-labels: YES (cached)
+Compiler for C supports arguments -Werror=incompatible-pointer-types: YES (cached)
+Compiler for C supports arguments -Werror=missing-declarations: YES (cached)
+Compiler for C supports arguments -Werror=overflow: YES (cached)
+Compiler for C supports arguments -Werror=return-type: YES (cached)
+Compiler for C supports arguments -Werror=shift-count-overflow: YES (cached)
+Compiler for C supports arguments -Werror=shift-overflow=2: YES (cached)
+Compiler for C supports arguments -Werror=implicit-fallthrough=3: YES (cached)
+Compiler for C supports arguments -Wformat-nonliteral: YES (cached)
+Compiler for C supports arguments -Wformat-security: YES (cached)
+Compiler for C supports arguments -Winit-self: YES (cached)
+Compiler for C supports arguments -Wmaybe-uninitialized: YES (cached)
+Compiler for C supports arguments -Wmissing-field-initializers: YES (cached)
+Compiler for C supports arguments -Wmissing-include-dirs: YES (cached)
+Compiler for C supports arguments -Wmissing-noreturn: YES (cached)
+Compiler for C supports arguments -Wnested-externs: YES (cached)
+Compiler for C supports arguments -Wno-missing-field-initializers: YES (cached)
+Compiler for C supports arguments -Wno-sign-compare: YES (cached)
+Compiler for C supports arguments -Wno-strict-aliasing: YES (cached)
+Compiler for C supports arguments -Wno-unused-parameter: YES (cached)
+Compiler for C supports arguments -Wold-style-definition: YES (cached)
+Compiler for C supports arguments -Wpointer-arith: YES (cached)
+Compiler for C supports arguments -Wredundant-decls: YES (cached)
+Compiler for C supports arguments -Wshadow: YES (cached)
+Compiler for C supports arguments -Wstrict-prototypes: YES (cached)
+Compiler for C supports arguments -Wtype-limits: YES (cached)
+Compiler for C supports arguments -Wundef: YES (cached)
+Compiler for C supports arguments -Wunused-function: YES (cached)
+Compiler for C supports arguments -Wswitch-default: YES (cached)
+Compiler for C supports arguments -fstack-protector-strong: YES (cached)
+Has header "sys/pidfd.h" : YES 
+Configuring phoc-config.h using configuration
+Program wayland-scanner found: YES (/usr/bin/wayland-scanner)
+Dependency gio-2.0 found: YES 2.88.0 (cached)
+Program /usr/lib/x86_64-linux-gnu/glib-2.0/glib-compile-schemas found: YES (/usr/lib/x86_64-linux-gnu/glib-2.0/glib-compile-schemas)
+Program glib-compile-schemas found: YES (/usr/bin/glib-compile-schemas)
+Configuring mobi.phosh.Phoc.desktop.in using configuration
+Program desktop-file-validate found: YES (/usr/bin/desktop-file-validate)
+Configuring phoc-dev using configuration
+Configuring phoc-dev.service using configuration
+Dependency glib-2.0 found: YES 2.88.0 (cached)
+Program /usr/bin/glib-mkenums found: YES (/usr/bin/glib-mkenums)
+Dependency glib-2.0 found: YES 2.88.0 (cached)
+Program /usr/bin/glib-mkenums found: YES (/usr/bin/glib-mkenums)
+Dependency gio-2.0 found: YES 2.88.0 (cached)
+Program /usr/bin/gdbus-codegen found: YES (/usr/bin/gdbus-codegen)
+Dependency glib-2.0 found: YES 2.88.0 (cached)
+Program /usr/bin/glib-mkenums found: YES (/usr/bin/glib-mkenums)
+Dependency glib-2.0 found: YES 2.88.0 (cached)
+Program /usr/bin/glib-mkenums found: YES (/usr/bin/glib-mkenums)
+Dependency glib-2.0 found: YES 2.88.0 (cached)
+Program /usr/bin/glib-genmarshal found: YES (/usr/bin/glib-genmarshal)
+Program check-indent found: YES (/home/xuqianhui/elden-cache/build/phoc-mr-20261128/tools/check-indent)
+Run-time dependency wayland-egl found: YES 18.1.0
+Run-time dependency wayland-cursor found: YES 1.24.0
+Dependency egl found: YES 1.5 (cached)
+Dependency glesv2 found: YES 3.2 (cached)
+Program glslang found: YES (/usr/bin/glslang)
+Program ./embed.sh found: YES (/home/xuqianhui/elden-cache/build/phoc-mr-20261128/examples/shaders/./embed.sh)
+Configuring run using configuration
+Dependency gio-2.0 found: YES 2.88.0 (cached)
+Program /usr/lib/x86_64-linux-gnu/glib-2.0/glib-compile-schemas found: YES (/usr/lib/x86_64-linux-gnu/glib-2.0/glib-compile-schemas)
+Build targets in project: 390
+
+gmobile 0.6.0.beta1
+
+  Build
+    Examples     : NO
+    Tests        : NO
+    Introspection: NO
+    VAPI         : YES
+    Documentation: NO
+    Manual pages : NO
+    Hwdb         : YES
+
+json-glib 1.6.6
+
+  Directories
+    prefix       : /usr/local
+    includedir   : /usr/local/include
+    libdir       : /usr/local/lib/x86_64-linux-gnu
+    datadir      : /usr/local/share
+
+  Build
+    Introspection: YES
+    Documentation: YES
+    Manual pages : NO
+    Tests        : YES
+
+seatd 0.9.3
+
+    libseat-seatd  : YES
+    libseat-builtin: NO
+    libseat-systemd: YES
+    libseat-elogind: NO
+    server         : NO
+    man-pages      : NO
+
+wlroots 0.20.2
+
+    drm-backend      : YES
+    x11-backend      : NO
+    libinput-backend : YES
+    xwayland         : NO
+    gles2-renderer   : YES
+    vulkan-renderer  : NO
+    gbm-allocator    : YES
+    udmabuf-allocator: YES
+    session          : YES
+    color-management : YES
+    xcb-errors       : NO
+    egl              : YES
+    libliftoff       : YES
+
+phoc 0.59.0
+
+  Build
+    wlroots version        : 0.20.2
+    wlroots as subproject  : YES
+    Xwayland               : NO
+    Documentation          : NO
+    Manual pages           : NO
+    Tracing (dtrace)       : NO
+    Tracing (sysprof)      : NO
+    Tests                  : NO
+
+  Subprojects
+    gmobile                : YES
+    gvdb                   : YES
+    json-glib              : YES (from gmobile)
+    libdisplay-info        : YES (from wlroots)
+    libliftoff             : YES (from wlroots)
+    seatd                  : YES (from wlroots)
+    wlroots                : YES
+
+  User defined options
+    wlroots:default_library: static
+    embed-wlroots          : enabled
+    wlroots:renderers      : gles2
+    tests                  : false
+    xwayland               : disabled
+
+Found ninja-1.13.2 at /usr/bin/ninja

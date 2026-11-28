@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：764
+- 报告总数：765
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -157,6 +157,7 @@
 | `fs` | 1 | `fs-dedup-20261127.md` |
 | `g0` | 1 | `g0-fstype-zero-write-20261025.md` |
 | `g1` | 1 | `g1-23-windows-20261026.md` |
+| `gesture` | 1 | `gesture-animation-feasibility-20261128.md` |
 | `gpu` | 1 | `gpu-minfreq-ab-20261125.md` |
 | `greetd` | 1 | `greetd-stop-verify-20261031.md` |
 | `hexagonrpc` | 1 | `hexagonrpc-upstream-registry-write-20261127.md` |
@@ -1362,6 +1363,10 @@
 ## `g1`（1）
 
 - `g1-23-windows-20261026.md` — G1-23 残留复核：三个长时窗（2026-10-26，日常线 vk163）
+
+## `gesture`（1）
+
+- `gesture-animation-feasibility-20261128.md` — Research: phoc/phosh 线「边缘返回手势动画」可行性（D13 后续，2026-11-28）
 
 ## `gpu`（1）
 

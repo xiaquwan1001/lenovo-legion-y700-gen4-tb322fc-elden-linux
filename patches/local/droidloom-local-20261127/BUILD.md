@@ -30,6 +30,7 @@ cargo build --release --locked --target aarch64-unknown-linux-gnu \
 
 - **能编出来的**（纯 Rust，实测 29 s 冷启）：`droidloom-supervisor`、`droidloomd`、`droidloomctl`、`droidloom-doctor`、`droidloom-applications`、`droidloom-package-helper`、`droidloom-update`、`droidloom-gapps`、`droidloom-gpu-gen`。
 - **编不出来**（要 Arch ARM sysroot 的 C 库）：`droidloom-wayland`（`-lxkbcommon -lwayland-server`）、以及依赖它的 `droidloom-audio`/`droidloom-devices`/`droidloom-gpu-server`。**这 4 个本轮没动**，仍用 release 51 原件（本组补丁不涉及它们）。
+  **★2026-11-28 用户裁决（T44）**：**不走 Arch ARM sysroot、不选 Arch 编译方式**；改为「后续直接在 Ubuntu/Debian arm64 环境编译」立项（依赖清单 + 最小可编配方先行）。在此之前这 4 个件继续用 release 51 原件，不要为它们拉 Arch 容器。
 - glibc 门槛实测：`objdump -T` 最高 `GLIBC_2.39` ≤ 设备 `glibc 2.41`（Debian 13）⇒ 可直接用。
 
 ## 3. 部署（哪个二进制承接哪一贴）

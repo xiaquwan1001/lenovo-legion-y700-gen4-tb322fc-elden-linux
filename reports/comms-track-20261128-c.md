@@ -374,3 +374,14 @@ gh api repos/denialwm/droidloom/issues/{48,65,69}[/comments]
 curl -sS https://lore.kernel.org/{all,coresight}/<MID>/t.mbox.gz   # 404 反例对照
 ```
 临时文件（**均在 `/tmp`，不入库**）：`/tmp/himalaya-outlook-override.toml`、`/tmp/akinola-4737.eml`、`/tmp/junk-157.eml`、`/tmp/sent-80.eml`、`/tmp/ustc-8d-full.txt`。
+
+---
+
+## §6 用户裁决落地（2026-11-28，父代理执行）
+
+| 动作 | 命令 | 结果 |
+|---|---|---|
+| **Akinola 邮件：不回 + 标垃圾** | `himalaya message move --account outlook --to junk 4737` | `1 message(s) successfully moved`；Junk 现列 `158 2026-11-24 12:50 Emmanuel Akinola …`，**Inbox 已无该信**；**未回复**（Sent 侧对 `emmanuelakinola260@gmail.com` 仍 0 命中） |
+| **himalaya 配置缺陷修复** | `cp ~/.config/himalaya/config.toml{,.bak-20261128}` + `sed -i 's\|"Sent Items"\|"Sent"\|'` | `mailbox.alias.sent = "Sent"`（原文件备份 `.bak-20261128`）；`himalaya envelope list --mailbox sent` 直接可用（17 封，末封我方 SMTP 自测）；`scripts/read-mail-outlook.sh --check` 仍 5/5 PASS、`--selftest` 5/5 PASS（脚本内的 sed 修正对已是 `Sent` 的配置变成 no-op，向后兼容） |
+
+- 因此 §4 的「需用户放行」三项现已全部关闭：① Akinola = 不回（已标垃圾）② outlook `4737` 标 junk = 已完成 ③ iris v3 无追加动作。

@@ -1,0 +1,512 @@
+From 7f3feda29bc869cc2e86cc74f70d0b6cf1033da6 Mon Sep 17 00:00:00 2001
+From: Elen Dev <dev@elden.local>
+Date: Sat, 28 Nov 2026 13:23:38 +0800
+Subject: [PATCH] cursor: Add an edge swipe back gesture
+
+Add a PhocGestureEdgeSwipe that recognizes horizontal single-finger
+swipes starting in a band along the left or right screen edge
+(configurable via the "edge-width" property, defaulting to 16 layout
+pixels).  Thumb movements are often arched so the gesture only
+requires the movement to be more horizontal than vertical instead of
+matching an exact angle.
+
+When the swipe passes the threshold the gesture emits "back".  The
+cursor then cancels the touch sequence so the events no longer reach
+the client under the touch and currently invokes the same action as
+the "close" keybinding (phoc_view_close()) on the focused view.
+
+This gives us a shell level back gesture to close dialogs and windows
+as known from libhandy's HdyDeck/HdyLeaflet.  A follow-finger
+animation with a drop shadow can be layered on top later.
+
+Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/125
+---
+ src/cursor.c             |  38 +++++
+ src/gesture-edge-swipe.c | 328 +++++++++++++++++++++++++++++++++++++++
+ src/gesture-edge-swipe.h |  57 +++++++
+ src/meson.build          |   2 +
+ 4 files changed, 425 insertions(+)
+ create mode 100644 src/gesture-edge-swipe.c
+ create mode 100644 src/gesture-edge-swipe.h
+
+diff --git a/src/cursor.c b/src/cursor.c
+index b31eb23..f303e56 100644
+--- a/src/cursor.c
++++ b/src/cursor.c
+@@ -12,6 +12,7 @@
+ #include "cursor.h"
+ #include "desktop.h"
+ #include "gesture-drag.h"
++#include "gesture-edge-swipe.h"
+ #include "gesture-swipe.h"
+ #include "gesture.h"
+ #include "input-method-relay.h"
+@@ -1164,11 +1165,39 @@ on_swipe (PhocGestureSwipe *swipe_gesture, double vx, double vy, gpointer data)
+ }
+ 
+ 
++static void
++on_edge_swipe_back (PhocGestureEdgeSwipe      *gesture,
++                    PhocGestureEdgeSwipeEdge   edge,
++                    PhocCursor                *self)
++{
++  PhocEventSequence *sequence;
++  struct wlr_touch_point *point;
++  PhocView *view;
++
++  g_assert (PHOC_IS_GESTURE_EDGE_SWIPE (gesture));
++  g_assert (PHOC_IS_CURSOR (self));
++
++  sequence = phoc_gesture_get_last_updated_sequence (PHOC_GESTURE (gesture));
++  if (!sequence)
++    return;
++
++  /* Swallow the touch sequence so the events don't reach the client */
++  point = wlr_seat_touch_get_point (self->seat->seat, GPOINTER_TO_INT (sequence));
++  if (point)
++    send_touch_cancel (self->seat, point->surface);
++
++  /* Same "back" semantics as wm.keybindings close for now */
++  view = phoc_seat_get_focus_view (self->seat);
++  if (view)
++    phoc_view_close (view);
++}
++
+ static void
+ phoc_cursor_init (PhocCursor *self)
+ {
+   g_autoptr (PhocGestureDrag) drag_gesture = NULL;
+   g_autoptr (PhocGestureSwipe) swipe_gesture = NULL;
++  g_autoptr (PhocGestureEdgeSwipe) edge_swipe_gesture = NULL;
+   PhocCursorPrivate *priv = phoc_cursor_get_instance_private (self);
+ 
+   self->cursor = wlr_cursor_create ();
+@@ -1192,6 +1221,15 @@ phoc_cursor_init (PhocCursor *self)
+   swipe_gesture = phoc_gesture_swipe_new ();
+   g_signal_connect (swipe_gesture, "swipe", G_CALLBACK (on_swipe), self);
+   phoc_cursor_add_gesture (self, PHOC_GESTURE (swipe_gesture));
++
++  /*
++   * Edge swipe gesture for the back gesture (see #125). The touch
++   * sequence is cancelled in the signal handler so it doesn't reach
++   * the client under the touch.
++   */
++  edge_swipe_gesture = phoc_gesture_edge_swipe_new ();
++  g_signal_connect (edge_swipe_gesture, "back", G_CALLBACK (on_edge_swipe_back), self);
++  phoc_cursor_add_gesture (self, PHOC_GESTURE (edge_swipe_gesture));
+ }
+ 
+ 
+diff --git a/src/gesture-edge-swipe.c b/src/gesture-edge-swipe.c
+new file mode 100644
+index 0000000..56344a7
+--- /dev/null
++++ b/src/gesture-edge-swipe.c
+@@ -0,0 +1,328 @@
++/*
++ * Copyright (C) 2026 Phoc Contributors
++ *
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ * Based on gesture-swipe.c which is
++ * Copyright (C) 2021 Purism SPC
++ * Author: Guido Günther <agx@sigxcpu.org>
++ */
++
++#define G_LOG_DOMAIN "phoc-gesture-edge-swipe"
++
++#include "phoc-config.h"
++
++#include <math.h>
++
++#include "desktop.h"
++#include "gesture-edge-swipe.h"
++#include "gesture-single.h"
++#include "output.h"
++#include "server.h"
++
++/* Minimum horizontal distance (in layout pixels) before a swipe is
++ * recognized as a back gesture */
++#define MIN_THRESHOLD_PX 32.0
++
++/* Fraction of the output width that the finger must travel */
++#define THRESHOLD_FRACTION 0.25
++
++enum {
++  PROP_0,
++  PROP_EDGE_WIDTH,
++  PROP_LAST_PROP,
++};
++static GParamSpec *props[PROP_LAST_PROP];
++
++enum {
++  BACK,
++  N_SIGNALS
++};
++static guint signals[N_SIGNALS];
++
++typedef struct _PhocGestureEdgeSwipePrivate {
++  /* Width of the edge band in layout (logical) pixels */
++  guint                  edge_width;
++
++  /* Layout position of the TOUCH_BEGIN */
++  double                 start_lx;
++  double                 start_ly;
++  PhocGestureEdgeSwipeEdge edge;
++
++  /* The touch sequence we're tracking (a touch id) */
++  PhocEventSequence     *current_sequence;
++
++  guint                  emitted : 1;
++} PhocGestureEdgeSwipePrivate;
++
++G_DEFINE_TYPE_WITH_PRIVATE (PhocGestureEdgeSwipe, phoc_gesture_edge_swipe, PHOC_TYPE_GESTURE_SINGLE)
++
++GType
++phoc_gesture_edge_swipe_edge_get_type (void)
++{
++  static GType type = 0;
++
++  if (!type) {
++    static const GEnumValue values[] = {
++      { PHOC_EDGE_SWIPE_EDGE_LEFT, "PHOC_EDGE_SWIPE_EDGE_LEFT", "left" },
++      { PHOC_EDGE_SWIPE_EDGE_RIGHT, "PHOC_EDGE_SWIPE_EDGE_RIGHT", "right" },
++      { 0, NULL, NULL }
++    };
++    type = g_enum_register_static ("PhocGestureEdgeSwipeEdge", values);
++  }
++
++  return type;
++}
++
++
++static void
++phoc_gesture_edge_swipe_set_property (GObject      *object,
++                                      guint         property_id,
++                                      const GValue *value,
++                                      GParamSpec   *pspec)
++{
++  PhocGestureEdgeSwipePrivate *priv;
++
++  priv = phoc_gesture_edge_swipe_get_instance_private (PHOC_GESTURE_EDGE_SWIPE (object));
++
++  switch (property_id) {
++  case PROP_EDGE_WIDTH:
++    priv->edge_width = g_value_get_uint (value);
++    break;
++  default:
++    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
++  }
++}
++
++
++static void
++phoc_gesture_edge_swipe_get_property (GObject    *object,
++                                      guint       property_id,
++                                      GValue     *value,
++                                      GParamSpec *pspec)
++{
++  PhocGestureEdgeSwipePrivate *priv;
++
++  priv = phoc_gesture_edge_swipe_get_instance_private (PHOC_GESTURE_EDGE_SWIPE (object));
++
++  switch (property_id) {
++  case PROP_EDGE_WIDTH:
++    g_value_set_uint (value, priv->edge_width);
++    break;
++  default:
++    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
++  }
++}
++
++
++static gboolean
++phoc_gesture_edge_swipe_filter_event (PhocGesture     *gesture,
++                                      const PhocEvent *event)
++{
++  switch (event->type) {
++  case PHOC_EVENT_TOUCH_BEGIN:
++  case PHOC_EVENT_TOUCH_UPDATE:
++  case PHOC_EVENT_TOUCH_END:
++  case PHOC_EVENT_TOUCH_CANCEL:
++    return FALSE;
++  default:
++    /* Touchpad gestures, mouse buttons and motion are not for us */
++    return TRUE;
++  }
++}
++
++
++static gboolean
++phoc_gesture_edge_swipe_get_edge (PhocGestureEdgeSwipe     *self,
++                                  double                    lx,
++                                  double                    ly,
++                                  PhocGestureEdgeSwipeEdge *edge)
++{
++  PhocGestureEdgeSwipePrivate *priv;
++  PhocDesktop *desktop;
++  PhocOutput *output;
++  struct wlr_box box = { 0 };
++
++  priv = phoc_gesture_edge_swipe_get_instance_private (self);
++
++  desktop = phoc_server_get_desktop (phoc_server_get_default ());
++  output = phoc_desktop_layout_get_output (desktop, lx, ly);
++  if (!output)
++    return FALSE;
++
++  wlr_output_layout_get_box (desktop->layout, output->wlr_output, &box);
++
++  if (lx <= box.x + (double)priv->edge_width) {
++    *edge = PHOC_EDGE_SWIPE_EDGE_LEFT;
++    return TRUE;
++  }
++
++  if (lx >= box.x + box.width - (double)priv->edge_width) {
++    *edge = PHOC_EDGE_SWIPE_EDGE_RIGHT;
++    return TRUE;
++  }
++
++  return FALSE;
++}
++
++
++static void
++phoc_gesture_edge_swipe_maybe_emit_back (PhocGestureEdgeSwipe *self, double lx, double ly)
++{
++  PhocGestureEdgeSwipePrivate *priv;
++  PhocDesktop *desktop;
++  PhocOutput *output;
++  struct wlr_box box = { 0 };
++  double dx, dy, threshold;
++
++  priv = phoc_gesture_edge_swipe_get_instance_private (self);
++
++  if (priv->emitted)
++    return;
++
++  desktop = phoc_server_get_desktop (phoc_server_get_default ());
++  output = phoc_desktop_layout_get_output (desktop, lx, ly);
++  if (!output)
++    return;
++
++  wlr_output_layout_get_box (desktop->layout, output->wlr_output, &box);
++
++  threshold = MAX (MIN_THRESHOLD_PX, box.width * THRESHOLD_FRACTION);
++
++  dx = lx - priv->start_lx;
++  dy = ly - priv->start_ly;
++
++  /* Thumb movements are often arched: only require the gesture to be
++   * more horizontal than vertical, not perfectly horizontal */
++  if (fabs (dx) <= fabs (dy))
++    return;
++
++  switch (priv->edge) {
++  case PHOC_EDGE_SWIPE_EDGE_LEFT:
++    if (dx < threshold)
++      return;
++    break;
++  case PHOC_EDGE_SWIPE_EDGE_RIGHT:
++    if (dx > -threshold)
++      return;
++    break;
++  default:
++    g_assert_not_reached ();
++  }
++
++  priv->emitted = TRUE;
++  g_signal_emit (self, signals[BACK], 0, priv->edge);
++}
++
++
++static gboolean
++phoc_gesture_edge_swipe_handle_event (PhocGesture *gesture, const PhocEvent *event, double lx, double ly)
++{
++  PhocGestureEdgeSwipe *self = PHOC_GESTURE_EDGE_SWIPE (gesture);
++  PhocGestureEdgeSwipePrivate *priv;
++  PhocEventSequence *sequence = NULL;
++  gboolean retval;
++
++  priv = phoc_gesture_edge_swipe_get_instance_private (self);
++
++  switch (event->type) {
++  case PHOC_EVENT_TOUCH_BEGIN:
++    sequence = GINT_TO_POINTER (event->touch_down.touch_id);
++    break;
++  case PHOC_EVENT_TOUCH_UPDATE:
++    sequence = GINT_TO_POINTER (event->touch_motion.touch_id);
++    break;
++  case PHOC_EVENT_TOUCH_END:
++    sequence = GINT_TO_POINTER (event->touch_up.touch_id);
++    break;
++  case PHOC_EVENT_TOUCH_CANCEL:
++    return PHOC_GESTURE_CLASS (phoc_gesture_edge_swipe_parent_class)->handle_event (gesture, event, lx, ly);
++  default:
++    return FALSE;
++  }
++
++  if (event->type == PHOC_EVENT_TOUCH_BEGIN) {
++    /* Only track a single touch sequence; a second finger cancels the
++     * gesture so we don't fire while e.g. pinching */
++    if (phoc_gesture_is_active (gesture)) {
++      phoc_gesture_reset (gesture);
++      return FALSE;
++    }
++
++    if (!phoc_gesture_edge_swipe_get_edge (self, lx, ly, &priv->edge))
++      /* Touch did not start in the edge band */
++      return FALSE;
++
++    priv->start_lx = lx;
++    priv->start_ly = ly;
++    priv->emitted = FALSE;
++    priv->current_sequence = sequence;
++  } else if (sequence != priv->current_sequence) {
++    /* Not our sequence */
++    return FALSE;
++  }
++
++  retval = PHOC_GESTURE_CLASS (phoc_gesture_edge_swipe_parent_class)->handle_event (gesture, event, lx, ly);
++
++  if (event->type == PHOC_EVENT_TOUCH_UPDATE)
++    phoc_gesture_edge_swipe_maybe_emit_back (self, lx, ly);
++  else if (event->type == PHOC_EVENT_TOUCH_END)
++    priv->current_sequence = NULL;
++
++  return retval;
++}
++
++
++static void
++phoc_gesture_edge_swipe_class_init (PhocGestureEdgeSwipeClass *klass)
++{
++  GObjectClass *object_class = G_OBJECT_CLASS (klass);
++  PhocGestureClass *gesture_class = PHOC_GESTURE_CLASS (klass);
++
++  object_class->set_property = phoc_gesture_edge_swipe_set_property;
++  object_class->get_property = phoc_gesture_edge_swipe_get_property;
++
++  gesture_class->filter_event = phoc_gesture_edge_swipe_filter_event;
++  gesture_class->handle_event = phoc_gesture_edge_swipe_handle_event;
++
++  /**
++   * PhocGestureEdgeSwipe:edge-width:
++   *
++   * The width of the edge band (in layout pixels) in which a touch
++   * down starts a back gesture.
++   */
++  props[PROP_EDGE_WIDTH] =
++    g_param_spec_uint ("edge-width", "", "",
++                       0, G_MAXUINT, 16,
++                       G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
++
++  g_object_class_install_properties (object_class, PROP_LAST_PROP, props);
++
++  /**
++   * PhocGestureEdgeSwipe::back:
++   * @self: The gesture
++   * @edge: The screen edge the swipe started at
++   *
++   * Emitted when a horizontal swipe starting in the edge band passed
++   * the recognition threshold.
++   */
++  signals[BACK] =
++    g_signal_new ("back",
++                  G_TYPE_FROM_CLASS (klass),
++                  G_SIGNAL_RUN_LAST,
++                  0, NULL, NULL, NULL,
++                  G_TYPE_NONE, 1, PHOC_TYPE_GESTURE_EDGE_SWIPE_EDGE);
++}
++
++
++static void
++phoc_gesture_edge_swipe_init (PhocGestureEdgeSwipe *self)
++{
++}
++
++
++PhocGestureEdgeSwipe *
++phoc_gesture_edge_swipe_new (void)
++{
++  return g_object_new (PHOC_TYPE_GESTURE_EDGE_SWIPE, NULL);
++}
+diff --git a/src/gesture-edge-swipe.h b/src/gesture-edge-swipe.h
+new file mode 100644
+index 0000000..f3b1ccb
+--- /dev/null
++++ b/src/gesture-edge-swipe.h
+@@ -0,0 +1,57 @@
++/*
++ * Copyright (C) 2026 Phoc Contributors
++ *
++ * SPDX-License-Identifier: GPL-3.0-or-later
++ *
++ * Based on gesture-swipe.h which is
++ * Copyright (C) 2021 Purism SPC
++ * Author: Guido Günther <agx@sigxcpu.org>
++ */
++#pragma once
++
++#include "gesture-single.h"
++
++G_BEGIN_DECLS
++
++#define PHOC_TYPE_GESTURE_EDGE_SWIPE (phoc_gesture_edge_swipe_get_type ())
++
++G_DECLARE_DERIVABLE_TYPE (PhocGestureEdgeSwipe,
++                          phoc_gesture_edge_swipe,
++                          PHOC, GESTURE_EDGE_SWIPE,
++                          PhocGestureSingle)
++
++struct _PhocGestureEdgeSwipeClass
++{
++  PhocGestureSingleClass parent_class;
++};
++
++/**
++ * PhocGestureEdgeSwipeEdge:
++ * @PHOC_EDGE_SWIPE_EDGE_LEFT: The touch started at the left screen edge
++ * @PHOC_EDGE_SWIPE_EDGE_RIGHT: The touch started at the right screen edge
++ *
++ * The screen edge a swipe started at.
++ */
++typedef enum {
++  PHOC_EDGE_SWIPE_EDGE_LEFT,
++  PHOC_EDGE_SWIPE_EDGE_RIGHT,
++} PhocGestureEdgeSwipeEdge;
++
++#define PHOC_TYPE_GESTURE_EDGE_SWIPE_EDGE (phoc_gesture_edge_swipe_edge_get_type ())
++GType phoc_gesture_edge_swipe_edge_get_type (void);
++
++/**
++ * PhocGestureEdgeSwipe:
++ *
++ * `PhocGestureEdgeSwipe` is a `PhocGestureSingle` for horizontal
++ * swipes starting in a band along the left or right screen edge.
++ *
++ * When the swipe passes the horizontal threshold the [signal@Phoc.GestureEdgeSwipe::back]
++ * signal is emitted.  The gesture does not claim the touch sequence
++ * itself; the user of the gesture is responsible for cancelling the
++ * touch sequence (see `phoc_seat_notify_touch_cancel()`) so the events
++ * don't reach the client under the touch.
++ */
++PhocGestureEdgeSwipe *phoc_gesture_edge_swipe_new (void);
++
++G_END_DECLS
+diff --git a/src/meson.build b/src/meson.build
+index a6d624f..715af84 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -49,6 +49,8 @@ sources = files(
+   'focus-frame.h',
+   'gesture-drag.c',
+   'gesture-drag.h',
++  'gesture-edge-swipe.c',
++  'gesture-edge-swipe.h',
+   'gesture-single.c',
+   'gesture-single.h',
+   'gesture-swipe.c',
+-- 
+2.53.0
+
