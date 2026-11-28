@@ -12,7 +12,7 @@
 
 ## 1. 空格：协议层干净，格式化在应用侧
 
-协议原文（`reports/artifacts/t38-20261128/9-wayland-protocol-1136-1138.log`）：
+协议原文（原日志 2.6 MB / 22 018 行，按仓库 artifacts 白名单只留**摘录** `reports/artifacts/t38-20261128/9b-protocol-excerpt.txt`，原件的 `zwp_text_input_v3@25.*` 五行逐字如下）：
 
 ```
 11:38:24  -> zwp_text_input_v3@25.enable()
@@ -59,4 +59,4 @@
 
 ## 5. 证据文件
 
-`reports/artifacts/t38-20261128/`：`9-wayland-protocol-1136-1138.log`（22 018 行，含 §1 那五行原文）、`7-logcat-capture-1121-1126.log`、`8-journal-trace-1121-1126.log`、以及 §1/§2 引用到的截图与 `t38-1x` 系列。
+`reports/artifacts/t38-20261128/`：`9b-protocol-excerpt.txt`（协议事件摘录，含 §1 那五行原文；原件 2.6 MB 未入库）、`7-logcat-capture-1121-1126.log`、`8-journal-trace-1121-1126.log`、以及 §1/§2 引用到的截图与 `t38-1x` 系列。
