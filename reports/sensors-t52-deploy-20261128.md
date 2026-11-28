@@ -108,3 +108,30 @@ ssh elden 'sudo -n sh /tmp/deploy-iio-sensor-proxy-patches.sh --rollback'
 
 ⇒ 「状态栏没有 auto 档位」拆成两件事：**亮度 auto = 已恢复**；**方向 auto = phosh 0.46 不重连 SensorProxy**（代理重启/设置变更都不 re-claim，与 `#764` 同类：客户端侧缺重连）。
 </br>修法候选：① UI 点一次旋转图标（若 phosh 走自己的 action 会切 SENSOR 模式并 claim）；② 重启一次会话（已知副作用：droidloom 不自启 = `T46`、Q28 modeset 风险）；③ 给 phosh 打「name-owner 变化即重建 proxy + 重新 claim」的补丁（永久修复，需交叉编 phosh + 一次会话重启）。
+
+## §6 进一步措施：用户点旋转图标无效后，重启一次会话（2026-11-28 19:43）
+
+- 先试过的**无效**路径（都留证据，省下次重试）：
+  - `orientation-lock` true→false：phosh 不 claim（`set_orientation_locked` 里 `claimed==locked` 的早退路径没触发）。
+  - `orientation-lock` true→false→**true→false**（强制走 `claim_or_release`）：仍不 claim。
+  - 用户手动点快捷设置旋转图标：仍无 auto。
+  - ⇒ 结论：phosh 进程内 `claimed` 状态已与真实不一致（代理重启后它以为还拿着 claim），**运行时无法自愈**。
+- 采取措施：`systemctl restart greetd`（用户在场；回退路径 = 物理冷启，Q28 modeset 风险已知）。
+- 结果（新 phosh pid `319310`）：
+  ```
+  19:43:23 iio-sensor-prox: Handling driver refcounting method 'ClaimAccelerometer' for accelerometer device
+  19:43:23 iio-sensor-prox: Enabling sensor (7037…) in 'continuous' mode      ← 加速度计真的开始出流
+  19:43:23 iio-sensor-prox: Enabling sensor (5230…) in 'on-change' mode       ← ALS 同时被 gsd claim
+  ```
+  ⇒ **phosh 在会话重建后立刻 claim 成功**，与「运行时无法自愈」的判断一致。
+- 副作用（已复现并处置）：`T46` —— 会话重建后 **droidloom 不自启**（`droidloomctl status` = `stopped`），已手工 `systemctl --user -M xuqianhui1001@ start droidloom.service`，`Android is ready`、cell `u1001` running。
+- 待用户目视两项：① 转动设备是否自动旋转（auto 档位是否回来）；② 竖持顶边朝上时 `AccelerometerOrientation` 应为 `left-up`/`right-up`（矩阵 M_A 定案）。
+
+### 6.1 应报上游 / 待补的 phosh 缺陷（本次定因）
+
+`phosh` 的 `PhoshRotationManager` 用 `GDBusProxy`（`sensor-proxy-manager.c`）连 `net.hadess.SensorProxy`，但只监听
+`notify::has-accelerometer` 与 `notify::accelerometer-orientation`（`rotation-manager.c` 的 `constructed`）。
+代理重启时 D-Bus 名字 owner 变化、但 `HasAccelerometer` 值不变 ⇒ **两个 notify 都不触发**，而 `self->claimed` 仍是 `TRUE`
+⇒ 会话内**永久不重新 claim**，表现为：自动旋转消失、快捷设置只剩纵向/横向。
+修法（待办）：监听 `notify::g-name-owner`（或 `g-signal` 的 NameOwnerChanged），把 `self->claimed = FALSE` 后按当前
+`mode`/`orientation_locked` 重新走 `claim_or_release_accelerometer()`；顺带把 `set_orientation_locked` 的早退条件收紧。
