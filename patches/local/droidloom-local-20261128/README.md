@@ -89,3 +89,20 @@ sudo cp -a /usr/bin/droidloom-wayland /root/droidloom-backup-20261128-t43/` 再
 - **测试陷阱**：`adb shell input tap` 点在 cell 内，宿主收不到 ⇒ droidloom 窗口拿不到 `wl_keyboard.enter` ⇒
   `text_input.rs` 的 `focused_task=None` ⇒ **永不发 `enable`** ⇒ 宿主 OSK 不起（假阴性，`PITFALLS #761`）。
   必须用宿主侧 `ydotool mousemove -a X Y` + `ydotool click 0x00` 拿焦点，再用 `grim` 看宿主截图 + `uiautomator dump` 读文本内容。
+
+## ② T43b：`enable` 不再要求宿主键盘焦点（`0002-enable-text-input-without-keyboard-focus.patch`）
+
+**根因（2026-11-28 探针实证）**：`text_input.rs::update()` 的 `desired` 要求 `Some(editor.task) == focused_task`，
+而 `focused` 只在 `wl_keyboard.enter` 里赋值。**宿主 OSK（phosh-osk-stub）是 layer 表面、被映射时就吃住键盘焦点**，
+于是等输入的应用永远不是「focused task」⇒ 永不发 `enable` ⇒ 键盘不起来 ⇒ 用户再点还是不起（死锁）。
+`entered` 已把请求绑定到本客户端自己的 text-input 表面（`zwp_text_input_v3.enter` → `task_for_surface()`），
+所以「合成器没报 focused task」时应当接受该 editor。
+
+修法：`Some(editor.task) == focused_task` → `focused_task.is_none_or(|task| task == editor.task)`。
+
+**同轮实测（T43 已装的基础之上）**：同一状态下探针 `focused_task=None`：
+- 旧判据 ⇒ `desired=None` ⇒ 无 `enable` ⇒ 宿主无键盘（鼠标点、触摸点都不起）；
+- 新判据 ⇒ `desired=Some((71,6,2))` ⇒ 有 `enable` ⇒ **单次手指触摸点号段框，数字键盘出现**（`out/phoc-deploy-20261128/ime-test/f1.png`）。
+
+**取舍**：与 ① 同风格 —— 宁可在「应用仍在输入但合成器无 focused task」时多给一次 `enable`，也不要出现唤不出键盘的死锁；
+`entered` 会在真正 Leave 时清空，所以焦点换到别的窗口时仍会 disable。

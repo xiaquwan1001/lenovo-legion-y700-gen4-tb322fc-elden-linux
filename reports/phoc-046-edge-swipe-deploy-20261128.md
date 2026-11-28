@@ -56,6 +56,24 @@
 附带探针证据（临时插桩，已回滚）：`focused=None entered=Some(...)` 时无 OSK；`focused=Some(..) entered=Some(..) android_task=Some(65)` 时 OSK 立刻出现。
 **已尝试**放宽 `text_input.rs` 的 `focused_task` 判据（`is_none_or`），**未上机证明、已回滚**（现设备上的件 = 纯 T43，sha `8908c37e…`，与原构建逐字节一致）。
 
+### 2026-11-28 追补（用户报「手动点小红书还是唤不出键盘」⇒ 真因 = 死锁，已修）
+
+用户手指点也不起；探针实测同一状态下 `focused_task=None`：
+
+| 判据 | 探针 | 结果 |
+|---|---|---|
+| T43 ①原样（`Some(editor.task) == focused_task`） | `desired=None enabled=None editor=Some((true,71,6,2)) entered=true` | **无 `enable` ⇒ 无宿主键盘**（手指点、鼠标点都不起） |
+| 加 ②（`focused_task.is_none_or(..)`） | `desired=Some((71,6,2))` | **有 `enable` ⇒ 单次手指点号段框，数字键盘出现**（`ime-test/f1.png`），连输 10 位不隐 |
+
+根因（新 `PITFALLS #762`）：`focused` 只在 `wl_keyboard.enter` 赋值，而 **phosh 的 OSK 是 layer 表面、被映射时就持有键盘焦点**
+⇒ 等输入的应用永远不是 focused task ⇒ 永不 `enable` ⇒ 无 OSK ⇒ 更回不到键盘焦点（死锁）。T43 ① 只覆盖「曾经 enable 过」的路径
+（`held` 要求 `enabled.is_some()`），对这条首次 enable 的死锁无效。
+
+补丁：`patches/local/droidloom-local-20261128/0002-enable-text-input-without-keyboard-focus.patch`
+（`entered` 已把请求绑定到本客户端自己的 text-input 表面，焦点换走时会清空 ⇒ 仍会 disable）。
+**现设备上的件** = ①+②+门控探针：`/usr/bin/droidloom-wayland` 7,968,248 B / sha `7d5f4303…`；
+回滚仍用 `/root/droidloom-backup-20261128-t43/`（release 51 原件）。
+
 ## 3. 本次踩到的连带故障：换 phoc 会静默打死 droidloom（**已修一例，缺口待补**）
 
 - 现象：phoc 换好后**小红书打不开**。设备侧 `droidloom.service` = `inactive dead`、`droidloom-applications` 每 2 s 报

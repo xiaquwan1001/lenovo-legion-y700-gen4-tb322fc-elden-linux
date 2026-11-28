@@ -1,0 +1,41 @@
+From: T43b worker <local>
+Subject: [PATCH 2/2] droidloom-wayland: enable host text input without host keyboard focus (T38 #65, OSK deadlock)
+
+The host's on-screen keyboard (phosh-osk-stub) is a layer surface.  While it
+is mapped it holds the compositor's keyboard focus, so the Android client that
+is waiting for text input is *not* the focused task.  Requiring
+`Some(editor.task) == focused_task` therefore deadlocks as soon as the OSK has
+ever been shown: no `zwp_text_input_v3.enable` is sent, so the OSK never
+returns, so the client never regains keyboard focus.
+
+`entered` already ties the request to this client's own text-input surface
+(`zwp_text_input_v3.enter` ⇒ `task_for_surface()`), so accept the editor when
+the compositor reports no focused Android task at all.
+
+Measured on TB322FC (phoc 0.46 + edge-swipe, droidloom release 51):
+- before: probe `focused_task=None` ⇒ `desired=None` ⇒ no enable ⇒ 小红书
+  phone field / Android Settings search show no host keyboard;
+- after: same state, `desired=Some(..)` ⇒ enable ⇒ numeric OSK appears on a
+  single finger tap, typing 10 digits keeps the OSK up.
+
+---
+--- a/graphics/droidloom-wayland/src/text_input.rs
++++ b/graphics/droidloom-wayland/src/text_input.rs
+@@ -242,10 +242,16 @@
+     }
+ 
+     pub fn update(&mut self, focused_task: Option<u64>) {
++        // The host's on-screen keyboard is a layer surface that holds the
++        // compositor's keyboard focus while it is mapped, so the app waiting
++        // for text input is *not* the focused task. Requiring `focused_task`
++        // here deadlocks once the OSK has ever been mapped: no enable ⇒ no
++        // OSK ⇒ the app never regains keyboard focus. `entered` already ties
++        // the request to this client's own text-input surface.
+         let desired = self.editor.filter(|editor| {
+             editor.active
+                 && editor.task != 0
+-                && Some(editor.task) == focused_task
++                && focused_task.is_none_or(|task| task == editor.task)
+                 && self.entered.is_some()
+         });
+         // T38 (#65), break ① of the causal chain: Android's `showSoftInput`
