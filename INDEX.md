@@ -6,7 +6,7 @@
 
 ---
 
-## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-28（17:5x CST：phosh 三封维护者回复已处置 + 协议层邮件已发；G2 主路线裁决材料出 T50；apk 基础设施可行性出 T51；设备侧 Waydroid 实测**未初始化**））
+## 0. 现在一页（**唯一的状态入口**；核对日期：2026-11-28（19:0x CST：**G2 主路线已改判 = droidloom，Waydroid 降冷备（用户裁决）**；phosh 三封维护者回复已处置 + 协议层邮件已发；apk 基础设施可行性出 T51；设备侧 Waydroid 实测**未初始化**））
 
 > **★ 2026-11-28 09:3x CST（T32 层次结论 + D13 手势放宽 + T33 gmobile 素材 + 默认 IME 回退）**：
 > ① **T32 收口**：droidloom 里「软键盘不出」在**宿主投影层**——图形 Android IME（Trime/Fossify 都复现）在 cell 内 `mInputShown=true`/`mImeWindowVis=3`、`adb screencap` 能看到键盘，但宿主 `grim` 无键盘（架构 `docs/architecture.md:419`「headless input method never shows a window」）。**`default_input_method` 已回退 `com.android.droidloom.ime/.HostInputMethod`**（宿主 phosh OSK，用户真机确认可输入）；残留 = 宿主 OSK 无中文 / 让 Trime 可见需上游特性。**T30 的验收是假绿**（`adb screencap` 判据）。`reports/trime-droidloom-keyboard-20261128.md`、`PITFALLS #753`。

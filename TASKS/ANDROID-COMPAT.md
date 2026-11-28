@@ -2,18 +2,25 @@
 
 ### 0. 结论先行
 
-**主路线 = 容器（Android-in-Linux），备选 = 虚拟机，观察 = 原生合成器方案；三条都不依赖 a 槽常驻。**
+**★2026-11-28 用户裁决：Waydroid（R1）路线收益低，不再当主力考虑 ⇒ 主路线改为 R3 droidloom，Waydroid 降「冷备」（资产留仓、不常驻、不追版本）；备选 = 虚拟机（R2，低优先），R1' redroid 随 R1 一起降级。三条都不依赖 a 槽常驻。**
+
+> 裁决依据（数字与推翻条件）= `../reports/android-compat-route-decision-20261128.md`：我方 droidloom 层 **6 patch / +366 −121 行** vs Waydroid 层 **~2 700 行 C/AIDL + ~1 070 行 shell + 11 项固化配置**；
+> 上游 `0.1.0-52` 的 `b30e8d8`（2026-11-27T11:25Z）已修掉我方 `#763` 的 image 侧缺陷 ⇒「要重编 AOSP」不是持续成本；两条路线的身份天花板相同（PI 三档全不满足、Widevine 只有 ClearKey）；
+> 设备上 Waydroid 实测**未初始化**（`waydroid status`）。下表「定位」列保留拆分前的原文，加 ⬇ 标注现行定位。
 
 | 路线 | 形态 | 与"无安卓"前提 | 本地现成度 | 定位 |
 |---|---|---|---|---|
-| **R1 容器** | **Waydroid**（LXC + AIDL/HAL + 我们的 freedreno） | ✅ 完全符合 | ✅ Mesa 26.1.8 解 A830 chip-id、GAPPS 镜像在手、内核 binder/XFRM/netfilter 已开、代理通路已通 | **主力，先做（C1–C6）** |
-| **R1' 容器备胎** | **redroid**（Docker/podman/k8s，arm64 官方支持，GMS 经 OpenGApps/MicroG/MindTheGapps） | ✅ 符合 | ⬜ 未装；与我们内核的 binder 配置兼容 | **备胎**：R1 受阻（图形/HAL 层）时切换验证 |
+| **R1 容器** | **Waydroid**（LXC + AIDL/HAL + 我们的 freedreno） | ✅ 完全符合 | ✅ Mesa 26.1.8 解 A830 chip-id、GAPPS 镜像在手、内核 binder/XFRM/netfilter 已开、代理通路已通 | ~~主力，先做（C1–C6）~~ ⬇ **2026-11-28 起 = 冷备**（资产留仓，不常驻、不追上游版本；触发转正条件见裁决报告 F5/F6） |
+| **R1' 容器备胎** | **redroid**（Docker/podman/k8s，arm64 官方支持，GMS 经 OpenGApps/MicroG/MindTheGapps） | ✅ 符合 | ⬜ 未装；与我们内核的 binder 配置兼容 | ~~备胎~~ ⬇ **随 R1 一起降级**：仅在「必须跑容器形态」且 R1 修复成本 > redroid 时才验证 |
 | **R2 虚拟机** | Android/Debian guest；本机 **无 KVM**（消费者机：XBL 在 secure-boot 链内加载 hyp，主线 `-el2.dtb` overlay 模式只适用 Qualcomm dev kit）⇒ ① KVM-in-EL1+Gunyah backend（RFC 00/34，Linaro，2025-04，配 `qemu-for-gunyah`，需数周 port，WIP）或 ② QEMU TCG（可用但慢，Android 不可接受） | ✅ 不需要 Android 宿主（方案①） | ⚠️ AVF/DroidVM 是 Android 侧用法（与新前提冲突）；Gunyah ABI 兼容性待上机探测（`dmesg \| grep gunyah`） | **调研，不承诺**（C8 书面结论已出，维持低优先） |
-| **R3 原生** | droidloom（Wayland 直出窗口，shared-kernel；Denial 合成器同栈） | ✅ 形态最优雅 | 🟡 aarch64 产品已一等（OnePlus Pad 4 真机跑通）且**2026-11-08 起有 aarch64 发布包**（修订 27–30，`0.1.0-30`）；**新增硬门槛：宿主合成器需 `linux-dmabuf` v4 feedback + `linux-drm-syncobj`**（Phosh 不满足）；更早的阻碍是 R1 本身未受阻 | **只跟踪上游**（Q3，R1 受阻再试） |
+| **R3 原生** | droidloom（Wayland 直出窗口，shared-kernel；Denial 合成器同栈） | ✅ 形态最优雅 | 🟡 aarch64 产品已一等（OnePlus Pad 4 真机跑通）且**2026-11-08 起有 aarch64 发布包**（修订 27–30，`0.1.0-30`）；**新增硬门槛：宿主合成器需 `linux-dmabuf` v4 feedback + `linux-drm-syncobj`**（Phosh 不满足）；更早的阻碍是 R1 本身未受阻 | **⬇ 2026-11-28 起 = G2 主路线**（跟上游 `main` 发版 + 我方 `patches/local/` 6 条上限；`linux-dmabuf` v4 + `linux-drm-syncobj` 前置**已由 phoc 补丁解决**） |
 | （相邻）| Win-x86 转译 Box64+Wine | ✅ | ✅ **PoC 已成功** | 已交付，与 R1 共用 chroot/防护范式 |
 
-> **为什么容器优先**：它是唯一"不重启、不离开 Linux、能用我们自己的 GPU 驱动栈、可单独卸载"的形态；
+> **为什么容器当初优先**（2026-11-28 前的口径，保留作沿革）：它是唯一"不重启、不离开 Linux、能用我们自己的 GPU 驱动栈、可单独卸载"的形态；
 > 且社区在**纯 Linux 宿主**上把 GMS/Widevine 做进容器的先例最多（`../RESOURCES/README.md` §1.3）。
+> **2026-11-28 改判的核心理由**：容器的 4 项优势（相机/音频/传感器/GMS 登录）来自**我们自编的 ~3.8 k 行**（属于继续背债，不是白拿），
+> 而它的形态是「一个全屏 Android 窗口」，与「Android 应用进 Phosh 桌面」的项目目标相反；droidloom 这一侧的缺陷集中在宿主用户态可修层，且上游活跃（2 天一版）。
+> **保留 Waydroid 资产的唯一理由**：相机/音频/传感器三项只有它有本机实证，需求转向「用平板发布照片/视频/直播」时可 60–90 min 恢复。
 
 ---
 

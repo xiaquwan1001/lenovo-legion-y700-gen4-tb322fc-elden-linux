@@ -1,5 +1,6 @@
 # droidloom vs Waydroid 路线裁决材料（Y700 四代 TB322FC，主线 Linux + Phosh）
 
+- **★裁决落地（2026-11-28）**：用户已裁定「**Waydroid 路线收益低，不再当主力考虑**」⇒ 本报告 §5.1 推荐被采纳；SSOT 同轮改完（`TASKS/ANDROID-COMPAT.md §6`、`AGENTS.md` G2、`README.md` G2、`INDEX.md §0`、`TASKS/NEXT.md` T50）。下文保持提交时的原文（含「待拍板」字样），不追改。
 - **基准日**：2026-11-28；在线取数窗口 **2026-11-28T09:37:32Z–09:45Z**（每条数字附复现命令）。
 - **性质**：**主机侧只读**。零设备动作（未 ssh/adb/fastboot）、零 git 写、未发 issue。
 - **唯一写入**：本文件。未改 `TASKS/`、`INDEX.md`、`PITFALLS/`、`DEVICE/`、`RESOURCES/`。

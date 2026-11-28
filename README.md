@@ -45,7 +45,7 @@
 > [`TASKS/README.md`](TASKS/README.md) §0（进度数字）维护；此处不复述，避免三处漂移。
 
 - **G1 — 完整 Linux + 上游化**（驱动 bring-up + 按模块上游提交）
-- **G2 — 安卓容器**（Waydroid 为主路线；验收 = 可用性 + 风控/完整性等级）
+- **G2 — 安卓容器**（**2026-11-28 起主路线 = droidloom，Waydroid 降冷备**；验收 = 可用性 + 风控/完整性等级）
 - **G3 — x86 模拟**（Steam 游戏为载体，Box64 + Wine/Proton）
 - **拓展（非主线，不阻塞 G1–G3）**：UEFI 间接引导、Gunyah 虚拟化
 
