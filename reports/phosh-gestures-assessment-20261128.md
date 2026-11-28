@@ -311,3 +311,15 @@ grep -n "CAPTURE_THRESHOLD_MS" /tmp/ph046/phoc-0.46.0/src/gesture-swipe.c
 grep -n "PHOC_ANIM_DURATION_WINDOW_FADE" /tmp/ph046/phoc-0.46.0/src/view.c
 grep -n "get_corner_shift" -A12 /tmp/ph046/phosh-0.46.0/src/layout-manager.c
 ```
+
+---
+
+## 9. 用户真机裁决（2026-11-28，T29 手感第一轮反馈）
+
+| 项 | 用户裁决 | 落点 |
+|---|---|---|
+| **P1/P2 边缘侧滑返回**（本报告 §5 列为「需设备窗」） | **意图判定过严**：必须水平滑才返回，**拇指弧形轨迹不识别**；Firefox 内实测弧形滑动被传给网页、网页取竖直分量当滚动 | 已细化到 `TASKS/dim/D13.md` §「2026-11-28 用户真机反馈」：`-r` 默认 15° 是死区主因（15°–30° 无人认领），下一轮 `-r 45` + 补对角手势 + 评估「吞事件」（lisgd 只旁听、无 EVIOCGRAB） |
+| **圆角/刘海避让（§4.4 / P5+P6）** | **记入待办：下一次尝试自建 gmobile 设备条目，先搜素材库** | 新行 `TASKS/NEXT.md` §4.0a **T33**（素材 = 现有 38 条 JSON 写法 + 面板圆角真值来源；走发行版打包，不 patch 二进制） |
+| **底部 home-bar 手势（P7 zoom 过渡等）** | **保持 phosh 默认即可，是正常的** | 本报告 §5 的 home-bar 项**关闭**，不再列为问题 |
+| **revealer 400 ms / deck 200 ms 硬编码（P9 等）** | **暂不评价，等收集场景反馈** | 挂起（不立项；保留 §2/§3 的数值取证即可） |
+| **新问题（非本报告范围）** | Trime 在 droidloom 内**不唤起软键盘** | 新行 `TASKS/NEXT.md` §4.0a **T32**（先取证：`mInputShown`/`mShowRequested` + 切回 Fossify 对照；首选假设 = droidloom IME 宿主状态机缺陷，见 issue #65） |
