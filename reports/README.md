@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：765
+- 报告总数：767
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -36,9 +36,9 @@
 | `wl2868c` | 8 | `wl2868c-v10-landed-20261111.md` |
 | `camera` | 7 | `camera-restore-20261121.md` |
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
+| `comms` | 6 | `comms-track-20261128-b.md` |
 | `device` | 6 | `device-window-20261121-night.md` |
 | `disk` | 6 | `disk-audit-20261126.md` |
-| `comms` | 5 | `comms-track-20261128-b.md` |
 | `dwc3` | 5 | `dwc3-v16-20261125.md` |
 | `git` | 5 | `git-slim-exec-20261113.md` |
 | `usb` | 5 | `usb-charging-dualport-20261126.md` |
@@ -204,6 +204,7 @@
 | `shellcheck` | 1 | `shellcheck-fix-20261120.md` |
 | `sn` | 1 | `sn-anchoring-audit-20261113.md` |
 | `ssot` | 1 | `ssot-merge-20261105-round2.md` |
+| `t44` | 1 | `t44-ubuntu-build-scoping-20261128.md` |
 | `t5` | 1 | `t5-q24-dataset-20261020.md` |
 | `t8` | 1 | `t8-elden-wake-check-20261127.md` |
 | `task` | 1 | `task-inventory-20261107.md` |
@@ -742,6 +743,15 @@
 - `waydroid-haptics-20261013.md` — Waydroid 马达透传（vibrator HAL → aw86927 FF）— 2026-10-13 实测
 - `waydroid-sensors-next-20261011.md` — 调查：Waydroid 传感器『下一步到底做什么』（2026-10-11，只读）
 
+## `comms`（6）
+
+- `comms-track-20261128-b.md` — D10 通信跟踪（D10 lane 增量快照，只读）— 邮件三箱 + lore + 用户态上游现查
+- `comms-track-20261128-c.md` — D10 通信跟踪（只读增量快照 `-c`）— outlook/himalaya 首扫 + USTC 复核 + 用户态现查
+- `comms-track-20261128-d.md` — D10 通信跟踪（只读增量 `-d`）— outlook/USTC 双箱 + 在飞系列现查 + phoc MR !829
+- `comms-track-20261128.md` — D10 通信跟踪（窗口 `2026-11-26T22:02Z` → `2026-11-27T22:17Z`）— 邮件 / lore / Mobian / phosh / GitHub（只读）
+- `comms-track-20261127-c.md` — 通信跟踪 D10-c 增量（窗口 `2026-11-27T03:20Z` → `2026-11-27T12:32Z`）— 只读
+- `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
+
 ## `device`（6）
 
 - `device-window-20261121-night.md` — 设备窗口清单（2026-11-21 夜，待用户放行）
@@ -759,14 +769,6 @@
 - `disk-cleanup-20261119-validation-impact.md` — 2026-11-19 磁盘清理对「验证面」的影响与处置
 - `disk-cleanup-20261116.md` — 磁盘清理第二轮执行账 — 2026-11-16（承接 `reports/disk-cleanup-20261115.md`）
 - `disk-cleanup-20261115.md` — 磁盘清理评估与执行账 — 2026-11-15（第二轮，承接 `.pi/reports/disk-audit-2026-11-15.md`）
-
-## `comms`（5）
-
-- `comms-track-20261128-b.md` — D10 通信跟踪（D10 lane 增量快照，只读）— 邮件三箱 + lore + 用户态上游现查
-- `comms-track-20261128-c.md` — D10 通信跟踪（只读增量快照 `-c`）— outlook/himalaya 首扫 + USTC 复核 + 用户态现查
-- `comms-track-20261128.md` — D10 通信跟踪（窗口 `2026-11-26T22:02Z` → `2026-11-27T22:17Z`）— 邮件 / lore / Mobian / phosh / GitHub（只读）
-- `comms-track-20261127-c.md` — 通信跟踪 D10-c 增量（窗口 `2026-11-27T03:20Z` → `2026-11-27T12:32Z`）— 只读
-- `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
 
 ## `dwc3`（5）
 
@@ -1551,6 +1553,10 @@
 ## `ssot`（1）
 
 - `ssot-merge-20261105-round2.md` — SSOT 并入第二轮回执
+
+## `t44`（1）
+
+- `t44-ubuntu-build-scoping-20261128.md` — T44 · droidloom 用户态「直接 Ubuntu/Debian 编译」立项评估（2026-11-28）
 
 ## `t5`（1）
 

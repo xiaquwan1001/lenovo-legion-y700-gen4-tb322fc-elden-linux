@@ -456,6 +456,7 @@ git log --oneline -10
 | | `scripts/dpms-watch.sh` | 每秒采面板/合成器状态到 `/root/dpms-watch.log`——熄屏/黑屏取证。 |
 | 桌面栈构建 / 调试（T16 新立面 2026-11-27） | `scripts/build-phosh-upstream-fix.sh` | 用上游 main 源树 + 本地补丁编 aarch64 phosh——验证 upstream/*.patch 可上机件时。 |
 | | `scripts/phoc-build-launch.sh` | root 独立 session 启动 build-phoc-arm64.sh（脱离调用者进程组，日志 /tmp/phoc-build.log）——编 phoc 不想被 sudo_exec/tmux 退出连杀时。 |
+| | `scripts/build-phoc046-trixie.sh` | 在 Debian 13 trixie arm64 chroot 里编「设备在版 phoc 0.46 + 补丁」（动态 libwlroots-0.18、glibc 2.41），产物 `out/phoc-046-edge-swipe-arm64-<日期>/`——上机验证上游 MR 前的设备件。 |
 | | `scripts/build-phoc-mr-arm64.sh` | 在 Debian sid arm64 chroot 里编 **phoc MR 分支**并取产物/元数据（`out/phoc-edge-swipe-arm64-<日期>/`）——给上游 MR 补架构编译证据时（换 SRC/OUT 环境变量即可复用）。 |
 | | `scripts/glycin-bwrap-shim.sh` | 在 bwrap 前装 shim 让 glycin 判定沙箱不可用、退直跑 loader——修 gdk-pixbuf 2.44 断言杀 phosh 时。 |
 | 上游 / 词库 | `scripts/lore-fetch-raw.py` | 按 Message-ID 直接从 lore 取 raw（自动过 Anubis PoW）——需要上游邮件原文/附件补丁。 |
@@ -486,6 +487,8 @@ git log --oneline -10
 | 主机环境（T16 新立面 2026-11-27） | `scripts/net-egress.sh` | 主机出口选择：教育网有线 vs 热点 wifi 显式路由（test/mirrors 模式）——下载慢、怀疑走错出口时。 |
 | | `scripts/host-mem-build-stress.sh` | 用真实构建压测宿主内存（无 ECC 机位翻转排查，配 kbuild-sanity.sh）——疑似内存坏时。 |
 | 通信 / 邮件（2026-11-28 新立面） | `scripts/read-mail-outlook.sh` | Outlook 通道只读快照（`himalaya` envelope list，不改已读态）：`--days N` / `--mailbox inbox\|junk\|sent\|all` / `--check` / `--selftest`；内含 sent 别名修正与分页上限——D10 通信 lane 每轮先跑它。 |
+| droidloom 用户态构建（T44，2026-11-28） | `scripts/sysroot-add-droidloom-deps.sh` | 往 trixie arm64 sysroot 解入 droidloom 4 件所需的 arm64 -dev+运行时包（wayland/gbm/pipewire/spa），并自检 libc/libm 绝对路径链接 ⇒ 主机交叉编前置。 |
+| | `scripts/build-droidloom-userland-crates.sh` | 主机交叉编 `droidloom-{wayland,audio,devices,gpu-server}`（18 s，不走 Arch ARM sysroot），自带 `--sysroot` gcc wrapper 与 glibc≤2.41 判据——改 T43/IME 或换 release 时用。 | Outlook 通道只读快照（`himalaya` envelope list，不改已读态）：`--days N` / `--mailbox inbox\|junk\|sent\|all` / `--check` / `--selftest`；内含 sent 别名修正与分页上限——D10 通信 lane 每轮先跑它。 |
 | Win-x86 转译 PoC（T16 新立面 2026-11-27） | `scripts/fetch-x86-assets.sh` | 下载 Win-x86 转译 PoC 离线资产到 pkgs-x86/（双路径 + precheck）——重配 box64/wine 环境时。 |
 | | `scripts/win-x86-rootfs.sh` | 构建/部署 glibc aarch64 rootfs（build/deploy/debootstrap）——重造 PoC 根时。 |
 | | `scripts/win-x86-run.sh` | 在设备 glibc-rootfs chroot 内跑 Box64+Wine（自带 fork 风暴防护）——PoC 上机执行入口。 |
