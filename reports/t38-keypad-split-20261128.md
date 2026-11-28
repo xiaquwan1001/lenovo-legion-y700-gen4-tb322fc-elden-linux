@@ -28,7 +28,7 @@ Android 侧日志（逐字）：
 
 - `onFailed at PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE` 正是 **droidloom issue #65**（2026-11-27 我方提，见 `TASKS/NEXT.md` ~~T3~~）的签名；#65 未被修，51 复现依旧。
 - 机制解释（与 §1 日志一致）：宿主 OSK 的显示由 `droidloom-wayland` 的 text-input `enable/disable` 驱动，`HostInputMethod.onShowInputRequested()` 恒 `false`；一次 dismiss 之后 `Editor.needs_enable()` 认为 task/session 未变 ⇒ 不重发 `enable()` ⇒ 后续 `onRequestShow` 永远落 `onFailed`。
-- 处置：**并入 T37 的 droidloom 跟进**（在 #65 下补一条「dismiss 后不再 enable 的复现」），本机不打算再用规避手段（占位 IME 已证实无效）。
+- 处置（已完成）：**已在该 issue 下补复现**（2026-11-28T02:51:40Z，<https://github.com/denialwm/droidloom/issues/65#issuecomment-7232640301>，正文原件 `out/gh-20261128/droidloom-65-comment.md`）：明确「不是占位 IME 专属，headless IME + 宿主 OSK 同样复现」，给出触发条件（一次 show 后 dismiss）与三条日志，并把 `needs_enable()` 写成**假设**（未用 `DROIDLOOM_TRACE=input` 取证）。本机不做规避（占位 IME 已证无效）。
 
 ## 3. 关键工具发现：注入的触摸/指针**到不了宿主 OSK 表面**
 
