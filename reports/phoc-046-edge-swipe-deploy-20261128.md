@@ -74,7 +74,26 @@
 **现设备上的件** = ①+②+门控探针：`/usr/bin/droidloom-wayland` 7,968,248 B / sha `7d5f4303…`；
 回滚仍用 `/root/droidloom-backup-20261128-t43/`（release 51 原件）。
 
-## 3. 本次踩到的连带故障：换 phoc 会静默打死 droidloom（**已修一例，缺口待补**）
+### 2026-11-28 追补 2（用户报「只能输入一个字」「9 键回不到」）
+
+**「只进一个字」不是宿主键盘坏了**（`PITFALLS #763`）。小红书手机号框每敲一键都触发 Android **输入重启**：
+
+| 证据 | 值 |
+|---|---|
+| `adb logcat -s DroidloomIME` | `start input restarting=true editable=true` **每键一条**（连敲 3 键 = 3 条） |
+| 探针（`DROIDLOOM_TRACE=input`） | `editor=Some((false, 0, 9, 1)) enabled=Some((75, 6)) held=true entered=true` ⇒ Android 新记录 **`active=false, task=0`** |
+| 结果 | 框内只有 `151 23`（3 键进了 2 键），之后全被丢 |
+| **对照**：Android Settings 纯文本搜索框 | `ydotool type "abcdef"` ⇒ `text="abcdef"`（**6 字全进**）、`DroidloomIME` 零 `restarting` 日志 |
+
+链条：应用每键 `setText` → IMMS restart input → framework 补丁在 restart 期间 `mFocusedWindow` 为空 ⇒ `task=0` ⇒
+`HostInputMethod.publish()` 的 `active = active && task > 0` = false ⇒ **`apply()` 开头 `if (!state.optBoolean("active")) return;` 丢弃后续提交**
+（发生在 Java 侧、到 `InputConnection` 之前，宿主补丁绕不过）。宿主侧 `text_input.rs::done()` 的
+`self.editor != Some(editor)` 在 `held` 期间是同一现象的第二处丢弃。
+
+⇒ 修复必须在 Android 侧（framework 沿用上一 task / IME 去掉 `state.active` 门），属镜像重编范畴（用户已裁定出列）⇒ 登记 **T48**；
+宿主 OSK 数字面板没有回切入口的问题登记 **T49**。
+
+：换 phoc 会静默打死 droidloom（**已修一例，缺口待补**）
 
 - 现象：phoc 换好后**小红书打不开**。设备侧 `droidloom.service` = `inactive dead`、`droidloom-applications` 每 2 s 报
   `connect catalog subscription: No such file or directory`。
