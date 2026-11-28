@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：770
+- 报告总数：773
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -18,7 +18,7 @@
 | `upstream` | 25 | `upstream-userland-20261128.md` |
 | `doc` | 20 | `doc-audit-20261125.md` |
 | `gunyah` | 20 | `gunyah-daily-line-20261126.md` |
-| `android` | 15 | `android-boot-audit-20261122.md` |
+| `android` | 16 | `android-compat-route-decision-20261128.md` |
 | `m1` | 15 | `m1-u6-pas-dtbfw-leak-20261027.md` |
 | `comm` | 12 | `comm-triage-20261127-b.md` |
 | `m3` | 12 | `m3-v5-selfcontained-20261031.md` |
@@ -42,6 +42,7 @@
 | `build` | 5 | `build-env-cross-vs-podman-20261128.md` |
 | `dwc3` | 5 | `dwc3-v16-20261125.md` |
 | `git` | 5 | `git-slim-exec-20261113.md` |
+| `phosh` | 5 | `phosh-gestures-assessment-20261128.md` |
 | `usb` | 5 | `usb-charging-dualport-20261126.md` |
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
 | `bl` | 4 | `bl-stuck-20261118-forensics.md` |
@@ -49,7 +50,6 @@
 | `g7` | 4 | `g7-flip-ondevice-20261123.md` |
 | `host` | 4 | `host-stability-20261023.md` |
 | `out` | 4 | `out-android-purge-20261126.md` |
-| `phosh` | 4 | `phosh-gestures-assessment-20261128.md` |
 | `progress` | 4 | `progress-audit-20261118.md` |
 | `q32` | 4 | `q32-matrix-20261024.md` |
 | `research` | 4 | `research-next-20261102.md` |
@@ -179,6 +179,7 @@
 | `moonlight` | 1 | `moonlight-client-deploy-20261127.md` |
 | `motor` | 1 | `motor-haptics-vk127-20261017.md` |
 | `mu` | 1 | `mu-memmap-20261115.md` |
+| `native` | 1 | `native-apk-install-feasibility-20261128.md` |
 | `net` | 1 | `net-https-mtu-rootcause-20261018.md` |
 | `odirect` | 1 | `odirect-sha-gate-20261120.md` |
 | `onkernel` | 1 | `onkernel-20261123-h2.md` |
@@ -515,8 +516,9 @@
 - `gunyah-vmm-first-attempt-20261024.md` — Gunyah VMM 第一步（2026-10-24 深夜）：用户态 harness 打通到 `VM_INIT`，RM 返回 **IRQ_INUSE(0x10)**
 - `gunyah-roadmap-20261021.md` — Gunyah 虚拟化线（拓展项）资产盘点 + 事实核查 + 分阶段规划
 
-## `android`（15）
+## `android`（16）
 
+- `android-compat-route-decision-20261128.md` — droidloom vs Waydroid 路线裁决材料（Y700 四代 TB322FC，主线 Linux + Phosh）
 - `android-boot-audit-20261122.md` — 安卓「系统起不来」证据链审计（2026-11-22，主机侧只读）
 - `android-a-slot-laneC-20261121.md` — 安卓 a 槽 lane C：机制重判 · 材料核实 · 设备只读取证 · 执行单 · 脚本复核（2026-11-21）
 - `android-a-slot-materials-20261121.md` — a 槽 S2/S3 材料盘点 + 设备只读取证（2026-11-21）
@@ -795,6 +797,14 @@
 - `git-tree-merge-20261111.md` — 内核 git 树合并/差分分析（geekidos-linux × wt/reb-731）— 2026-11-11
 - `git-tree-consolidation-20261103.md` — 2026-11-03 本地 git 树精简合并 + 损坏镜像重建
 
+## `phosh`（5）
+
+- `phosh-gestures-assessment-20261128.md` — T29 上游化评估（主机侧那半）· phosh/phoc 手势导航交互 + 视觉效果
+- `phosh-ime-popup-research-20261128.md` — phosh/phoc「输入法弹窗 / 键盘意图」上游化调研 — 2026-11-28
+- `phosh-replies-20261128.md` — phosh/gmobile 三封维护者回复处置 + 协议层讨论起头（2026-11-28）
+- `phosh-mr-2005-rework-20261124.md` — phosh !2005 第二轮（2026-11-24，按 guidog 意见重写）
+- `phosh-mr-power-mode-20261114.md` — phosh MR 提交材料（T20 / 2026-11-14）
+
 ## `usb`（5）
 
 - `usb-charging-dualport-20261126.md` — 双口同插「插着充不进电」定因与修复（2026-11-26，U1 在机）
@@ -844,13 +854,6 @@
 - `out-status-ledger-20261120.md` — out/ 造件生命周期账本（out-status.py + versions/out-artifacts.tsv）— 2026-11-20
 - `out-uefi-trim-20261106.md` — `out/r21-sbstop` 处置：先记指纹与可复现性缺口（2026-11-06）→ **同日已执行清仓**
 - `out-archive-20261105.md` — `out/` 历史镜像归档执行（2026-11-05）—— 114 件 / 7.66 GiB
-
-## `phosh`（4）
-
-- `phosh-gestures-assessment-20261128.md` — T29 上游化评估（主机侧那半）· phosh/phoc 手势导航交互 + 视觉效果
-- `phosh-ime-popup-research-20261128.md` — phosh/phoc「输入法弹窗 / 键盘意图」上游化调研 — 2026-11-28
-- `phosh-mr-2005-rework-20261124.md` — phosh !2005 第二轮（2026-11-24，按 guidog 意见重写）
-- `phosh-mr-power-mode-20261114.md` — phosh MR 提交材料（T20 / 2026-11-14）
 
 ## `progress`（4）
 
@@ -1456,6 +1459,10 @@
 ## `mu`（1）
 
 - `mu-memmap-20261115.md` — 2026-11-15 Mu UEFI 重打：把 0xD65C0000–0xFC800000 纳入 EFI 可见内存图 + AllocatePages/内存图插桩
+
+## `native`（1）
+
+- `native-apk-install-feasibility-20261128.md` — 「自建 APK 包管理器：装进我们的安卓环境 → 进 Phosh 网格 → 点开就跑」可行性评估（2026-11-28）
 
 ## `net`（1）
 

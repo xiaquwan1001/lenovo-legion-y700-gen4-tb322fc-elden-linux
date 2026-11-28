@@ -72,6 +72,7 @@
   **模块树 = 1510 个 `.ko` 已部署 `/lib/modules/7.3.1-debug-vk189-suspend-00005-g4bdf1711b5c0`**（新 UTS ⇒ 整套重编，不能沿用 vk190 那套）。
   **判据（本轮全绿，2026-11-16）**：`bound ae94000.dsi` + `[drm] fb0` / `wlp1s0` UP（ustcnet）/ `/dev/fastrpc-adsp` + `qrtr-lookup` 的 `400 Snapdragon Sensor Core service` /
   SensorProxy `HasAccelerometer/HasProximity/HasAmbientLight = true` / Waydroid + zramswap active / s2idle `rtcwake -m mem -s 45` **3/3 rc=0（`suspend_stats` fail=0）**。
+  **★2026-11-28 状态更正（本轮实测）**：Waydroid **已不在初始化状态** —— `waydroid status` = `Waydroid is not initialized`、`/var/lib/waydroid/images` 不存在（`waydroid-container.service` 仍 running、`lxc 6.0.4` 在位）；恢复需 `waydroid init` + 回刷 `vendor.img` + 三套自编 HAL 重部署（`reports/best-state-and-gap-20261122.md` A7；口径与成本见 `reports/android-compat-route-decision-20261128.md` J3）。同日在机安卓侧唯一可用 runtime = **droidloom `cell u1001`（`Android is ready`，6 个应用）**。
   **本版内容 = pstore/ram 守卫**（拒绝与 initrd 重叠的 ramoops zone，两枚提交 `5c72e9e838`+`4bdf1711b5`，上游已投 3×250）。
   证据 `reports/device-session-20261116-vk192.md`、`reports/pstore-ram-initrd-guard-20261116.md`。
   - 历史：`vk191` 曾以 **RAM 启动**（`fastboot boot`，kernel/dtb 同 vk190、仅 ramdisk 换成立即 SN 版）在机 2026-11-13→11-16；
