@@ -135,3 +135,15 @@ ssh elden 'sudo -n sh /tmp/deploy-iio-sensor-proxy-patches.sh --rollback'
 ⇒ 会话内**永久不重新 claim**，表现为：自动旋转消失、快捷设置只剩纵向/横向。
 修法（待办）：监听 `notify::g-name-owner`（或 `g-signal` 的 NameOwnerChanged），把 `self->claimed = FALSE` 后按当前
 `mode`/`orientation_locked` 重新走 `claim_or_release_accelerometer()`；顺带把 `set_orientation_locked` 的早退条件收紧。
+
+## §7 矩阵第二次修正：`diag(1,-1,-1)`（用户 2026-11-28 19:4x 目视「竖屏正常、横屏颠倒」）
+
+- 用户复验 `diag(1,1,-1)` 的结果：**竖屏正确、横屏 180° 颠倒**。
+- 按 `src/orientation.c` 的判据反推（源码核对，非猜测）：
+  - `portrait_rotation = atan2(x, √(y²+z²))`，`>0 → left-up(90°)`、`<0 → right-up(270°)`
+  - `landscape_rotation = atan2(y, √(x²+z²))`，`>0 → bottom-up(180°)`、`<0 → normal(0°)`
+  - 竖屏正确 ⇒ **x 符号正确**；横屏 180° 颠倒 ⇒ **y 符号反了** ⇒ 第 2 行取反
+- ⇒ 定值 **`1, 0, 0; 0, -1, 0; 0, 0, -1`**（`det=+1`，绕 X 轴 180° 的真旋转；平放仍 `face-up`，已复核 `Tilt=s "face-up"`）。
+- **诚实记录**：报告 §2.4 的候选表把 M_B（本值）预测成「画面仍 180° 反」，该预测**是错的**（当时把两条口述约束当成了充分条件）；现以用户实测 + `orientation.c` 源码为准。
+- 上线动作（按顺序，一次做完）：改设备 udev → `udevadm trigger` → `systemctl restart iio-sensor-proxy`（矩阵在 discovery 时读取，必须重启代理）→ **再 `systemctl restart greetd` 一次**让 phosh 重新 claim（否则方向 auto 依旧消失，见 §6）。
+- 复验状态：`phosh` 新 pid `322942`（19:45:44 启动）在 19:45:45 `ClaimAccelerometer` + 加速度计 continuous 出流；`droidloom` 已手工起到 `Android is ready`。**待用户目视**：横屏是否正立、竖屏是否仍正常。

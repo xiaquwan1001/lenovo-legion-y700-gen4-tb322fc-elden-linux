@@ -13,8 +13,8 @@
 #
 # ACCEL_MOUNT_MATRIX：★2026-11-28 重新标定。旧值 diag(-1,-1,1)（Alpine 根 2026-10-09 标定）在
 # 本机让平放**屏幕朝上却报 face-down**（tilt=-84°，PITFALLS #765）；与「竖屏 180° 错向」两约束
-# 联立后，带符号置换族里唯一解 = diag(1,1,-1)。det=-1 属镜像而非真旋转：iio-sensor-proxy 不校验
-# det，orientation/tilt 判据不受影响，故可用；若要「必须真旋转」需按
-# reports/sensors-orientation-als-20261128.md §2.4 的候选表做一次物理动作区分。
+# 联立先得 diag(1,1,-1)，**2026-11-28 用户实机目视后修正为 diag(1,-1,-1)**：
+# 竖屏正确、横屏 180° 颠倒 ⇒ orientation.c 的 landscape_rotation=atan2(y,·) 符号错 ⇒ 第 2 行取反；
+# det=+1（绕 X 轴 180° 的真旋转），平放仍 face-up。判据见 reports/sensors-t52-deploy-20261128.md §6.2。
 # 改前备份 + `udevadm control --reload && udevadm trigger --action=change /sys/class/misc/fastrpc-adsp`。
-SUBSYSTEM=="misc", KERNEL=="fastrpc-adsp*", ENV{IIO_SENSOR_PROXY_TYPE}+="ssc-accel ssc-proximity ssc-light ssc-compass", ENV{ACCEL_MOUNT_MATRIX}="1, 0, 0; 0, 1, 0; 0, 0, -1"
+SUBSYSTEM=="misc", KERNEL=="fastrpc-adsp*", ENV{IIO_SENSOR_PROXY_TYPE}+="ssc-accel ssc-proximity ssc-light ssc-compass", ENV{ACCEL_MOUNT_MATRIX}="1, 0, 0; 0, -1, 0; 0, 0, -1"

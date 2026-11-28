@@ -23,8 +23,12 @@ sudo busctl --system get-property net.hadess.SensorProxy /net/hadess/SensorProxy
 带符号置换族（48 个）里**唯一解**：
 
 ```
-ENV{ACCEL_MOUNT_MATRIX}="1, 0, 0; 0, 1, 0; 0, 0, -1"
+ENV{ACCEL_MOUNT_MATRIX}="1, 0, 0; 0, -1, 0; 0, 0, -1"      # ★2026-11-28 用户实机目视后的最终值
 ```
+
+> 迭代过程（别重走）：先按两条口述约束解出 `diag(1,1,-1)`，用户实测「竖屏正常、**横屏 180° 颠倒**」⇒ 按 `orientation.c`
+> 的 `landscape_rotation=atan2(y,·)`（`>0→bottom-up(180°)`、`<0→normal(0°)`）判定**第 2 行符号反了** ⇒ 改 `diag(1,-1,-1)`（`det=+1`，真旋转）。
+> 教训：姿态矩阵不要靠"两条口述约束联立"定案，必须**两种姿态各目视一次**（竖屏 + 横屏），因为竖屏只锁 x 行、横屏才锁 y 行。
 
 诚实标注：`det = −1`（不是真旋转，是镜像）。代理不校验 det，orientation/tilt 判据不受影响、可用；
 若要"必须真旋转"，则说明两条约束有一条不成立，需按 `reports/sensors-orientation-als-20261128.md` §2.4 的候选表做一次物理动作区分。

@@ -22,7 +22,7 @@ dst	kind	sha256	size	mode	repo_src
 /etc/systemd/system/elden-sensorspd.service	unit	a15f17d32f665b2a25ed230448cd146664a83a8f103d365348d32d7fd98103f2	701	644	files/etc/systemd/system/elden-sensorspd.service
 /etc/systemd/system/qbootctl.service.d/override.conf	systemd-unit	08b59f05708722c6237524c4c2d9a4319b4b8b42f892edd90f403818a9c97a44	381	644	files/etc/systemd/system/qbootctl.service.d/override.conf
 /etc/udev/rules.d/70-elden-dma-heap.rules	udev-rule	4fa512367f7602581703e977f4ca1eaed42199faf8ae15f1a7f47986daced955	50	644	files/etc/udev/rules.d/70-elden-dma-heap.rules
-/etc/udev/rules.d/81-libssc-elden.rules	udev-rule	327256c549e9fc3de84bcb2d78b4b8240c2bfbb13059e009293b9ed64b09c8df	1659	644	files/etc/udev/rules.d/81-libssc-elden.rules
+/etc/udev/rules.d/81-libssc-elden.rules	udev-rule	83c3720868193bfc86fa79ffe8d4cf4e5fd0b3090166a68a6198649e11cecd27	1689	644	files/etc/udev/rules.d/81-libssc-elden.rules
 /etc/udev/rules.d/99-elden-serial-mm-ignore.rules	config	a12e21917078fe42eeffb78facdda4672a5619b79486e1b9ca5a8725ef4d570c	611	644	files/etc/udev/rules.d/99-elden-serial-mm-ignore.rules
 /etc/xdg/autostart/elden-waydroid.desktop	config	84969f19d03b4541e1f1b5a3af5e909b1d4ff0747c3e187b353eca65aa67bc77	808	644	files/etc/xdg/autostart/elden-waydroid.desktop
 /init	init	47af5f7d5400f52b944ffd8d5517e38dfa99531667a5cc2f18919209f6e7a539	34584	755	files/init
