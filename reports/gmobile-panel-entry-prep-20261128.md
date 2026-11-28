@@ -57,6 +57,19 @@
 
 ## 4. 构建路径（**本轮不执行**，给下一步）
 
+> **2026-11-28 已执行（T34），原始命令在下两种都可用；实际可行的一条 = 用专用 cross file**：
+> ① 先建 **trixie** arm64 sysroot（本节下面的 `rootfs/cross-aarch64.ini` 指向 `/TB322FC/out/sysroot-arm64`，**该路径本机不存在，照抄必失败**）：
+> ```sh
+> SUITE=trixie MIRROR=http://deb.debian.org/debian \
+> PKGS_ENV="libgio-2.0-dev libglib2.0-0t64 libjson-glib-1.0-0 libjson-glib-dev libffi-dev libffi8 \
+> libpcre2-dev libpcre2-8-0 libsysprof-capture-4-dev libmount-dev libmount1 libselinux1-dev libselinux1 \
+> libsepol-dev libsepol2 uuid-dev libblkid-dev libblkid1 zlib1g-dev zlib1g libc6 libgcc-s1 libc6-dev linux-libc-dev" \
+> SYSROOT=$PWD/out/sysroot-trixie-arm64 bash rootfs/build-sysroot.sh
+> ```
+> ② 用 **`rootfs/cross-aarch64-gmobile.ini`**（不是 `cross-aarch64.ini`；后者是 Mesa 专用、路径写死 `/TB322FC`）：
+> `meson setup _b --cross-file rootfs/cross-aarch64-gmobile.ini --prefix=/usr -Dgtk_doc=false -Dintrospection=false -Dvapi=false -Dtests=false -Dexamples=false -Dman=false && ninja -C _b`
+> 全流程与验收数据 = `reports/gmobile-t34-build-deploy-20261128.md`；踩坑 = `PITFALLS #754`。
+
 ```sh
 # 0) 取 Debian 源码（0.3.1，与本机同版）
 cd /tmp && curl -LO https://deb.debian.org/debian/pool/main/g/gmobile/gmobile_0.3.1.orig.tar.xz

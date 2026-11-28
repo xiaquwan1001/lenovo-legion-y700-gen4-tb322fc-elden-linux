@@ -1,13 +1,19 @@
 #!/bin/bash
-# Assemble an arm64 sysroot from the same Ubuntu release the tablet runs
-# (26.04 "resolute"), so Mesa is cross-compiled against exactly the headers
-# and sonames it will meet at runtime.
+# Assemble an arm64 sysroot for cross-building userland pieces.
+# 默认 `SUITE=resolute` = **主机** Ubuntu 26.04 的端口源（历史上为编 Mesa 设的）；
+# 注意：**设备在版 = Debian 13 trixie**（phosh 0.46 / phoc 0.46 / glib 2.84.4）。
+# 要与设备同 ABI 编件（如 libgmobile）请显式覆盖：
+#   SUITE=trixie MIRROR=http://deb.debian.org/debian PKGS_ENV="<包表>" SYSROOT=… bash rootfs/build-sysroot.sh
+# 范例（T34）= reports/gmobile-t34-build-deploy-20261128.md §1 + rootfs/cross-aarch64-gmobile.ini 头注。
 set -euo pipefail
 
-SYSROOT=${SYSROOT:-/home/xuqianhui1001/y700-elden/out/sysroot-arm64}
+# 默认路径按仓根推导（2026-11-28 修正：旧值 /home/xuqianhui1001/… 在本机不存在）
+REPO=${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}
+SYSROOT=${SYSROOT:-$REPO/out/sysroot-arm64}
 APT=$SYSROOT/.apt
-SUITE=resolute
-MIRROR=http://ports.ubuntu.com/ubuntu-ports
+# SUITE/MIRROR 可按需换（例：在 Debian trixie 设备上取同版 dev 包）
+SUITE=${SUITE:-resolute}
+MIRROR=${MIRROR:-http://ports.ubuntu.com/ubuntu-ports}
 
 PKGS=(
 	libdrm-dev libdrm2 libdrm-common
@@ -27,6 +33,11 @@ PKGS=(
 	libvulkan-dev libvulkan1
 	libc6-dev libc6 linux-libc-dev
 )
+
+# PKGS_ENV：逗号或空白分隔的完整替代包表（例：只给 gmobile 用的 glib/json-glib dev）
+if [ -n "${PKGS_ENV:-}" ]; then
+	read -r -a PKGS <<< "${PKGS_ENV//,/ }"
+fi
 
 mkdir -p "$APT"/etc/apt/{sources.list.d,preferences.d,apt.conf.d,trusted.gpg.d} \
 	 "$APT"/var/lib/apt/lists/partial "$APT"/var/cache/apt/archives/partial \

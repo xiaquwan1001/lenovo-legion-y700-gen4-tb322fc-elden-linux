@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：756
+- 报告总数：758
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -44,6 +44,7 @@
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
 | `bl` | 4 | `bl-stuck-20261118-forensics.md` |
 | `c5` | 4 | `c5-u7-sf-skimage-20261029.md` |
+| `comms` | 4 | `comms-track-20261128-b.md` |
 | `g7` | 4 | `g7-flip-ondevice-20261123.md` |
 | `host` | 4 | `host-stability-20261023.md` |
 | `out` | 4 | `out-android-purge-20261126.md` |
@@ -57,7 +58,6 @@
 | `bootloader` | 3 | `bootloader-slotguid-brick-20261121.md` |
 | `build` | 3 | `build-residue-verify-20261125.md` |
 | `c3` | 3 | `c3-spic-verdict-20261115.md` |
-| `comms` | 3 | `comms-track-20261128.md` |
 | `driver` | 3 | `driver-gap-device-audit-20261127.md` |
 | `external` | 3 | `external-scan-20261112.md` |
 | `grub` | 3 | `grub-rehash-20261115.md` |
@@ -86,6 +86,7 @@
 | `f2fs` | 2 | `f2fs-host-bench-20261025.md` |
 | `fastrpc` | 2 | `fastrpc-nonsecure-evidence-20261113.md` |
 | `g3` | 2 | `g3-steam-screenshot-paths-20261029.md` |
+| `gmobile` | 2 | `gmobile-panel-entry-prep-20261128.md` |
 | `hw` | 2 | `hw-capability-drivers-20261127.md` |
 | `integrity` | 2 | `integrity-h2-20261111.md` |
 | `iris` | 2 | `iris-backport-1222157-20261127.md` |
@@ -155,7 +156,6 @@
 | `fs` | 1 | `fs-dedup-20261127.md` |
 | `g0` | 1 | `g0-fstype-zero-write-20261025.md` |
 | `g1` | 1 | `g1-23-windows-20261026.md` |
-| `gmobile` | 1 | `gmobile-panel-entry-prep-20261128.md` |
 | `gpu` | 1 | `gpu-minfreq-ab-20261125.md` |
 | `greetd` | 1 | `greetd-stop-verify-20261031.md` |
 | `hexagonrpc` | 1 | `hexagonrpc-upstream-registry-write-20261127.md` |
@@ -800,6 +800,13 @@
 - `c5-u7-gralloc-device-20261028.md` — C5/U7 容器相机 gralloc 崩溃：设备侧判别 E1/E2 与最小修法（2026-10-28）
 - `c5-u7-gralloc-layout-20261028.md` — C5/U7 容器相机「帧交给图形层」崩溃：gralloc 布局定位（2026-10-28）
 
+## `comms`（4）
+
+- `comms-track-20261128-b.md` — D10 通信跟踪（D10 lane 增量快照，只读）— 邮件三箱 + lore + 用户态上游现查
+- `comms-track-20261128.md` — D10 通信跟踪（窗口 `2026-11-26T22:02Z` → `2026-11-27T22:17Z`）— 邮件 / lore / Mobian / phosh / GitHub（只读）
+- `comms-track-20261127-c.md` — 通信跟踪 D10-c 增量（窗口 `2026-11-27T03:20Z` → `2026-11-27T12:32Z`）— 只读
+- `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
+
 ## `g7`（4）
 
 - `g7-flip-ondevice-20261123.md` — G7 换口实测（rev2，RAM 启动，2026-11-23 21:10–21:14）
@@ -887,12 +894,6 @@
 - `c3-spic-verdict-20261115.md` — C3 Play Integrity 实测回包（SPIC v1.4.0，2026-11-15）
 - `c3-pi-tiers-closeout-20261110.md` — C3 收口（2026-11-10）：Play Integrity 三档 × Widevine 等级的**书面结论**
 - `c3-identity-drm-20261013.md` — C3 身份/DRM 取证（Waydroid 容器 / lineage_waydroid_arm64_only A13）— 2026-10-13
-
-## `comms`（3）
-
-- `comms-track-20261128.md` — D10 通信跟踪（窗口 `2026-11-26T22:02Z` → `2026-11-27T22:17Z`）— 邮件 / lore / Mobian / phosh / GitHub（只读）
-- `comms-track-20261127-c.md` — 通信跟踪 D10-c 增量（窗口 `2026-11-27T03:20Z` → `2026-11-27T12:32Z`）— 只读
-- `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
 
 ## `driver`（3）
 
@@ -1049,6 +1050,11 @@
 
 - `g3-steam-screenshot-paths-20261029.md` — G3 Steam 判据②「截图」路径清单 + captive-portal 绕过草案（2026-10-29，纯主机）
 - `g3-steam-20261028.md` — G3 第一批：Steam 客户端起到登录界面（2026-10-28，持设备）
+
+## `gmobile`（2）
+
+- `gmobile-panel-entry-prep-20261128.md` — T33 素材 — 自建 gmobile `lenovo,elden` 显示面板条目（圆角/刘海避让）
+- `gmobile-t34-build-deploy-20261128.md` — T34 — 本机编 `libgmobile` 带 `lenovo,elden` 面板条目并验收（2026-11-28）
 
 ## `hw`（2）
 
@@ -1346,10 +1352,6 @@
 ## `g1`（1）
 
 - `g1-23-windows-20261026.md` — G1-23 残留复核：三个长时窗（2026-10-26，日常线 vk163）
-
-## `gmobile`（1）
-
-- `gmobile-panel-entry-prep-20261128.md` — T33 素材 — 自建 gmobile `lenovo,elden` 显示面板条目（圆角/刘海避让）
 
 ## `gpu`（1）
 

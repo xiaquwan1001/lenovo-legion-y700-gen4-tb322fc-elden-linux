@@ -78,6 +78,7 @@
 > 裁决 = **不整包跟 fork，只 cherry-pick 4 条 patch**（`patches/local/`）+ **先把 49 升到上游 51 再判 IME**（`4df8af9`）。`reports/droidloom-upstream-cluster-20261127.md`。
 > ⑥ 收尾门：`check-doctor` **FAIL=0 / WARN=3**（三条 C 类存量：源树不可核 67 行、账本登记例外、身份表降级一致）；`docs-health` **0/0/0**；
 > `check-progress-counts` **G1 36/37 · G2 10/13**；`reports-orphan-check --check` **rc=0（710/710）**；`git fsck` rc=0。
+> **2026-11-28 现态更正**：`reports-orphan-check --check` 复跑 **rc=1**（TOTAL 756–757、有指针 98.4%、**孤儿 12–13**）；缺的角度层指针与两条判据 bug 已登记 **T39**，逐篇清单 = `.pi/plans/2026-11-28-doc-drift.md` M2。
 
 > **⚠ 2026-11-27 20:1x 现态**：设备被换到内核 `7.3.1-debug-vk189-suspend-g4da9a8b69fc8-dirty`（`build/daily` 直出）后 **`/dev/fastrpc-adsp` 不存在**
 > （该 DTB 缺 adsp fastrpc 的 `qcom,non-secure-domain` = G1-34 的已知回归形态）⇒ **传感器当前不起**；`elden-sensorspd` 已改 oneshot + 有界等待，
