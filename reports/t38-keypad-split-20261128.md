@@ -59,3 +59,10 @@ Android 侧日志（逐字）：
 ## 6. 证据文件
 
 `reports/artifacts/t38-20261128/`：`t38-1-launch.png`（锁屏）、`t38-2/3`（锁屏，鼠标解不开）、`t38-4-unlocked.png`、`t38-5-login.png`（数字键盘出）、`t38-6-after1.png`（点 1 后自隐）、`t38-7-refocus.png`（唤不出）、`t38-8-password.png`（密码框仍数字键盘）、`t38-9-pwtap.png`、`t38-10-settings.png`（全键盘）、`t38-11-typed.png`（注入点键不进字）、`t38-12/15`（鼠标点击 → overview）、`t38-14-keypad2.png`（再次出数字键盘）。
+
+## 7. 操作事故（2026-11-28 10:49–10:59）：pkill osk-stub 导致「键盘画得出按不动」
+
+- 我在 §4 之后为「重置布局滞留」执行了 `pkill -x phosh-osk-stub`：phosh 拉起新进程（PID 365710），但**用户真手实测该状态下数字/字母键盘都打不进、退格无效**，随机按到一处冒出 `8` 且键盘自收 —— 这一条**不是** T38 原始 bug 的复现，而是我的操作造成的会话内 OSK 状态不一致。
+- 复原：`sudo systemctl restart greetd`（10:59:1x 三件新起）→ 桌面/键盘恢复；`droidloom.service` 是 user unit，会话重开会停，需 `systemctl --user start droidloom.service` 拉回（现 `Android is ready`）。
+- 纪律已写成 `PITFALLS #756`：要重置键盘就重开会话，**不要杀 osk-stub**；同时以后遇到「键盘能显示但打不进字」先问「这轮有没有动过 osk-stub/会话」。
+- 对 T38 的影响：用户这次「打不进字」的观察**不能**用来说明 keypad 触点问题；§5 的真人复验仍需在**干净会话**上重做（当前设备已是干净会话）。
