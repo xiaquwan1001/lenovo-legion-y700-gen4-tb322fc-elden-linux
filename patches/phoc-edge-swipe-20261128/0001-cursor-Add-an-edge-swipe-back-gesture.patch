@@ -1,6 +1,6 @@
-From 7f3feda29bc869cc2e86cc74f70d0b6cf1033da6 Mon Sep 17 00:00:00 2001
-From: Elen Dev <dev@elden.local>
-Date: Sat, 28 Nov 2026 13:23:38 +0800
+From 4931414cc7d3fd79a9ed67c702ac0c8234f15475 Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 28 Nov 2026 14:06:15 +0800
 Subject: [PATCH] cursor: Add an edge swipe back gesture
 
 Add a PhocGestureEdgeSwipe that recognizes horizontal single-finger
@@ -19,18 +19,20 @@ This gives us a shell level back gesture to close dialogs and windows
 as known from libhandy's HdyDeck/HdyLeaflet.  A follow-finger
 animation with a drop shadow can be layered on top later.
 
-Closes: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/125
+See: https://gitlab.gnome.org/World/Phosh/phoc/-/issues/125
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
 ---
  src/cursor.c             |  38 +++++
- src/gesture-edge-swipe.c | 328 +++++++++++++++++++++++++++++++++++++++
+ src/gesture-edge-swipe.c | 331 +++++++++++++++++++++++++++++++++++++++
  src/gesture-edge-swipe.h |  57 +++++++
  src/meson.build          |   2 +
- 4 files changed, 425 insertions(+)
+ 4 files changed, 428 insertions(+)
  create mode 100644 src/gesture-edge-swipe.c
  create mode 100644 src/gesture-edge-swipe.h
 
 diff --git a/src/cursor.c b/src/cursor.c
-index b31eb23..f303e56 100644
+index b31eb23..c3ea4b7 100644
 --- a/src/cursor.c
 +++ b/src/cursor.c
 @@ -12,6 +12,7 @@
@@ -46,9 +48,9 @@ index b31eb23..f303e56 100644
  
  
 +static void
-+on_edge_swipe_back (PhocGestureEdgeSwipe      *gesture,
-+                    PhocGestureEdgeSwipeEdge   edge,
-+                    PhocCursor                *self)
++on_edge_swipe_back (PhocGestureEdgeSwipe    *gesture,
++                    PhocGestureEdgeSwipeEdge edge,
++                    PhocCursor              *self)
 +{
 +  PhocEventSequence *sequence;
 +  struct wlr_touch_point *point;
@@ -99,10 +101,10 @@ index b31eb23..f303e56 100644
  
 diff --git a/src/gesture-edge-swipe.c b/src/gesture-edge-swipe.c
 new file mode 100644
-index 0000000..56344a7
+index 0000000..e72da22
 --- /dev/null
 +++ b/src/gesture-edge-swipe.c
-@@ -0,0 +1,328 @@
+@@ -0,0 +1,331 @@
 +/*
 + * Copyright (C) 2026 Phoc Contributors
 + *
@@ -147,17 +149,17 @@ index 0000000..56344a7
 +
 +typedef struct _PhocGestureEdgeSwipePrivate {
 +  /* Width of the edge band in layout (logical) pixels */
-+  guint                  edge_width;
++  guint  edge_width;
 +
 +  /* Layout position of the TOUCH_BEGIN */
-+  double                 start_lx;
-+  double                 start_ly;
++  double start_lx;
++  double start_ly;
 +  PhocGestureEdgeSwipeEdge edge;
 +
 +  /* The touch sequence we're tracking (a touch id) */
-+  PhocEventSequence     *current_sequence;
++  PhocEventSequence       *current_sequence;
 +
-+  guint                  emitted : 1;
++  guint emitted : 1;
 +} PhocGestureEdgeSwipePrivate;
 +
 +G_DEFINE_TYPE_WITH_PRIVATE (PhocGestureEdgeSwipe, phoc_gesture_edge_swipe, PHOC_TYPE_GESTURE_SINGLE)
@@ -321,7 +323,8 @@ index 0000000..56344a7
 +
 +
 +static gboolean
-+phoc_gesture_edge_swipe_handle_event (PhocGesture *gesture, const PhocEvent *event, double lx, double ly)
++phoc_gesture_edge_swipe_handle_event (PhocGesture *gesture, const PhocEvent *event, double lx,
++                                      double ly)
 +{
 +  PhocGestureEdgeSwipe *self = PHOC_GESTURE_EDGE_SWIPE (gesture);
 +  PhocGestureEdgeSwipePrivate *priv;
@@ -341,7 +344,8 @@ index 0000000..56344a7
 +    sequence = GINT_TO_POINTER (event->touch_up.touch_id);
 +    break;
 +  case PHOC_EVENT_TOUCH_CANCEL:
-+    return PHOC_GESTURE_CLASS (phoc_gesture_edge_swipe_parent_class)->handle_event (gesture, event, lx, ly);
++    return PHOC_GESTURE_CLASS (phoc_gesture_edge_swipe_parent_class)->handle_event (gesture, event,
++                                                                                    lx, ly);
 +  default:
 +    return FALSE;
 +  }
@@ -367,7 +371,8 @@ index 0000000..56344a7
 +    return FALSE;
 +  }
 +
-+  retval = PHOC_GESTURE_CLASS (phoc_gesture_edge_swipe_parent_class)->handle_event (gesture, event, lx, ly);
++  retval = PHOC_GESTURE_CLASS (phoc_gesture_edge_swipe_parent_class)->handle_event (gesture, event,
++                                                                                    lx, ly);
 +
 +  if (event->type == PHOC_EVENT_TOUCH_UPDATE)
 +    phoc_gesture_edge_swipe_maybe_emit_back (self, lx, ly);

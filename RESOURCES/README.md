@@ -456,6 +456,7 @@ git log --oneline -10
 | | `scripts/dpms-watch.sh` | 每秒采面板/合成器状态到 `/root/dpms-watch.log`——熄屏/黑屏取证。 |
 | 桌面栈构建 / 调试（T16 新立面 2026-11-27） | `scripts/build-phosh-upstream-fix.sh` | 用上游 main 源树 + 本地补丁编 aarch64 phosh——验证 upstream/*.patch 可上机件时。 |
 | | `scripts/phoc-build-launch.sh` | root 独立 session 启动 build-phoc-arm64.sh（脱离调用者进程组，日志 /tmp/phoc-build.log）——编 phoc 不想被 sudo_exec/tmux 退出连杀时。 |
+| | `scripts/build-phoc-mr-arm64.sh` | 在 Debian sid arm64 chroot 里编 **phoc MR 分支**并取产物/元数据（`out/phoc-edge-swipe-arm64-<日期>/`）——给上游 MR 补架构编译证据时（换 SRC/OUT 环境变量即可复用）。 |
 | | `scripts/glycin-bwrap-shim.sh` | 在 bwrap 前装 shim 让 glycin 判定沙箱不可用、退直跑 loader——修 gdk-pixbuf 2.44 断言杀 phosh 时。 |
 | 上游 / 词库 | `scripts/lore-fetch-raw.py` | 按 Message-ID 直接从 lore 取 raw（自动过 Anubis PoW）——需要上游邮件原文/附件补丁。 |
 | | `scripts/gen-pinyin-lexicon.py` | 从 CC-CEDICT 生成「拼音 → 词」候选词库（供 `elden-pinyin-completer`）——换/扩词库时；`--check` 可验。 |

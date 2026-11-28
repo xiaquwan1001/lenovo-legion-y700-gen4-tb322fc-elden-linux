@@ -50,3 +50,21 @@ PKG_CONFIG_PATH=/tmp/wp-install/share/pkgconfig ninja -C build-host src/phoc
 
 - 未跑 aarch64/chroot 交叉验证（无 root）；x86_64 内嵌 wlroots 全量链接通过已覆盖语法/链接层风险。
 - 未动 `/opt/elden` 任何目录；`build-slot take y700-elden:phoc-mr` 已 take/drop（本轮实际未占用 CPU 构建）。
+
+## 追加：aarch64（目标架构）真编 —— 2026-11-28 父代理
+
+worker 无 sudo，故父代理用 `sudo_exec` 跑 `scripts/build-phoc-mr-arm64.sh`（chroot `/opt/elden/arm64-sid`，
+wayland-protocols 1.50 / wlroots 0.20.2 / wayland-server 1.26 / xkbcommon 1.13.1 / meson 1.13.2）：
+
+```
+--- meson setup ---  embed-wlroots: enabled, wlroots subproject: YES
+[523/523] Linking target src/phoc
+```
+（构建过程有 gvdb 静态分析器的 `-fanalyzer` 提示，属 subproject 既有告警，链接成功、与 MR 代码无关。）
+
+产物 `out/phoc-edge-swipe-arm64-20261128/`：
+- `phoc-edge-swipe` 7,483,056 B，sha256 `6aa46b3a5ab2571f7dff2a49a8ac9587ea8b2c965a6f92ca7e98ec8b60c807f7`
+- `ELF 64-bit LSB pie executable, ARM aarch64`，max `GLIBC_2.38`（设备 2.41 ⇒ 兼容）
+- `meta.txt`（branch/commit/sha/NEEDED）+ `build.log`（138 KB 全量）
+
+⇒ **两架构编译证据齐**（x86_64 + aarch64）。设备侧安装验证（Firefox 内边缘滑动不透传）仍需一次重启窗，未做。

@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=c71a3b8af726bd27（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=1f78d81e593d4afb（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,8 +7,8 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**368**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 89 / 设备操作 109 / 造件 71 / 取证 52 / 一次性 3 / 公共库 8 / 其它 36
+- 入口总数：**369**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 89 / 设备操作 109 / 造件 72 / 取证 52 / 一次性 3 / 公共库 8 / 其它 36
 - 引用数为 0 的孤立件：**0**（判定口径见下）
 
 ## 判据（怎么读这张表）
@@ -95,7 +95,7 @@
 | `scripts/out-archive.py` | out/*.img 归档器 —— out/ 只留在用件与取证件，历史镜像 mv 到 backup/out-history-<date>/。 | 48 |
 | `scripts/out-manifest-check.py` | out/ 造件「报告↔镜像」账本门（2026-11-20，arch-audit P0#2） | 14 |
 | `scripts/rawprogram-preflight.py` | 线刷包 rawprogram XML 的**写前**几何预检（纯主机、无 USB）。 | 16 |
-| `scripts/read-mail-outlook.sh` | Outlook 通道只读快照（himalaya envelope list，不改已读态） | 3 |
+| `scripts/read-mail-outlook.sh` | Outlook 通道只读快照（himalaya envelope list，不改已读态） | 17 |
 | `scripts/reports-orphan-check.py` | `reports/*.md` 是否被「角度层」指针引用（可复跑判据 + 反作弊 + 自测）。 | 39 |
 | `scripts/retire-reboot2.sh` | 把设备上的 `/usr/local/sbin/reboot2` 换成「拒绝壳」（幂等；2026-11-27） | 5 |
 | `scripts/rootfs-image-check.py` | 磁盘根 ext4 镜像「能不能起 / 能不能登入」的写前门（主机侧，只读） | 6 |
@@ -232,7 +232,7 @@
 | `scripts/wd.sh` | 主机侧 Waydroid 快捷控制（**每次 <15s 返回，绝不长等待**） | 13 |
 | `scripts/win-x86-rootfs.sh` | 构建/部署 glibc aarch64 rootfs（Win-x86 转译 PoC 阶段A） | 17 |
 
-## 造件（71）
+## 造件（72）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -261,7 +261,8 @@
 | `scripts/build-manifest.sh` | record everything needed to identify/rebuild a boot image. | 33 |
 | `scripts/build-modular-overlay.sh` | layer the modularized payload driver bundle | 14 |
 | `scripts/build-payload-hook.sh` | RETIRED 2026-11-27：vk77-modular ramdisk 补 payload 钩子的一次性打包器（教训已入 PITFALLS §0 纪律 4），配方在 reports/；可复核：reports/scripts-index-20261120.md | 6 |
-| `scripts/build-phoc-arm64.sh` | 产出「广告 wp_linux_drm_syncobj_manager_v1」的 aarch64 phoc（C12 L2） | 18 |
+| `scripts/build-phoc-arm64.sh` | 产出「广告 wp_linux_drm_syncobj_manager_v1」的 aarch64 phoc（C12 L2） | 19 |
+| `scripts/build-phoc-mr-arm64.sh` | 在 Debian sid arm64 chroot 里编译 phoc MR 分支（边缘返回手势） | 3 |
 | `scripts/build-phosh-arm64.sh` | 产出带「output power 失败即视为屏亮」修复的 aarch64 phosh | 8 |
 | `scripts/build-phosh-upstream-fix.sh` | 用「上游 main 源树 + 本地补丁」编 aarch64 phosh（验证上游补丁用） | 7 |
 | `scripts/build-sensord.sh` | 编译 eldroid-sensord（C4 数据源 daemon）： | 11 |

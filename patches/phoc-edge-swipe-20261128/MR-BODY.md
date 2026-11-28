@@ -32,7 +32,10 @@ touch 屏侧没有任何边缘手势；用户侧只能用 lisgd 旁听 evdev 模
 
 ## 如何测
 
-- `meson compile -C build`（本 MR 在 x86_64 宿主上以 `-Dembed-wlroots=enabled` 全量编译链接通过，0 warning）。
+- `meson compile -C build`：两个架构都真编过（`-Dembed-wlroots=enabled -Dwlroots:default_library=static`）
+  - **x86_64 宿主**：`[3/3] Linking target src/phoc`，0 warning（7,572,896 B）
+  - **aarch64（Debian sid arm64 chroot，目标架构）**：`[523/523] Linking target src/phoc`（7,483,056 B，sha256 `6aa46b3a…`，
+    max GLIBC symbol = `GLIBC_2.38` ≤ 设备 glibc 2.41）；构建脚本 `scripts/build-phoc-mr-arm64.sh`，日志 `out/phoc-edge-swipe-arm64-20261128/build.log`
 - 手机上：从屏幕左/右边缘水平（含弧线）滑入 ≥1/4 屏宽 ⇒ 顶层窗口关闭；触摸抬手前应用不应收到任何事件（可用 `WAYLAND_DEBUG` 或 Firefox 内滚动无反应验证）。
 - 反例：屏幕中部竖划、双指、面板上按下均不触发。
 
