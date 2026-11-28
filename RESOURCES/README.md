@@ -484,6 +484,7 @@ git log --oneline -10
 | | `scripts/test-bt-guard.sh` | 50-elden-bt-guard 钩子的注入式单元测试（伪造 dmesg/rfkill，不动真机 BT）——改钩子后必跑。 |
 | 主机环境（T16 新立面 2026-11-27） | `scripts/net-egress.sh` | 主机出口选择：教育网有线 vs 热点 wifi 显式路由（test/mirrors 模式）——下载慢、怀疑走错出口时。 |
 | | `scripts/host-mem-build-stress.sh` | 用真实构建压测宿主内存（无 ECC 机位翻转排查，配 kbuild-sanity.sh）——疑似内存坏时。 |
+| 通信 / 邮件（2026-11-28 新立面） | `scripts/read-mail-outlook.sh` | Outlook 通道只读快照（`himalaya` envelope list，不改已读态）：`--days N` / `--mailbox inbox\|junk\|sent\|all` / `--check` / `--selftest`；内含 sent 别名修正与分页上限——D10 通信 lane 每轮先跑它。 |
 | Win-x86 转译 PoC（T16 新立面 2026-11-27） | `scripts/fetch-x86-assets.sh` | 下载 Win-x86 转译 PoC 离线资产到 pkgs-x86/（双路径 + precheck）——重配 box64/wine 环境时。 |
 | | `scripts/win-x86-rootfs.sh` | 构建/部署 glibc aarch64 rootfs（build/deploy/debootstrap）——重造 PoC 根时。 |
 | | `scripts/win-x86-run.sh` | 在设备 glibc-rootfs chroot 内跑 Box64+Wine（自带 fork 风暴防护）——PoC 上机执行入口。 |

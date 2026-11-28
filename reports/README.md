@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：761
+- 报告总数：764
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -13,9 +13,9 @@
 | `uefi` | 86 | `uefi-bslot-plan-20261121.md` |
 | `q28` | 33 | `q28-ab-rig-20261116.md` |
 | `mail` | 30 | `mail-inbox-20261121.md` |
+| `droidloom` | 25 | `droidloom-eb-main-compare-20261128.md` |
 | `q24` | 25 | `q24-cam-on-retire-20261127.md` |
 | `upstream` | 25 | `upstream-userland-20261128.md` |
-| `droidloom` | 24 | `droidloom-fork-survey-20261128.md` |
 | `doc` | 20 | `doc-audit-20261125.md` |
 | `gunyah` | 20 | `gunyah-daily-line-20261126.md` |
 | `android` | 15 | `android-boot-audit-20261122.md` |
@@ -38,13 +38,13 @@
 | `waydroid` | 7 | `waydroid-proxy-err-20261030.md` |
 | `device` | 6 | `device-window-20261121-night.md` |
 | `disk` | 6 | `disk-audit-20261126.md` |
+| `comms` | 5 | `comms-track-20261128-b.md` |
 | `dwc3` | 5 | `dwc3-v16-20261125.md` |
 | `git` | 5 | `git-slim-exec-20261113.md` |
 | `usb` | 5 | `usb-charging-dualport-20261126.md` |
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
 | `bl` | 4 | `bl-stuck-20261118-forensics.md` |
 | `c5` | 4 | `c5-u7-sf-skimage-20261029.md` |
-| `comms` | 4 | `comms-track-20261128-b.md` |
 | `g7` | 4 | `g7-flip-ondevice-20261123.md` |
 | `host` | 4 | `host-stability-20261023.md` |
 | `out` | 4 | `out-android-purge-20261126.md` |
@@ -182,6 +182,7 @@
 | `odirect` | 1 | `odirect-sha-gate-20261120.md` |
 | `onkernel` | 1 | `onkernel-20261123-h2.md` |
 | `optional` | 1 | `optional-9-applycheck-20261113.md` |
+| `outlook` | 1 | `outlook-mail-tooling-20261128.md` |
 | `p1` | 1 | `p1-upstream-dsi-20261013.md` |
 | `p2b` | 1 | `p2b-retest-20261014.md` |
 | `panel` | 1 | `panel-wake-service-20261126.md` |
@@ -381,6 +382,34 @@
 - `mail-triage-20261017.md` — 邮箱通道验证 + 新邮件分诊（2026-10-17）
 - `mail-lists-subscription-20261013.md` — 值得订阅/追踪的邮件列表与信息源 — elden 项目（2026-10-13）
 
+## `droidloom`（25）
+
+- `droidloom-eb-main-compare-20261128.md` — T42 残留：EvilBorsch eb/main 三条 commit vs 我方 00{2,3,4} 逐 hunk 对比（2026-11-28）
+- `droidloom-fork-survey-20261128.md` — droidloom 社区分支/分叉生态调查（2026-11-28）
+- `droidloom-osk-keypad-hide-20261128.md` — 新发现/回归记录（2026-11-28 收尾轮，用户真机报告）
+- `droidloom-local-patches-20261127.md` — droidloom 本地 patch 备料 — 2026-11-27（D24 lane）
+- `droidloom-release-download-verify-20261127.md` — droidloom release 资产下载验证 + 「rayburst 报无效」取证（2026-11-27，父代理亲测）
+- `droidloom-t2-patches-t5-ime-20261127.md` — droidloom 本地 patch 落地（T2）+ 真重启后 IME 持久性（T5）—— 2026-11-27 深夜，上机
+- `droidloom-trime-default-20261127.md` — droidloom：Trime 落成默认中文输入法（T30）—— 2026-11-27 深夜，纯 adb 无人值守
+- `droidloom-upgrade-51-ime-20261127.md` — droidloom 0.1.0-49 → 0.1.0-51 升级 + 占位 IME 复判（T15/T3 收口，2026-11-27 晚，父代理上机）
+- `droidloom-upstream-cluster-20261127.md` — droidloom 上游缺陷聚类 + 社区分叉评估（D24 第二轮，主机侧，2026-11-27）
+- `droidloom-cell-network-20261126.md` — droidloom cell 无网根因（工单 D2）——U2 平板，2026-11-26
+- `droidloom-deploy-20261126.md` — droidloom 部署（工单 D）——U2 平板 TB322FC，2026-11-26
+- `droidloom-display-sizing-20261126.md` — droidloom 小红书「画面不全 / 同意弹窗被截断」定位（2026-11-26，父代理上机）
+- `droidloom-ime-keyboard-20261126.md` — droidloom 输入法：「输入第一个字符后键盘缩回、再也唤不出」（2026-11-26，父代理上机取证 + adb 自动化复现）
+- `droidloom-real-ime-20261126.md` — droidloom 真 IME 绕行（工单 D6）——Fossify Keyboard 装进 cell，三轮连续输入验收通过（2026-11-26）
+- `droidloom-upstream-lane-20261126.md` — droidloom 附属仓库整理 + 上游缺陷/社区分叉评估（D24 常设 lane，首轮 2026-11-26）
+- `droidloom-app-compat-20261125.md` — droidloom 应用兼容三问（GMS / Limbus Company / 小红书）——2026-11-25 静态取证
+- `droidloom-source-build-20261125.md` — droidloom 源码本地克隆与编译（2026-11-25 收尾轮）
+- `droidloom-l2-phoc-syncobj-20261111.md` — C12 L2：phoc 广告 `wp_linux_drm_syncobj_manager_v1`（主机侧全链打通 + aarch64 产物就位）
+- `droidloom-notifications-abi-20261111.md` — droidloom 通知通道 ABI 死循环定位（静态分析，2026-11-11）
+- `droidloom-status-20261111.md` — droidloom 现状与下一步（2026-11-11 盘点）
+- `droidloom-warn-20261111.md` — droidloom 告警收尾：doctor 全表 + invalid Android frame 定位（2026-11-11）
+- `droidloom-feasibility-20261110.md` — Waydroid 网络现状定案 + droidloom 可行性复评（2026-11-10，设备实测）
+- `droidloom-feasibility-20261108.md` — droidloom 可行性复核（2026-11-08）——在线增量 + 四门槛判定
+- `droidloom-build-device-plan-20261030.md` — droidloom 真实构建 + 上机计划（2026-10-31）
+- `droidloom-feasibility-plan-20261030.md` — droidloom 可行性规划（2026-10-30）
+
 ## `q24`（25）
 
 - `q24-cam-on-retire-20261127.md` — Q24「相机常驻 + 熄屏」实测 → `cam-mode-off` 退役、改默认相机常驻（2026-11-27）
@@ -436,33 +465,6 @@
 - `upstream-hits-20261012.md` — 上游命中与回移审计（7.2.y 稳定 / 7.3 周期 / lore 在途）
 - `upstream-hits-review-20261012.md` — 上游命中审计复核 —— 对 `reports/upstream-hits-20261012.md`（lane/upstream 53fbe5a）的独立核对
 - `upstream-lane-merge-20261012.md` — 上游回移 lane 收尾：按裁决清洗 + 合入基线 + 出日常镜像 — 2026-10-12
-
-## `droidloom`（24）
-
-- `droidloom-fork-survey-20261128.md` — droidloom 社区分支/分叉生态调查（2026-11-28）
-- `droidloom-osk-keypad-hide-20261128.md` — 新发现/回归记录（2026-11-28 收尾轮，用户真机报告）
-- `droidloom-local-patches-20261127.md` — droidloom 本地 patch 备料 — 2026-11-27（D24 lane）
-- `droidloom-release-download-verify-20261127.md` — droidloom release 资产下载验证 + 「rayburst 报无效」取证（2026-11-27，父代理亲测）
-- `droidloom-t2-patches-t5-ime-20261127.md` — droidloom 本地 patch 落地（T2）+ 真重启后 IME 持久性（T5）—— 2026-11-27 深夜，上机
-- `droidloom-trime-default-20261127.md` — droidloom：Trime 落成默认中文输入法（T30）—— 2026-11-27 深夜，纯 adb 无人值守
-- `droidloom-upgrade-51-ime-20261127.md` — droidloom 0.1.0-49 → 0.1.0-51 升级 + 占位 IME 复判（T15/T3 收口，2026-11-27 晚，父代理上机）
-- `droidloom-upstream-cluster-20261127.md` — droidloom 上游缺陷聚类 + 社区分叉评估（D24 第二轮，主机侧，2026-11-27）
-- `droidloom-cell-network-20261126.md` — droidloom cell 无网根因（工单 D2）——U2 平板，2026-11-26
-- `droidloom-deploy-20261126.md` — droidloom 部署（工单 D）——U2 平板 TB322FC，2026-11-26
-- `droidloom-display-sizing-20261126.md` — droidloom 小红书「画面不全 / 同意弹窗被截断」定位（2026-11-26，父代理上机）
-- `droidloom-ime-keyboard-20261126.md` — droidloom 输入法：「输入第一个字符后键盘缩回、再也唤不出」（2026-11-26，父代理上机取证 + adb 自动化复现）
-- `droidloom-real-ime-20261126.md` — droidloom 真 IME 绕行（工单 D6）——Fossify Keyboard 装进 cell，三轮连续输入验收通过（2026-11-26）
-- `droidloom-upstream-lane-20261126.md` — droidloom 附属仓库整理 + 上游缺陷/社区分叉评估（D24 常设 lane，首轮 2026-11-26）
-- `droidloom-app-compat-20261125.md` — droidloom 应用兼容三问（GMS / Limbus Company / 小红书）——2026-11-25 静态取证
-- `droidloom-source-build-20261125.md` — droidloom 源码本地克隆与编译（2026-11-25 收尾轮）
-- `droidloom-l2-phoc-syncobj-20261111.md` — C12 L2：phoc 广告 `wp_linux_drm_syncobj_manager_v1`（主机侧全链打通 + aarch64 产物就位）
-- `droidloom-notifications-abi-20261111.md` — droidloom 通知通道 ABI 死循环定位（静态分析，2026-11-11）
-- `droidloom-status-20261111.md` — droidloom 现状与下一步（2026-11-11 盘点）
-- `droidloom-warn-20261111.md` — droidloom 告警收尾：doctor 全表 + invalid Android frame 定位（2026-11-11）
-- `droidloom-feasibility-20261110.md` — Waydroid 网络现状定案 + droidloom 可行性复评（2026-11-10，设备实测）
-- `droidloom-feasibility-20261108.md` — droidloom 可行性复核（2026-11-08）——在线增量 + 四门槛判定
-- `droidloom-build-device-plan-20261030.md` — droidloom 真实构建 + 上机计划（2026-10-31）
-- `droidloom-feasibility-plan-20261030.md` — droidloom 可行性规划（2026-10-30）
 
 ## `doc`（20）
 
@@ -757,6 +759,14 @@
 - `disk-cleanup-20261116.md` — 磁盘清理第二轮执行账 — 2026-11-16（承接 `reports/disk-cleanup-20261115.md`）
 - `disk-cleanup-20261115.md` — 磁盘清理评估与执行账 — 2026-11-15（第二轮，承接 `.pi/reports/disk-audit-2026-11-15.md`）
 
+## `comms`（5）
+
+- `comms-track-20261128-b.md` — D10 通信跟踪（D10 lane 增量快照，只读）— 邮件三箱 + lore + 用户态上游现查
+- `comms-track-20261128-c.md` — D10 通信跟踪（只读增量快照 `-c`）— outlook/himalaya 首扫 + USTC 复核 + 用户态现查
+- `comms-track-20261128.md` — D10 通信跟踪（窗口 `2026-11-26T22:02Z` → `2026-11-27T22:17Z`）— 邮件 / lore / Mobian / phosh / GitHub（只读）
+- `comms-track-20261127-c.md` — 通信跟踪 D10-c 增量（窗口 `2026-11-27T03:20Z` → `2026-11-27T12:32Z`）— 只读
+- `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
+
 ## `dwc3`（5）
 
 - `dwc3-v16-20261125.md` — dwc3 v16 备料处置报告（2026-11-25）——**未投递，等放行**
@@ -801,13 +811,6 @@
 - `c5-u7-container-camera-20261028.md` — C5/U7 容器相机：从「需装 APK」推进到「HAL 静态元数据为空」——真卡点换人（2026-10-28）
 - `c5-u7-gralloc-device-20261028.md` — C5/U7 容器相机 gralloc 崩溃：设备侧判别 E1/E2 与最小修法（2026-10-28）
 - `c5-u7-gralloc-layout-20261028.md` — C5/U7 容器相机「帧交给图形层」崩溃：gralloc 布局定位（2026-10-28）
-
-## `comms`（4）
-
-- `comms-track-20261128-b.md` — D10 通信跟踪（D10 lane 增量快照，只读）— 邮件三箱 + lore + 用户态上游现查
-- `comms-track-20261128.md` — D10 通信跟踪（窗口 `2026-11-26T22:02Z` → `2026-11-27T22:17Z`）— 邮件 / lore / Mobian / phosh / GitHub（只读）
-- `comms-track-20261127-c.md` — 通信跟踪 D10-c 增量（窗口 `2026-11-27T03:20Z` → `2026-11-27T12:32Z`）— 只读
-- `comms-track-20261127.md` — D10 通信跟踪（2026-11-27，只读快照）— 邮件 / GitLab / GitHub / 其他
 
 ## `g7`（4）
 
@@ -1459,6 +1462,10 @@
 ## `optional`（1）
 
 - `optional-9-applycheck-20261113.md` — 可选 9 条逐枚 `git apply --check`（B11，2026-11-13）
+
+## `outlook`（1）
+
+- `outlook-mail-tooling-20261128.md` — Outlook 邮件通道工具化（`scripts/read-mail-outlook.sh`）— 2026-11-28
 
 ## `p1`（1）
 

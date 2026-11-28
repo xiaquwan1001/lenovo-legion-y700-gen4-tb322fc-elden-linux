@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=f510b795a8ff9ee3（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=c71a3b8af726bd27（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,8 +7,8 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**367**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 88 / 设备操作 109 / 造件 71 / 取证 52 / 一次性 3 / 公共库 8 / 其它 36
+- 入口总数：**368**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 89 / 设备操作 109 / 造件 71 / 取证 52 / 一次性 3 / 公共库 8 / 其它 36
 - 引用数为 0 的孤立件：**0**（判定口径见下）
 
 ## 判据（怎么读这张表）
@@ -24,7 +24,7 @@
 
 > 本文件由生成器重写，**手改会被下一次生成覆盖**；要改内容就改被索引脚本的头注释，要改分组就改 `gen-scripts-index.py` 的 `GROUPS`。
 
-## 门禁（88）
+## 门禁（89）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -56,8 +56,8 @@
 | `scripts/doctor/30-tasks-routing.py` | TASKS 台账「章节路由」门（2026-11-26 拆分后新增） | 4 |
 | `scripts/doctor/31-reports-index.sh` | §31 reports/README.md 新鲜度门（委托 scripts/reports-index.py --check）。 | 5 |
 | `scripts/doctor/32-userland-mirror.sh` | 用户态镜像一致性门 + packaging verify.sh --offline 接线 | 9 |
-| `scripts/doctor/33-reports-orphan.sh` | §33 reports/ 孤儿真值门（委托 scripts/reports-orphan-check.py --check）。 | 3 |
-| `scripts/doctor/_lib.sh` | shellcheck shell=bash | 30 |
+| `scripts/doctor/33-reports-orphan.sh` | §33 reports/ 孤儿真值门（委托 scripts/reports-orphan-check.py --check）。 | 4 |
+| `scripts/doctor/_lib.sh` | shellcheck shell=bash | 31 |
 | `scripts/doctor/ab-bench.sh` | bench.sh — check-doctor 新旧 A/B（2026-11-05 脚本审计的验收装置） | 8 |
 | `scripts/android-apk-pkgname.py` | 从 apk 里读 package 名（纯主机侧，无 aapt/jadx 依赖）。 | 4 |
 | `scripts/android-ksu-avb-build.py` | 造 KernelSU(LKM) 修补的 init_boot + 与之自洽的 vbmeta_a。 | 13 |
@@ -95,10 +95,11 @@
 | `scripts/out-archive.py` | out/*.img 归档器 —— out/ 只留在用件与取证件，历史镜像 mv 到 backup/out-history-<date>/。 | 48 |
 | `scripts/out-manifest-check.py` | out/ 造件「报告↔镜像」账本门（2026-11-20，arch-audit P0#2） | 14 |
 | `scripts/rawprogram-preflight.py` | 线刷包 rawprogram XML 的**写前**几何预检（纯主机、无 USB）。 | 16 |
-| `scripts/reports-orphan-check.py` | `reports/*.md` 是否被「角度层」指针引用（可复跑判据 + 反作弊 + 自测）。 | 30 |
+| `scripts/read-mail-outlook.sh` | Outlook 通道只读快照（himalaya envelope list，不改已读态） | 3 |
+| `scripts/reports-orphan-check.py` | `reports/*.md` 是否被「角度层」指针引用（可复跑判据 + 反作弊 + 自测）。 | 39 |
 | `scripts/retire-reboot2.sh` | 把设备上的 `/usr/local/sbin/reboot2` 换成「拒绝壳」（幂等；2026-11-27） | 5 |
 | `scripts/rootfs-image-check.py` | 磁盘根 ext4 镜像「能不能起 / 能不能登入」的写前门（主机侧，只读） | 6 |
-| `scripts/doctor/s07-08-docs.py` | check-doctor §7/§8 入口文档与索引对账（纯文本判据）。 | 43 |
+| `scripts/doctor/s07-08-docs.py` | check-doctor §7/§8 入口文档与索引对账（纯文本判据）。 | 44 |
 | `scripts/doctor/s16-tasks-counts.py` | check-doctor §16：TASKS §0 手写数字 ↔ 计数脚本自动比对。 | 15 |
 | `scripts/serial-console.sh` | 设备串口控制台（/dev/ttyACM0）的**唯一仲裁入口** | 2 |
 | `scripts/sleep-policy.sh` | 设备「待机策略」开关：待机（关屏）时是否允许 SSH/网络继续可用 | 3 |
@@ -128,7 +129,7 @@
 | `scripts/ath12k-load.sh` | ★★★ RETIRED（2026-11-22 脚本审计批 1，reports/scripts-audit-20261122.md §3）★★★ | 55 |
 | `scripts/ath12k-retry.sh` | ath12k (WCN7861 "Peach") boot-time re-probe. | 63 |
 | `scripts/audio-alsa-init.sh` | put the Lenovo-Y700-Gen4 (TB322FC/elden) sound card into | 24 |
-| `scripts/autotest-cycle.sh` | 「BL → 零写盘上机 → 跑测试 → 回 BL」的自主循环驱动（可无人值守连跑） | 23 |
+| `scripts/autotest-cycle.sh` | 「BL → 零写盘上机 → 跑测试 → 回 BL」的自主循环驱动（可无人值守连跑） | 24 |
 | `scripts/bl-preunlock-evidence.sh` | 解锁前（locked 状态）零风险取证 + 解锁申请表所需参数打印。 | 11 |
 | `scripts/bl-unlock.sh` | ⚠ 适用前提（2026-10-03 定稿）：**只有 ROM ≤ 1.1.11.073/.076 才存在解锁命令**； | 12 |
 | `scripts/bt-link-test.sh` | BR/EDR 数据链路只读诊断（y700-elden / WCN7861 Brahma v2） | 14 |
@@ -252,12 +253,12 @@
 | `scripts/bootimg-replace-kernel.py` | 只替换 Android boot image 的内核段，其余逐字节保留。 | 16 |
 | `scripts/build-athm-probe.sh` | Q26 Step A probe: CONFIG_ATH12K=m single-shot build. | 5 |
 | `scripts/build-boot-slim.sh` | G1-30（= G1-29 路线 C）：最小 initramfs 版 boot.img | 13 |
-| `scripts/build-boot.sh` | 打包 fastboot 可启动 boot.img（kernel + Alpine rootfs ramdisk + DTB） | 168 |
+| `scripts/build-boot.sh` | 打包 fastboot 可启动 boot.img（kernel + Alpine rootfs ramdisk + DTB） | 169 |
 | `scripts/build-ffrumble.sh` | 交叉编译 ffrumble（aw86927 FF_RUMBLE 宿主侧阳性对照工具） | 14 |
 | `scripts/build-initramfs.sh` | 可复现地构建 initramfs 资产（唯一真源 = initramfs/init） | 31 |
-| `scripts/build-kernel.sh` | rebuild kernel/DTB for TB322FC (elden), with ccache. | 130 |
+| `scripts/build-kernel.sh` | rebuild kernel/DTB for TB322FC (elden), with ccache. | 131 |
 | `scripts/build-locked-chain.sh` | 为 **BL locked** 单元生成 b 槽 mainline 自洽链（AOSP testkey） | 26 |
-| `scripts/build-manifest.sh` | record everything needed to identify/rebuild a boot image. | 31 |
+| `scripts/build-manifest.sh` | record everything needed to identify/rebuild a boot image. | 33 |
 | `scripts/build-modular-overlay.sh` | layer the modularized payload driver bundle | 14 |
 | `scripts/build-payload-hook.sh` | RETIRED 2026-11-27：vk77-modular ramdisk 补 payload 钩子的一次性打包器（教训已入 PITFALLS §0 纪律 4），配方在 reports/；可复核：reports/scripts-index-20261120.md | 6 |
 | `scripts/build-phoc-arm64.sh` | 产出「广告 wp_linux_drm_syncobj_manager_v1」的 aarch64 phoc（C12 L2） | 18 |
@@ -270,7 +271,7 @@
 | `scripts/c1-iprule-build.sh` | RETIRED 2026-11-27：C1 策略路由内核（vk95 一发）一次性构建器，C1 已由 vk103/vk126 落地，配方在 TASKS/reports C1 记录；可复核：reports/c1-iprule-vk95-20261011.md | 6 |
 | `scripts/detect-memory-corruption.py` | 找出「页缓存里的内容 ≠ 磁盘上的内容」的文件。 | 14 |
 | `scripts/dev-super-relabel.sh` | 设备侧（POSIX sh）：把 Android `super`（sda10，22 GiB 动态分区容器）转成 Linux 分区 | 18 |
-| `scripts/env-build.sh` | shared host build environment for the elden kernel tree. | 61 |
+| `scripts/env-build.sh` | shared host build environment for the elden kernel tree. | 65 |
 | `scripts/esp-apply.sh` | 把主机侧目录树「一条命令」组装成 FAT32 镜像并写进 eldenesp 分区（S5 自动化）。 | 27 |
 | `scripts/esp-install-grub.sh` | 把主机侧造好的 standalone GRUB（arm64-efi）装上 ESP 的 \EFI\BOOT\BOOTAA64.EFI | 36 |
 | `scripts/extract-avbpubkey.py` | 从带 AVB vbmeta header 的镜像提取 public key blob（.avbpubkey）。 | 6 |
@@ -287,7 +288,7 @@
 | `scripts/grubfat-build-uefi-bootimg.sh` | 把"可自举 UEFI 卷"包成 Android boot.img（间接引导层·路线 A 的打壳步骤） | 10 |
 | `scripts/gunyah-rm-bringup.sh` | 在机内核上把 Gunyah RM 栈拉起来并验证一次真实 RM RPC。 | 11 |
 | `scripts/host-mem-build-stress.sh` | 用真实构建压测宿主内存（无 ECC 机器专用） | 10 |
-| `scripts/audio-ucm/install.sh` | deploy the ALSA UCM2 config for Lenovo-Y700-Gen4 (TB322FC/elden). | 16 |
+| `scripts/audio-ucm/install.sh` | deploy the ALSA UCM2 config for Lenovo-Y700-Gen4 (TB322FC/elden). | 17 |
 | `scripts/lore-fetch-raw.py` | 按 Message-ID 直接从 lore 取 raw（自动过 Anubis PoW）。 | 56 |
 | `scripts/manifest-from-image.py` | 从**镜像本身**重建 `.manifest`（源树已删/丢失时用）。 | 11 |
 | `scripts/mesa-build.sh` | 只构建 Waydroid vendor 需要的 Mesa/gralloc 模块（比 make vendorimage 快得多） | 18 |
