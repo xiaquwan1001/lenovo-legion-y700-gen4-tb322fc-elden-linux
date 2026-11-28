@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Droidloom cell
+Comment=Start the droidloom Android cell with the graphical session (works around T46: graphical-session.target stays inactive after a greetd restart, so the unit's WantedBy= never fires)
+Exec=/usr/bin/systemctl --user start droidloom.service
+X-GNOME-Autostart-Phase=Applications
+X-GNOME-Autostart-enabled=true
+NoDisplay=true
