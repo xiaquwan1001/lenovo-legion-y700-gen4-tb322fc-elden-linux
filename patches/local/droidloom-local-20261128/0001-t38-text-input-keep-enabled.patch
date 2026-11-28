@@ -1,0 +1,120 @@
+From: T43 worker <local>
+Subject: [PATCH] droidloom-wayland: withhold host text-input disable + force re-enable (T38 #65 mitigation)
+
+--- a/graphics/droidloom-wayland/src/text_input.rs	2026-11-27 02:22:36.000000000 +0800
++++ b/graphics/droidloom-wayland/src/text_input.rs	2026-11-28 15:01:08.675844239 +0800
+@@ -69,6 +69,9 @@
+     panel_manager: Option<panel::DenialTextInputPanelManagerV1>,
+     panel: Option<panel::DenialTextInputPanelV1>,
+     dismissed: Option<Editor>,
++    /// T38 (#65): set while a host `disable()` was withheld because the
++    /// text-input surface is still entered; see `update()`.
++    held: bool,
+     /// The host keyboard's layout, given to the input method on each
+     /// connection and whenever it changes.
+     keyboard_layout: Option<Hint>,
+@@ -117,6 +120,7 @@
+             panel_manager: None,
+             panel: None,
+             dismissed: None,
++            held: false,
+             keyboard_layout: None,
+         })
+     }
+@@ -228,6 +232,7 @@
+ 
+     pub fn disconnect(&mut self) {
+         self.dismissed = None;
++        self.held = false;
+         self.client = None;
+         self.editor = None;
+         self.incoming.clear();
+@@ -243,6 +248,18 @@
+                 && Some(editor.task) == focused_task
+                 && self.entered.is_some()
+         });
++        // T38 (#65), break ① of the causal chain: Android's `showSoftInput`
++        // always fails for the headless IME, so IMMS retracts the IME on every
++        // app-driven input restart (`start input restarting=true`). Faithfully
++        // forwarding that as `zwp_text_input_v3.disable()` folds the host OSK
++        // away, and because `Editor.needs_enable()` only keys on task/session,
++        // the keyboard can never be raised again. While the host surface is
++        // still entered, withhold the disable (and the `enabled` transition);
++        // a real Leave clears `entered` and disables as before.
++        if desired.is_none() && self.enabled.is_some() && self.entered.is_some() {
++            self.held = true;
++            return;
++        }
+         if desired == self.enabled {
+             return;
+         }
+@@ -251,6 +268,7 @@
+         self.enabled = desired;
+         let Some(resource) = &self.resource else {
+             self.enabled = None;
++            self.held = false;
+             return;
+         };
+         if let Some(editor) = desired {
+@@ -258,13 +276,22 @@
+             // Re-enabling consumes the compositor's touch authorization twice
+             // and dismisses the panel immediately. A show request refreshes
+             // the existing editor, without resetting its Wayland lifecycle.
+-            if editor.needs_enable(previous) {
++            // T38 (#65), break ②: while a disable was withheld above (`held`),
++            // Android's IME has been retracted behind droidloom's back; a newer
++            // `show_request` means the user tapped the editor again, so force a
++            // fresh `enable()` even though task/session are unchanged and
++            // `needs_enable()` would suppress it.
++            let forced = self.held
++                && previous.is_some_and(|old| old.show_request < editor.show_request);
++            self.held = false;
++            if editor.needs_enable(previous) || forced {
+                 resource.enable();
+             }
+             let (hint, purpose) = content_type(editor.input_type);
+             resource.set_content_type(hint, purpose);
+         } else {
+             resource.disable();
++            self.held = false;
+         }
+         resource.commit();
+         self.serial = self.serial.wrapping_add(1);
+@@ -499,6 +526,37 @@
+     }
+ 
+     #[test]
++    fn t38_withholds_disable_while_entered_and_holds_state() {
++        let mut input = fixture();
++        let editor = Editor {
++            session: 8,
++            show_request: 1,
++            task: 143,
++            active: true,
++            input_type: 1,
++        };
++        input.editor = Some(editor);
++        input.enabled = Some(editor);
++        input.entered = Some(TaskObjectId(7));
++        // Android retracts the IME (active=false) but the host surface is still
++        // entered: the disable must be withheld and `enabled` kept, so a later
++        // identical editor record short-circuits without churning the host.
++        input.editor = Some(Editor {
++            active: false,
++            ..editor
++        });
++        input.update(Some(143));
++        assert!(input.outgoing.is_empty());
++        assert!(input.held);
++        assert_eq!(input.enabled, Some(editor));
++        // A real Leave (entered=None) still disables.
++        input.entered = None;
++        input.update(None);
++        assert!(!input.held);
++        assert_eq!(input.enabled, None);
++    }
++
++    #[test]
+     fn edits_are_committed_as_one_session_bound_transaction() {
+         let mut input = fixture();
+         let editor = Editor {

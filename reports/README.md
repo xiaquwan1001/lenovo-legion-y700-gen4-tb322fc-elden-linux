@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：767
+- 报告总数：768
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -44,6 +44,7 @@
 | `usb` | 5 | `usb-charging-dualport-20261126.md` |
 | `audit` | 4 | `audit-20261029-crossdoc.md` |
 | `bl` | 4 | `bl-stuck-20261118-forensics.md` |
+| `build` | 4 | `build-env-podman-eval-20261128.md` |
 | `c5` | 4 | `c5-u7-sf-skimage-20261029.md` |
 | `g7` | 4 | `g7-flip-ondevice-20261123.md` |
 | `host` | 4 | `host-stability-20261023.md` |
@@ -56,7 +57,6 @@
 | `tasks` | 4 | `tasks-next-sink-20261127.md` |
 | `主机侧` | 4 | `主机侧-B13-20261117.md` |
 | `bootloader` | 3 | `bootloader-slotguid-brick-20261121.md` |
-| `build` | 3 | `build-residue-verify-20261125.md` |
 | `c3` | 3 | `c3-spic-verdict-20261115.md` |
 | `driver` | 3 | `driver-gap-device-audit-20261127.md` |
 | `external` | 3 | `external-scan-20261112.md` |
@@ -808,6 +808,13 @@
 - `bl-stuck-20261116.md` — 2026-11-16 夜：设备卡 fastboot（两槽都不能起）—— 只读取证与排除表
 - `bl-history-and-playbook.md` — 卡 bootloader（卡 BL / 落 fastboot）历史案例与排查手册
 
+## `build`（4）
+
+- `build-env-podman-eval-20261128.md` — 本机是否要装 podman —— 构建环境路线评估（2026-11-28，用户提问）
+- `build-residue-verify-20261125.md` — `build/` 对象残渣可重建性 —— 只读复核（2026-11-25）
+- `build-kernel-dsi-guard-20261124.md` — D5⑤：build-kernel.sh DSI 守卫 pristine 上游树假阳性 — 修复回执（2026-11-24）
+- `build-stage-no-danger-units-20261120.md` — lane C：构建器 stage 不装危险件（P0-2，2026-11-20）
+
 ## `c5`（4）
 
 - `c5-u7-sf-skimage-20261029.md` — C5/U7 容器 surfaceflinger `SIGABRT: Unable to generate SkImage` 取证（2026-10-29）
@@ -890,12 +897,6 @@
 - `bootloader-slotguid-brick-20261121.md` — 设备停在 BL 的真根因：`ValidateSlotGuids: BootableSlot _b does not have valid guids`（2026-11-21 晚）
 - `bootloader-alternatives-20261111.md` — 替代引导器评估（systemd-boot / Limine）—— EFI-stub 后掉电这个卡点下
 - `bootloader-alternatives-survey-20261030.md` — 开源 bootloader 替代调研（TB322FC / SM8750P / elden）—— 2026-10-31
-
-## `build`（3）
-
-- `build-residue-verify-20261125.md` — `build/` 对象残渣可重建性 —— 只读复核（2026-11-25）
-- `build-kernel-dsi-guard-20261124.md` — D5⑤：build-kernel.sh DSI 守卫 pristine 上游树假阳性 — 修复回执（2026-11-24）
-- `build-stage-no-danger-units-20261120.md` — lane C：构建器 stage 不装危险件（P0-2，2026-11-20）
 
 ## `c3`（3）
 
