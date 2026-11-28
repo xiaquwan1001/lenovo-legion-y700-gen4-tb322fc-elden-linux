@@ -1,0 +1,14 @@
+# 2026-11-28 08:37 CST  git send-email --confirm=never（USTC SMTP）
+# 命令收件人：
+To: linux-media@vger.kernel.org
+Cc: linux-arm-msm@vger.kernel.org, Vikash Garodia, Dikshita Agarwal, Abhinav Kumar,
+    Bryan O'Donoghue, Mauro Carvalho Chehab, Hans Verkuil, Stefan Schmidt,
+    stable@vger.kernel.org (from Cc trailer)
+Subject: [PATCH v2] media: iris: fill in a default colorspace for decoded formats
+Message-ID: <20261128003737.1300698-1-xiaqinghuan@mail.ustc.edu.cn>
+In-Reply-To: <20261127152024.2149804-1-xiaqinghuan@mail.ustc.edu.cn>
+Result: 250
+# lore 复核（2026-11-28 08:4x CST，重试 2 次后命中）：
+#   GET /linux-media/<MID>/t.mbox.gz → HTTP 200, 15377 B gzip
+#   线程 = 6 封（v1 cover + 1/2/3 + Bryan 回帖 + 本 v2），本封 Subject 未改写，
+#   Fixes: b530b95de22c / Cc: stable@vger.kernel.org / Signed-off-by 逐字在档
