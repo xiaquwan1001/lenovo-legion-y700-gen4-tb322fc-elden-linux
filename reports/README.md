@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：760
+- 报告总数：761
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -103,6 +103,7 @@
 | `shutdown` | 2 | `shutdown-console-spam-20261125.md` |
 | `t14` | 2 | `t14-s3s4s6-offline-verify-20261114.md` |
 | `t18` | 2 | `t18-charging-timing-20261111.md` |
+| `t38` | 2 | `t38-keypad-rootcause-20261128.md` |
 | `v4l2` | 2 | `v4l2-compliance-overlap-20261128.md` |
 | `v4l2loopback` | 2 | `v4l2loopback-73-upgrade-20261112.md` |
 | `vk127` | 2 | `vk127-sampling-20261017.md` |
@@ -201,7 +202,6 @@
 | `shellcheck` | 1 | `shellcheck-fix-20261120.md` |
 | `sn` | 1 | `sn-anchoring-audit-20261113.md` |
 | `ssot` | 1 | `ssot-merge-20261105-round2.md` |
-| `t38` | 1 | `t38-keypad-split-20261128.md` |
 | `t5` | 1 | `t5-q24-dataset-20261020.md` |
 | `t8` | 1 | `t8-elden-wake-check-20261127.md` |
 | `task` | 1 | `task-inventory-20261107.md` |
@@ -1138,6 +1138,11 @@
 - `t18-charging-timing-20261111.md` — T18 补充：充电与开机时序（2026-11-11 深夜，用户提示「USB 不充电/充电和开机有关」）
 - `t18-usb-charging-triage-20261111.md` — T18 USB 充电图标/状态抖动 — 初查报告（只读）
 
+## `t38`（2）
+
+- `t38-keypad-rootcause-20261128.md` — T38 定因（2026-11-28 第三阶段）：`commit_string("8")` 是干净的 —— 空格来自小红书分组格式；「收回」= droidloom 在 Android 侧 IME 被 IMMS 收起后 `disable()` 了宿主 text-input
+- `t38-keypad-split-20261128.md` — T38 单变量实验（2026-11-28 第二阶段）：数字键盘自隐 / 再唤不出，拆出两个独立结论
+
 ## `v4l2`（2）
 
 - `v4l2-compliance-overlap-20261128.md` — v4l2-compliance 3 贴（已发系列 1224591）Fixes/Cc-stable/残项核定（2026-11-28，限时简报）
@@ -1534,10 +1539,6 @@
 ## `ssot`（1）
 
 - `ssot-merge-20261105-round2.md` — SSOT 并入第二轮回执
-
-## `t38`（1）
-
-- `t38-keypad-split-20261128.md` — T38 单变量实验（2026-11-28 第二阶段）：数字键盘自隐 / 再唤不出，拆出两个独立结论
 
 ## `t5`（1）
 
