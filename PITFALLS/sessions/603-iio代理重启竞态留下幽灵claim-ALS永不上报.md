@@ -39,7 +39,7 @@ ps -eo pid,ppid,args | grep -E 'gsd-power|iio-sensor-proxy'                  # �
 
 ## 处置
 
-- **根治** = 代理侧补丁：claim 在对应传感器 `Discovered` 之前挂起/可重试（`patches-userland/iio-sensor-proxy-20261128/`）。
+- **根治** = 代理侧补丁：claim 在对应传感器 `Discovered` 之前挂起/可重试（`patches-userland/iio-sensor-proxy-20261128/` 的 `0001`；部署 = `scripts/deploy-iio-sensor-proxy-patches.sh`，实测反演见 `reports/iio-proxy-patches-20261128.md`）。
 - **临时恢复**：`sudo busctl … ClaimLight`（root 授权可过）或重开一次会话让 gsd-power 重新 claim；
   **`ambient-enabled` / `orientation-lock` 翻转等"看似安全"的路子已实测无效**（journal `-- No entries --`、无 Claim/Release 记录）。
 - 相关：`#765`（同一轮的矩阵错值）、`#766`（测量口径坑）；细节与全部原始计数 = `reports/sensors-orientation-als-20261128.md` §1。

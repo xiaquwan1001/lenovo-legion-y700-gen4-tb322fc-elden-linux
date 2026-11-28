@@ -1,4 +1,4 @@
-<!-- 结构指纹 fp=d685a946247e95f8（--check 只比这个；引用计数不进指纹、随生成刷新） -->
+<!-- 结构指纹 fp=19397c2f03ffb367（--check 只比这个；引用计数不进指纹、随生成刷新） -->
 <!-- 本文件由 scripts/gen-scripts-index.py 生成；不要手改。
      重新生成：python3 scripts/gen-scripts-index.py
      过期检查：python3 scripts/gen-scripts-index.py --check   (rc=1 = 需要重新生成) -->
@@ -7,8 +7,8 @@
 
 `scripts/` 是「命名即接口」的命令层：**没有统一 dispatch**，每个任务一个脚本。本索引给地图，不是规范。设计与统计口径见 `reports/scripts-index-20261120.md`（arch-audit P1#3）。
 
-- 入口总数：**374**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
-- 分组：门禁 89 / 设备操作 109 / 造件 76 / 取证 52 / 一次性 3 / 公共库 8 / 其它 37
+- 入口总数：**375**（`scripts/*.sh|*.py` 或带 shebang 的可执行文本 + 一层子目录 `scripts/{doctor,bisect,audio-tplg,audio-ucm,wd-audio-test}/*`）
+- 分组：门禁 89 / 设备操作 110 / 造件 76 / 取证 52 / 一次性 3 / 公共库 8 / 其它 37
 - 引用数为 0 的孤立件：**0**（判定口径见下）
 
 ## 判据（怎么读这张表）
@@ -118,7 +118,7 @@
 | `scripts/wd-c1-verify.dev.sh` | RETIRED 2026-11-27：vk103 netd per-network 路由验证的一次性设备侧执行件，C1 已收口；可复核：reports/stale-alpine-audit-scripts-20261119.md | 8 |
 | `scripts/zero-to-desktop-check.sh` | 「起机 → 桌面」这一段（RUNBOOK S5–S12）的一条命令自检 | 18 |
 
-## 设备操作（109）
+## 设备操作（110）
 
 | 入口 | 用途 | 引用 |
 |---|---|---|
@@ -135,7 +135,7 @@
 | `scripts/bt-link-test.sh` | BR/EDR 数据链路只读诊断（y700-elden / WCN7861 Brahma v2） | 14 |
 | `scripts/bt-up.sh` | bring up Bluetooth at boot on the TB322FC (elden). | 20 |
 | `scripts/build-hapticd.sh` | 交叉编译 elden-hapticd（Waydroid 马达透传宿主 daemon） | 13 |
-| `scripts/cam-loopback.sh` | 把 mainline 相机（libcamera 软 ISP）转发到一个 v4l2loopback 节点。 | 46 |
+| `scripts/cam-loopback.sh` | 把 mainline 相机（libcamera 软 ISP）转发到一个 v4l2loopback 节点。 | 49 |
 | `scripts/cam-mode.sh` | elden 上「相机 ⇄ 熄屏」互斥的操作口径（在设备上当 root 跑） | 120 |
 | `scripts/camera-modules-load.sh` | bring up the mainline camera stack on TB322FC. | 85 |
 | `scripts/camera-stream-up.sh` | 在设备上把 camss 采集链路配置到可出流（幂等）。 | 30 |
@@ -143,10 +143,11 @@
 | `scripts/charge-watch.sh` | keep the qcom-battmgr charger settings applied. | 73 |
 | `scripts/deploy-camera-modules.sh` | 收口指针（script-redundancy-audit S15 + B13 §2，2026-11-17）：设备侧模块 tar 的**传输/备份/解包/depmod/读回校验** | 28 |
 | `scripts/deploy-desktop-shell.sh` | 把「minbase 根」补成能起 Phosh 桌面的 appliance（主机侧驱动，幂等） | 158 |
+| `scripts/deploy-iio-sensor-proxy-patches.sh` | install / verify / roll back the patched | 1 |
 | `scripts/deploy-modules.sh` | 把 `<构建树>/lib/modules/<UTS>` 部署到设备 `/lib/modules/<UTS>` | 50 |
 | `scripts/deploy-sensord-routec-debian.sh` | 在 **Debian/glibc 根**上安装路线 C 的 Waydroid sensor HAL | 15 |
 | `scripts/deploy-sensors-hal.sh` | 部署 elden UDP 传感器 HAL 到 Waydroid 容器（C4） | 14 |
-| `scripts/deploy-ssc-sensors.sh` | 在 Y700 (TB322FC, Debian trixie) 上部署 SSC 传感器用户态栈 | 8 |
+| `scripts/deploy-ssc-sensors.sh` | 在 Y700 (TB322FC, Debian trixie) 上部署 SSC 传感器用户态栈 | 9 |
 | `scripts/deploy-v4l2loopback.sh` | 为**当前在机内核**（读设备 uname -r）构建并部署 v4l2loopback | 21 |
 | `scripts/deploy-zh-ime.sh` | 部署「触屏唤起的中文输入法」到设备（幂等） | 37 |
 | `scripts/dev-userdata-relabel.sh` | 设备侧（POSIX sh）：把 Android userdata（sda16）就地转成 Linux 数据分区 | 14 |
@@ -254,7 +255,7 @@
 | `scripts/build-athm-probe.sh` | Q26 Step A probe: CONFIG_ATH12K=m single-shot build. | 5 |
 | `scripts/build-boot-slim.sh` | G1-30（= G1-29 路线 C）：最小 initramfs 版 boot.img | 13 |
 | `scripts/build-boot.sh` | 打包 fastboot 可启动 boot.img（kernel + Alpine rootfs ramdisk + DTB） | 169 |
-| `scripts/build-droidloom-userland-crates.sh` | 主机交叉编 droidloom 4 个「C 依赖」件（不走 Arch ARM sysroot） | 8 |
+| `scripts/build-droidloom-userland-crates.sh` | 主机交叉编 droidloom 4 个「C 依赖」件（不走 Arch ARM sysroot） | 9 |
 | `scripts/build-ffrumble.sh` | 交叉编译 ffrumble（aw86927 FF_RUMBLE 宿主侧阳性对照工具） | 14 |
 | `scripts/build-initramfs.sh` | 可复现地构建 initramfs 资产（唯一真源 = initramfs/init） | 31 |
 | `scripts/build-kernel.sh` | rebuild kernel/DTB for TB322FC (elden), with ccache. | 131 |
@@ -263,7 +264,7 @@
 | `scripts/build-modular-overlay.sh` | layer the modularized payload driver bundle | 14 |
 | `scripts/build-payload-hook.sh` | RETIRED 2026-11-27：vk77-modular ramdisk 补 payload 钩子的一次性打包器（教训已入 PITFALLS §0 纪律 4），配方在 reports/；可复核：reports/scripts-index-20261120.md | 6 |
 | `scripts/build-phoc-arm64.sh` | 产出「广告 wp_linux_drm_syncobj_manager_v1」的 aarch64 phoc（C12 L2） | 19 |
-| `scripts/build-phoc-cross.sh` | 交叉编 phoc（0.46 设备版或上游 main）到 Debian-13 arm64，**不需要 root/chroot** | 3 |
+| `scripts/build-phoc-cross.sh` | 交叉编 phoc（0.46 设备版或上游 main）到 Debian-13 arm64，**不需要 root/chroot** | 6 |
 | `scripts/build-phoc-mr-arm64.sh` | 在 Debian sid arm64 chroot 里编译 phoc MR 分支（边缘返回手势） | 5 |
 | `scripts/build-phoc046-trixie.sh` | 在 Debian trixie arm64 chroot 里编「设备在版 phoc 0.46 + edge-swipe 补丁」 | 1 |
 | `scripts/build-phosh-arm64.sh` | 产出带「output power 失败即视为屏亮」修复的 aarch64 phosh | 8 |
@@ -299,7 +300,7 @@
 | `scripts/mkbootimg.py` | minimal AOSP boot image v2 builder (elden project vendored copy). | 82 |
 | `scripts/pack-cloud-backup.sh` | ★ STALE 头注（2026-11-23，D5 批 4 / reports/scripts-hardening-4-20261123.md §2）：**保留 + 本头注，不归档**。 | 12 |
 | `scripts/phoc-build-launch.sh` | 以 root 在**独立 session** 里启动 build-phoc-arm64.sh（脱离调用者的进程组， | 6 |
-| `scripts/phoc-install.sh` | 把自编 phoc 装到设备并**钉住**，防 apt 覆盖（PITFALLS #654） | 26 |
+| `scripts/phoc-install.sh` | 把自编 phoc 装到设备并**钉住**，防 apt 覆盖（PITFALLS #654） | 27 |
 | `scripts/phosh-install.sh` | 把自编 phosh 装到设备并**钉住**，防 apt 覆盖（同 PITFALLS #654 的 phoc 做法） | 5 |
 | `scripts/rambuild.sh` | 内存盘构建区（RAM build scratch）辅助（见 .pi/plans/2026-10-15_081500-内存盘构建区规划.md） | 6 |
 | `scripts/rebuild-vk64-image.sh` | 重建 Q24/N5b 台架镜像 out/boot-elden-vk64.img | 26 |
@@ -307,7 +308,7 @@
 | `scripts/sd-variant-build.sh` | RETIRED 2026-11-27：sleep-death 候选内核/boot.img 一次性构建器（wt-sleepdeath worktree 口径），实验已完成；可复核：reports/artifacts/tablet-offload-20261030/l2a-offline-packages.md | 7 |
 | `scripts/setup-session-greetd.sh` | switch the TB322FC Alpine session between the | 25 |
 | `scripts/sign-boot-b.sh` | Sign a mainline boot image for slot b (self-signed AVB, see bootslot-b/README.md). | 45 |
-| `scripts/sysroot-add-droidloom-deps.sh` | 给 trixie arm64 sysroot 补 droidloom 4 个 C 依赖件的 -dev 包 | 7 |
+| `scripts/sysroot-add-droidloom-deps.sh` | 给 trixie arm64 sysroot 补 droidloom 4 个 C 依赖件的 -dev 包 | 9 |
 | `scripts/uefi-bootimg-dump-v0.py` | dump Android boot image v0 header fields (one line per field) + summary. | 8 |
 | `scripts/uefi-build-variant.sh` | 在 7-mu-lenovo 树上构建一个 **可追溯的 UEFI 变体**（G1-29 线） | 40 |
 | `scripts/uefi-r21-p7-ladder.sh` | UEFI R21「p7 / preamble7」一族镜像的**唯一重建入口**（G1-29 线，纯主机侧） | 153 |
@@ -428,7 +429,7 @@
 | `scripts/sess.sh` | 本项目（y700-elden）的会话检索入口。 | 30 |
 | `scripts/suspend-drain-rate.sh` | 量化「相机栈在位 + 真 suspend」的掉电率（%/h） | 12 |
 | `scripts/switch-kernel-abi.sh` | 在内核「ABI 变体」之间原子切换（内核镜像 + 模块树一起换） | 14 |
-| `scripts/sysroot-add-debs.sh` | 通用：把 trixie arm64 的 deb 解进 sysroot（供交叉编） | 2 |
+| `scripts/sysroot-add-debs.sh` | 通用：把 trixie arm64 的 deb 解进 sysroot（供交叉编） | 8 |
 | `scripts/time-sync.sh` | wait for network, step the clock from NTP, then keep chronyd | 66 |
 | `scripts/uefi-oneshot.sh` | 真载荷单档一发：换新 UEFI 会话 → 载 preamble → 打一个 stage → 判读 | 21 |
 | `scripts/win-x86-run.sh` | 在设备 glibc-rootfs chroot 内运行 Win-x86（Box64+Wine）命令 | 15 |

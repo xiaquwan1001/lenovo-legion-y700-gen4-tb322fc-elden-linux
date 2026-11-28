@@ -1,0 +1,346 @@
+From 2c650ba8d109c2d127a6e4b223eb15bb1369c0bc Mon Sep 17 00:00:00 2001
+From: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Date: Sat, 28 Nov 2026 18:05:48 +0800
+Subject: [PATCH 1/2] main: defer Claim() until sensor discovery finished
+
+A ClaimLight() can arrive while name_acquired_handler() is still inside
+find_sensors(), because the bus name is owned before discovery runs. That
+claim was answered with success while driver_type_exists() was still
+FALSE, so the sensor was never started, but the sender was already
+recorded in clients[]: every later claim turned into "already claimed
+device, no-op" and the client had no reason to retry, leaving LightLevel
+at 0 for the whole boot.
+
+Queue claims that arrive before their sensor type is discovered, and turn
+them into regular claims once discovery finishes (or when the device is
+hotplugged): one watch per sender, sensor started, invocation answered
+after the first reading. If the type is genuinely absent the queued
+claims are failed with G_DBUS_ERROR_NOT_SUPPORTED so a client can retry
+later instead of silently believing it claimed a sensor.
+
+Idempotency of real claims is unchanged: a claim for an already
+discovered sensor takes the previous code path unchanged, a repeat claim
+from a registered sender is still a no-op, and for a given sender at most
+one watch and one clients[] entry exist, so Release/vanished handling
+keeps matching claims 1:1.
+
+Signed-off-by: Qianhui Xu <xiaqinghuan@mail.ustc.edu.cn>
+Assisted-by: pi coding agent (LLM)
+---
+ src/iio-sensor-proxy.c | 202 ++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 188 insertions(+), 14 deletions(-)
+
+diff --git a/src/iio-sensor-proxy.c b/src/iio-sensor-proxy.c
+index 9c7e8cd..3415ca1 100644
+--- a/src/iio-sensor-proxy.c
++++ b/src/iio-sensor-proxy.c
+@@ -34,6 +34,13 @@
+ 
+ #define NUM_SENSOR_TYPES DRIVER_TYPE_PROXIMITY + 1
+ 
++/* A Claim() that arrived before the sensor type it refers to was
++ * discovered, kept around until discovery finishes. */
++typedef struct {
++	gchar                 *sender;
++	GDBusMethodInvocation *invocation;
++} PendingClaim;
++
+ typedef struct {
+ 	GMainLoop *loop;
+ 	GUdevClient *client;
+@@ -48,6 +55,7 @@ typedef struct {
+ 	SensorDevice      *devices[NUM_SENSOR_TYPES];
+ 	GUdevDevice       *udev_devices[NUM_SENSOR_TYPES];
+ 	GHashTable        *clients[NUM_SENSOR_TYPES]; /* key = D-Bus name, value = watch ID */
++	GPtrArray         *pending_claims[NUM_SENSOR_TYPES]; /* PendingClaim, see pending_claims_start() */
+ 
+ 	GPtrArray         *sensor_startup_dbus_invocations_delayed[NUM_SENSOR_TYPES];
+ 	gboolean           sensor_startup_dbus_event_delayed[NUM_SENSOR_TYPES];
+@@ -88,6 +96,10 @@ static const SensorDriver * const drivers[] = {
+ };
+ 
+ static ReadingsUpdateFunc driver_type_to_callback_func (DriverType type);
++static void pending_claim_remove (SensorData  *data,
++				  DriverType   driver_type,
++				  const gchar *sender,
++				  gboolean     reply_success);
+ 
+ static const char *
+ driver_type_to_str (DriverType type)
+@@ -188,6 +200,15 @@ create_clients_hash_table (void)
+ 				      g_free, free_client_watch);
+ }
+ 
++static void
++pending_claim_free (gpointer data)
++{
++	PendingClaim *claim = data;
++
++	g_free (claim->sender);
++	g_free (claim);
++}
++
+ typedef enum {
+ 	PROP_HAS_ACCELEROMETER		= 1 << 0,
+ 	PROP_ACCELEROMETER_ORIENTATION  = 1 << 1,
+@@ -454,11 +475,139 @@ client_vanished_cb (GDBusConnection *connection,
+ 		watch_id = GPOINTER_TO_UINT (g_hash_table_lookup (ht, sender));
+ 		if (watch_id > 0)
+ 			client_release (data, sender, i);
++		else
++			pending_claim_remove (data, i, sender, FALSE);
+ 	}
+ 
+ 	g_free (sender);
+ }
+ 
++static void
++client_add (SensorData  *data,
++	    const gchar *sender,
++	    DriverType   driver_type)
++{
++	GHashTable *ht = data->clients[driver_type];
++	guint watch_id;
++
++	watch_id = g_bus_watch_name_on_connection (data->connection,
++						   sender,
++						   G_BUS_NAME_WATCHER_FLAGS_NONE,
++						   NULL,
++						   client_vanished_cb,
++						   data,
++						   NULL);
++	g_hash_table_insert (ht, g_strdup (sender), GUINT_TO_POINTER (watch_id));
++}
++
++/* A Claim() arrived before the sensor type was discovered: keep it (and its
++ * invocation, which stays unanswered for now) until discovery is done. */
++static void
++pending_claim_add (SensorData            *data,
++		   const gchar           *sender,
++		   DriverType             driver_type,
++		   GDBusMethodInvocation *invocation)
++{
++	PendingClaim *claim;
++
++	claim = g_new0 (PendingClaim, 1);
++	claim->sender = g_strdup (sender);
++	claim->invocation = invocation;
++	g_ptr_array_add (data->pending_claims[driver_type], claim);
++}
++
++/* Drop queued claims for @sender, answering the pending invocations with
++ * success (i.e. what the pre-deferral code did) unless the caller vanished. */
++static void
++pending_claim_remove (SensorData  *data,
++		      DriverType   driver_type,
++		      const gchar *sender,
++		      gboolean     reply_success)
++{
++	GPtrArray *pending = data->pending_claims[driver_type];
++	guint i;
++
++	for (i = 0; i < pending->len; i++) {
++		PendingClaim *claim = g_ptr_array_index (pending, i);
++
++		if (g_strcmp0 (claim->sender, sender) != 0)
++			continue;
++
++		if (reply_success)
++			g_dbus_method_invocation_return_value (claim->invocation, NULL);
++
++		g_ptr_array_remove_index (pending, i);
++		return;
++	}
++}
++
++/* Discovery is over and the sensor type is not usable: fail the queued claims
++ * instead of pretending they succeeded, so that a client can retry later. */
++static void
++pending_claims_fail (SensorData  *data,
++		     DriverType   driver_type,
++		     const gchar *message)
++{
++	GPtrArray *pending = data->pending_claims[driver_type];
++	guint i;
++
++	for (i = 0; i < pending->len; i++) {
++		PendingClaim *claim = g_ptr_array_index (pending, i);
++
++		g_debug ("Failing deferred claim from '%s' for %s device: %s",
++			 claim->sender, driver_type_to_str (driver_type), message);
++		g_dbus_method_invocation_return_error (claim->invocation,
++						       G_DBUS_ERROR,
++						       G_DBUS_ERROR_NOT_SUPPORTED,
++						       "%s", message);
++	}
++	g_ptr_array_set_size (pending, 0);
++}
++
++/* Discovery for @driver_type finished (or the sensor just appeared): turn the
++ * claims that raced with it into regular claims, i.e. register the client,
++ * start the sensor and answer the invocations with the first reading. This is
++ * the same state a client ends up in when claiming an already running sensor,
++ * so the idempotency rules for real claims stay untouched. */
++static void
++pending_claims_start (SensorData *data,
++		      DriverType  driver_type)
++{
++	GPtrArray *pending = data->pending_claims[driver_type];
++	GHashTable *ht = data->clients[driver_type];
++	guint i;
++
++	if (pending->len == 0)
++		return;
++
++	if (!driver_type_exists (data, driver_type) ||
++	    DEVICE_FOR_TYPE (driver_type) == NULL) {
++		pending_claims_fail (data, driver_type, "Sensor not available");
++		return;
++	}
++
++	for (i = 0; i < pending->len; i++) {
++		PendingClaim *claim = g_ptr_array_index (pending, i);
++
++		g_debug ("Turning deferred claim from '%s' for %s device into a real claim",
++			 claim->sender, driver_type_to_str (driver_type));
++
++		/* Several claims from the same sender only get one watch. */
++		if (GPOINTER_TO_UINT (g_hash_table_lookup (ht, claim->sender)) == 0)
++			client_add (data, claim->sender, driver_type);
++
++		/* Return the invocation only after the first reading, so that the
++		 * client has a valid measurement right after Claim(). */
++		g_ptr_array_add (data->sensor_startup_dbus_invocations_delayed[driver_type],
++				 claim->invocation);
++		claim->invocation = NULL;
++	}
++	g_ptr_array_set_size (pending, 0);
++
++	if (g_hash_table_size (ht) > 0)
++		driver_set_polling (DEVICE_FOR_TYPE (driver_type), TRUE);
++}
++
+ static gboolean
+ check_claim_permission (SensorData   *data,
+ 			const char   *sender,
+@@ -513,16 +662,21 @@ handle_generic_method_call (SensorData            *data,
+ 			return;
+ 		}
+ 
+-		watch_id = g_bus_watch_name_on_connection (data->connection,
+-							   sender,
+-							   G_BUS_NAME_WATCHER_FLAGS_NONE,
+-							   NULL,
+-							   client_vanished_cb,
+-							   data,
+-							   NULL);
+-		g_hash_table_insert (ht, g_strdup (sender), GUINT_TO_POINTER (watch_id));
++		if (!driver_type_exists (data, driver_type)) {
++			/* Our D-Bus name shows up before find_sensors() has run (a
++			 * restart of the proxy is enough to hit this), so a client can
++			 * claim before we know about this sensor type. Do not record
++			 * the client yet and do not answer: pending_claims_start()
++			 * turns this into a real claim once discovery finished. */
++			g_debug ("Claim from '%s' for %s device arrived before discovery finished, deferring",
++				 sender, driver_type_to_str (driver_type));
++			pending_claim_add (data, sender, driver_type, invocation);
++			return;
++		}
++
++		client_add (data, sender, driver_type);
+ 
+-		if (driver_type_exists (data, driver_type)) {
++		{
+ 			SensorDevice *sensor_device = DEVICE_FOR_TYPE(driver_type);
+ 
+ 			/* No other clients for this sensor? Start it */
+@@ -545,10 +699,9 @@ handle_generic_method_call (SensorData            *data,
+ 				 * invocation immediately. */
+ 				g_dbus_method_invocation_return_value (invocation, NULL);
+ 			}
+-		} else {
+-			g_dbus_method_invocation_return_value (invocation, NULL);
+ 		}
+ 	} else if (g_str_has_prefix (method_name, "Release")) {
++		pending_claim_remove (data, driver_type, sender, TRUE);
+ 		client_release (data, sender, driver_type);
+ 		g_dbus_method_invocation_return_value (invocation, NULL);
+ 	}
+@@ -742,8 +895,14 @@ bus_acquired_handler (GDBusConnection *connection,
+ 	/* Initialize DBus clients hash table before DBus is fully exposed */
+ 	data->client = g_udev_client_new (subsystems);
+ 
+-	for (guint i = 0; i < NUM_SENSOR_TYPES; i++)
++	for (i = 0; i < NUM_SENSOR_TYPES; i++) {
+ 		data->clients[i] = create_clients_hash_table ();
++		data->pending_claims[i] = g_ptr_array_new_with_free_func (pending_claim_free);
++		/* Allocate the delayed invocation lists here, not in
++		 * name_acquired_handler(): a Claim() can arrive as soon as the bus
++		 * name is owned, which is before find_sensors() has run. */
++		data->sensor_startup_dbus_invocations_delayed[i] = g_ptr_array_new ();
++	}
+ 
+ 	data->connection = g_object_ref (connection);
+ }
+@@ -765,8 +924,6 @@ name_acquired_handler (GDBusConnection *connection,
+ 	for (i = 0; i < NUM_SENSOR_TYPES; i++) {
+ 		SensorDevice *sensor_device;
+ 
+-		data->sensor_startup_dbus_invocations_delayed[i] = g_ptr_array_new ();
+-
+ 		if (!driver_type_exists (data, i))
+ 			continue;
+ 
+@@ -784,11 +941,19 @@ name_acquired_handler (GDBusConnection *connection,
+ 	if (!any_sensors_left (data))
+ 		goto bail;
+ 
++	/* Discovery is done: service the claims that raced with it, so that
++	 * their sensors get started and their invocations answered. */
++	for (i = 0; i < NUM_SENSOR_TYPES; i++)
++		pending_claims_start (data, i);
++
+ 	send_dbus_event (data, PROP_ALL);
+ 	send_dbus_event (data, PROP_ALL_COMPASS);
+ 	return;
+ 
+ bail:
++	for (i = 0; i < NUM_SENSOR_TYPES; i++)
++		pending_claims_fail (data, i, "No sensors or missing kernel drivers for the sensors");
++
+ 	data->ret = 0;
+ 	g_message ("No sensors or missing kernel drivers for the sensors. Exiting");
+ 	g_main_loop_quit (data->loop);
+@@ -1010,6 +1175,7 @@ free_sensor_data (SensorData *data)
+ 			driver_close (DEVICE_FOR_TYPE(i));
+ 		g_clear_object (&UDEV_DEVICE_FOR_TYPE(i));
+ 		g_clear_pointer (&data->clients[i], g_hash_table_unref);
++		g_clear_pointer (&data->pending_claims[i], g_ptr_array_unref);
+ 		g_clear_pointer (&data->sensor_startup_dbus_invocations_delayed[i], g_ptr_array_unref);
+ 	}
+ 
+@@ -1071,6 +1237,10 @@ sensor_changes (GUdevClient *client,
+ 					}
+ 				}
+ 
++				/* Claims that were still waiting for discovery have
++				 * nothing to be attached to anymore. */
++				pending_claims_fail (data, i, "Sensor removed while waiting for it to start up");
++
+ 				send_driver_changed_dbus_event (data, i);
+ 			}
+ 		}
+@@ -1101,6 +1271,10 @@ sensor_changes (GUdevClient *client,
+ 
+ 					g_assert (data->sensor_startup_dbus_event_delayed[driver->type] == FALSE);
+ 
++					/* Claims that arrived before this device showed up can
++					 * become real claims now. */
++					pending_claims_start (data, driver->type);
++
+ 					ht = data->clients[driver->type];
+ 
+ 					if (g_hash_table_size (ht) > 0) {
+-- 
+2.53.0
+

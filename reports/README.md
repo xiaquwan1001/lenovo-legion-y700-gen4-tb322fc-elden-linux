@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：774
+- 报告总数：775
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -163,6 +163,7 @@
 | `hexagonrpc` | 1 | `hexagonrpc-upstream-registry-write-20261127.md` |
 | `hide` | 1 | `hide-android-partitions-20261119.md` |
 | `hwdec` | 1 | `hwdec-iris-sm8750-feasibility-20261127.md` |
+| `iio` | 1 | `iio-proxy-patches-20261128.md` |
 | `init` | 1 | `init-systemd-vs-openrc-20261011.md` |
 | `joonhoe` | 1 | `joonhoe-kim-contact-20261019.md` |
 | `kaanapali` | 1 | `kaanapali-tnoc-periphid-20261127.md` |
@@ -1396,6 +1397,10 @@
 ## `hwdec`（1）
 
 - `hwdec-iris-sm8750-feasibility-20261127.md` — Y700(TB322FC / SM8750) 主线硬件视频解码（qcom iris）可行性 + 上机备料
+
+## `iio`（1）
+
+- `iio-proxy-patches-20261128.md` — iio-sensor-proxy 3.9：claim 竞态 + ALS 抖动 两条补丁与 arm64 deb（2026-11-28，lane S2 后续）
 
 ## `init`（1）
 
