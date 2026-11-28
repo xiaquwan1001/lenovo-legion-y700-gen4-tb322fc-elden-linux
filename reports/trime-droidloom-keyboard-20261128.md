@@ -70,11 +70,25 @@ $A shell ime set com.android.droidloom.ime/.HostInputMethod
 
 | # | 事项 | 判据 | 阻塞 |
 |---|---|---|---|
-| ① | **中文输入**：宿主 OSK 当前只有 `xkb us`（`gsettings get org.gnome.desktop.input-sources sources` = `[('xkb','us')]`），没有拼音 | 宿主 OSK 能出中文候选 | 需决定：给宿主装中文 IME / 或等 droidloom 支持投影图形 Android IME（上游特性，不是配置） |
-| ② | **图形 Android IME 投影**（让 Trime 在 droidloom 里可见） | 宿主 `grim` 出现 Android IME 图层 / 或 droidloom 有对应开关 | 需改 droidloom 源码（架构上明确「never shows a window」）⇒ 属上游 feature request，按 T2 口径只写结论与备料，不自行重编镜像 |
+| ~~①~~ | ~~中文输入~~ **已解决（2026-11-28 09:5x，自研路线）**：宿主 `phosh-osk-stub` 已带自研 RIME completer（`~/y700-elden/patches-userland/zh-ime-rime-20261123`，`gsettings` 的 `sm.puri.phosh.osk.Completers.Rime {schema=luna_pinyin, user-data=~/.local/share/rime}` 在位）。实测：Settings 搜索框里用宿主 OSK 打 `nihao` 类拼音 → 候选条出中文 → 点候选 → **Android 输入框出现「关于提取」**（`grim` 逐个字形可读） | ✅ 已闭环，**不等 droidloom 适配**；无需再动 cell |
+| ② | **图形 Android IME 投影**（让 Trime 在 droidloom 里可见） | 宿主 `grim` 出现 Android IME 图层 / 或 droidloom 有对应开关 | 已向 droidloom 提 **issue #69**（<https://github.com/denialwm/droidloom/issues/69>，正文留档 `reports/artifacts/droidloom-graphical-ime-20261128/body.md`）：请求文档化「只支持 headless IME」并评估投影图形 IME；等维护者表态，不自行重编镜像 |
 | ③ | `PHASE_IME_ON_SHOW_SOFT_INPUT_TRUE` 日志噪音 | 与「键盘是否可见」解耦后不再误判 | 无；已在 PITFALLS 记录 |
 
 ## 6. 产物
 
 - 截图：`reports/artifacts/t32-droidloom-ime-20261128/{cell-display-trime-keyboard,host-trime-no-keyboard,host-fossify-no-keyboard,host-hostinputmethod-osk}.png`
 - 关联：`reports/droidloom-trime-default-20261127.md`（T30，判据①的“真机出中文”其实是 cell 内 screencap 假绿）、`reports/droidloom-upgrade-51-ime-20261127.md` §2/§3。
+
+## 4.1 中文输入（自研路线）实测记录 — 2026-11-28 09:5x
+
+**配置**：默认 IME = `com.android.droidloom.ime/.HostInputMethod`（headless）⇒ 宿主 `phosh-osk-stub` 显示；其 RIME completer 已装：
+
+```sh
+gsettings list-recursively sm.puri.phosh.osk.Completers.Rime
+# schema 'luna_pinyin'; shared-data '/usr/share/rime-data'; user-data '/home/xuqianhui1001/.local/share/rime'
+strings /usr/bin/phosh-osk-stub | grep -ciE 'ELDEN_OSK|rime'   # => 107（自编件在版）
+```
+
+**步骤与结果**：`droidloomctl launch com.android.settings` → 宿主触摸点搜索框 → OSK 出（`grim`）→ 点 `n i h a o` 类拼音键 →
+候选条出中文（`artifacts/.../host-osk-rime-candidates.png`）→ 点首候选 → **Android 输入框出现「关于提取」**（`artifacts/.../host-osk-rime-committed.png`）。
+⇒ 中文字符经 `droidloom-wayland` 的 text-input 桥 commit 进 Android 编辑器，**全链路可用**，不需要图形 Android IME。

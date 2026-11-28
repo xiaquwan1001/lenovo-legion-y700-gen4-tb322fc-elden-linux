@@ -2,7 +2,7 @@
   "name": "Lenovo Legion Y700 Gen4",
   "x-res": 1904,
   "y-res": 3040,
-  "border-radius": 0,
+  "border-radius": 80,
   "width": 119,
   "height": 189,
   "cutouts": []

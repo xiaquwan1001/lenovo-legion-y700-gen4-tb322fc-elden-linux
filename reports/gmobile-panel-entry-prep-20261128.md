@@ -7,7 +7,8 @@
 ## 0. 一句话结论
 
 **能自建，但只能重编 `libgmobile`（或上游 MR），运行时放 JSON 无效**；识别键已确定 = DT compatible **`lenovo,elden`**（文件名必须叫 `lenovo,elden.json`）。
-面板几何真值 = **1904×3040、8.8" 16:10、无挖孔**；唯一缺的真值是**圆角半径**（原厂 Android 确认启用了硬件圆角，但半径不在可读文本里）⇒ 下一步 = 量半径 → 编进条目 → 用「顶栏是否内缩」验收。
+面板几何真值 = **1904×3040、8.8" 16:10、无挖孔**；**圆角半径已从原厂 Android 的存档 dump 里捞到 = 80 px（四角相同）**
+（`backup/HA2EXB0E-16+512/unique/part-persist.bin` 里 WindowManager 的 `roundedCorners RoundedCorners{[RoundedCorner{position=TopLeft, radius=80, center=Point(80, 80)} … ]}`，与 1904×3040/`vendor.display.enable_rounded_corner=1` 同源）⇒ 草稿 JSON 已填 80，下一步就是编。
 
 ## 1. 加载机制（已逐行核对源码/装机件，可复现）
 
@@ -31,17 +32,11 @@
 | 有效显示区（推算） | **118.6 × 189.4 mm**（由 8.8" 对角 + 16:10 算） | 计算；误差 <1% |
 | 像素密度 | **≈16.05 px/mm** | 1904 / 118.6 |
 | 挖孔/刘海 | **无**（官方：无开孔设计） | 发布稿；`dumpsys window` 的 `mDisplayCutout` 为空（cell 侧） |
-| 圆角 | **有硬件圆角**，半径待测 | 原厂 ROM `super_6.img` 里 `vendor.display.enable_rounded_corner=1` 与 SDM 的 `RCDriverIntfImpl`/`PostPrepareJsonBasedRC` 字符串；但半径是面板 RC blob，不在可读文本 |
+| 圆角 | **80 px（四角相同）** | 原厂 Android 的 persist 存档 dump：`backup/HA2EXB0E-16+512/unique/part-persist.bin` 文本里 `roundedCorners RoundedCorners{[RoundedCorner{position=TopLeft, radius=80, center=Point(80, 80)}, TopRight radius=80 center=Point(1824, 80), BottomRight radius=80, BottomLeft radius=80]}`（同一 dump 还记 `1904 x 3040`、`density 640`）；旁证 = 原厂 ROM `super_6.img` 的 `vendor.display.enable_rounded_corner=1` 与 SDM `RCDriverIntfImpl`/`PostPrepareJsonBasedRC`（硬件圆角确实开） |
 
-> **圆角半径是本条目唯一的未知量。** 说明：`adb screencap`/`grim` 看到的四角都是方的（软件帧缓冲不体现物理遮罩），所以不能从截图读；原厂 Android 的 `mRoundedCorners` 在 droidloom cell 里被 `org.droidloom.framework.display.overlay` 归零。
-
-**测量协议（下一步，二选一）**
-
-1. **实物尺量**（最省事）：屏幕全白 → 用直尺量左上角弧线起止点的切点距离 `d`（mm），半径 `r ≈ d`；`border-radius(px) = round(r_mm × 16.05)`。
-2. **官图量**：找正面正视高清渲染图，量「显示区角弧半径 / 显示区短边」的像素比 `k`，则 `radius_px = k × 1904`。
-
-**候选带（仅作编译试值，不作结论）**：同类圆角手机条目实测半径 6–8 mm（`fairphone,fp5` 135 px/18 px·mm⁻¹ ≈ 7.5 mm、`motorola,river` 118/15.88 ≈ 7.4 mm）；
-本板 px/mm≈16.05 ⇒ **≈96–136 px（6–8.5 mm）**是合理起测带。先用 **120 px** 编一版看顶栏内缩量，再按实物微调。
+> **圆角半径采用值 = 80 px**（≈5.0 mm @16.05 px/mm；≈20 dp @640 dpi）。这是**原厂 Android WindowManager 自己报的值**，不是估算；
+> 若日后实物目视发现偏小/偏大，再按「实物尺量」微调（20 dp 是 Android 平板的常见设定）。
+> 注意：`adb screencap`/`grim` 看四角永远是方的（软件帧缓冲不含物理遮罩），droidloom cell 里的 `mRoundedCorners` 也被 `org.droidloom.framework.display.overlay` 归零 —— 所以只能用原厂存档 dump。
 
 ## 3. 可直接用的条目（草稿）
 
@@ -50,9 +45,9 @@
 - `patches-userland/gmobile-elden-20261128/lenovo,elden.json` —— **本机 0.3.1 用**（标量 `border-radius`）：
   ```json
   {"name":"Lenovo Legion Y700 Gen4","x-res":1904,"y-res":3040,
-   "border-radius":0,"width":119,"height":189,"cutouts":[]}
+   "border-radius":80,"width":119,"height":189,"cutouts":[]}
   ```
-- `patches-userland/gmobile-elden-20261128/lenovo,elden.upstream.json` —— **上游 main 用**（`corner-radii:[r,r,r,r]`）。
+- `patches-userland/gmobile-elden-20261128/lenovo,elden.upstream.json` —— **上游 main 用**（`corner-radii:[80,80,80,80]`）。
 
 条目形态对照（上游 `main`，实测抓取）：`fairphone,fp5.json` =
 `{"name","x-res","y-res","corner-radii":[135,135,135,135],"width","height","cutouts":[{"name":"notch","path":"M …"}]}`；
@@ -83,7 +78,7 @@ sudo install -m644 /tmp/gm-root/usr/lib/aarch64-linux-gnu/libgmobile.so.0.300.1 
 
 ## 5. 可验收的下一步（本报告建议的「一条」）
 
-**目标**：`border-radius` 取自实测值（先 120 px 试装）后，phosh 顶栏在左上/右上角自动内缩，且 phosh 0.46 布局不破。
+**目标**：装带 `border-radius: 80` 条目的 `libgmobile` 后，phosh 顶栏在左上/右上角自动内缩，且 phosh 0.46 布局不破。
 
 判据（全绿才算成）：
 
@@ -93,7 +88,9 @@ sudo install -m644 /tmp/gm-root/usr/lib/aarch64-linux-gnu/libgmobile.so.0.300.1 
 4. **可回退**：`.so.bak-20261128` 一条 `cp` 还原；`ldconfig -p | grep gmobile` 版本号不变。
 5. **不写死来源**：条目随 Debian 包重装会丢 ⇒ 若要长期保留，需固化成下游 patch / 上游 MR（与 `PITFALLS #654` 同型的「自编件被包管理器冲掉」风险）。
 
-**上游化（顺路，按 §7 口径只立账不投）**：条目本身是纯数据，适合直接提 gmobile MR（`lenovo,elden.json` + gresource 一行）。要不要提，等本机验完半径再说。
+**上游化（已完成 2026-11-28）**：条目按用户裁决直接提了 gmobile MR —— **!131** <https://gitlab.gnome.org/World/Phosh/gmobile/-/merge_requests/131>
+（分支 `xuqianhui1001/gmobile:lenovo-elden-panel`，commit `ac5aae2`；JSON + gresource 一行；发布时 `mergeable`、pipeline running）。
+半径用原厂 Android persist dump 的 **80 px**，不再等实物测量。台账 `reports/upstream-userland-20261128.md` §2。
 
 ## 6. 素材链接（本轮实际抓取/核对）
 

@@ -336,3 +336,13 @@ for k,(n,last,who,tit) in sorted(res.items(), key=lambda kv: kv[1][1], reverse=T
 | **网络坑** | `gh` 默认走 `https_proxy` ⇒ `api.github.com` TLS handshake timeout；`env -u https_proxy …` 即正常（`curl --noproxy '*'` = 200 同证） |
 
 **本轮我方欠动作（0 项必须）**：M6 的 `Reviewed-by` 只需在下次修订（v4 或合入后）带进 commit trailer；不需要单独回帖（D10 只读口径）。
+
+### 2026-11-28 09:5x 我方外发（用户裁决后执行，已报备）
+
+| 面 | 动作 | 结果 |
+|---|---|---|
+| droidloom | 新 issue **#69**：图形 IME 不投影到宿主（Trime/Fossify 对照 + `grim` 证据 + 源码指针 + 三条 asks） | <https://github.com/denialwm/droidloom/issues/69>（正文 `reports/artifacts/droidloom-graphical-ime-20261128/body.md`，含 AI 披露行） |
+| gmobile（Phosh 上游） | **MR !131** `display-panels: Add Lenovo Legion Y700 Gen4` | <https://gitlab.gnome.org/World/Phosh/gmobile/-/merge_requests/131>，commit `ac5aae2`，`mergeable`、pipeline running |
+| phoc | #125 证据回帖（lisgd 旁听/不吞事件的实测 + phoc 内实现提议） | note `2948914`，2026-11-28T01:55:21Z |
+
+全账 = `reports/upstream-userland-20261128.md`。凭据：GNOME token（keyring）走 bettbox `127.0.0.1:7890`；GitHub 走 `gh`（需 `env -u *_proxy`）。

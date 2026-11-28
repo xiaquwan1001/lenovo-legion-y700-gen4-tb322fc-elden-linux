@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：754
+- 报告总数：755
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -14,7 +14,7 @@
 | `q28` | 33 | `q28-ab-rig-20261116.md` |
 | `mail` | 30 | `mail-inbox-20261121.md` |
 | `q24` | 25 | `q24-cam-on-retire-20261127.md` |
-| `upstream` | 24 | `upstream-coresight-fixes-20261127.md` |
+| `upstream` | 25 | `upstream-userland-20261128.md` |
 | `droidloom` | 22 | `droidloom-local-patches-20261127.md` |
 | `doc` | 20 | `doc-audit-20261125.md` |
 | `gunyah` | 20 | `gunyah-daily-line-20261126.md` |
@@ -408,8 +408,9 @@
 - `q24-stageA-20261012.md` — Q24 阶段 A（安全采集）实测 + 设备挂死事件（2026-10-12）
 - `q24-repro-20261011.md` — Q24 复现 + RPMh 现场取证（2026-10-11）
 
-## `upstream`（24）
+## `upstream`（25）
 
+- `upstream-userland-20261128.md` — 2026-11-28 用户态上游/外发台账（droidloom issue + gmobile MR + phoc #125 证据回帖）
 - `upstream-coresight-fixes-20261127.md` — reboot2 退役 + Coresight 两处上游缺陷（已投）+ vk196 持久化部署 — 2026-11-27
 - `upstream-sent-backfill-20261127.md` — 上游投递 SENT.md 按 MID 复核回填（2026-11-27T12:30Z）
 - `upstream-status-20261125.md` — 上游化当前一页（2026-11-25）
