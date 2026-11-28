@@ -35,9 +35,10 @@
 | 编译 | `ARCH=arm64 CROSS_COMPILE="ccache aarch64-linux-gnu-" make -j8 M=drivers/media/platform/qcom/iris modules` | ✅ 全部 `.o` 编出（`iris_vdec.o` 等 06:13 刷新）；`modpost` 因该树未编 `vmlinux`（无 `Module.symvers`）报未定符号，属**该树未全量构建**的已知现象，不构成本贴问题 |
 | 发信解析 | `git send-email --dry-run` | ✅ 收件人 = linux-media(To) + arm-msm/Vikash/Dikshita/Abhinav/Bryan/Mauro/Hans/Stefan + **stable@vger（从 Cc trailer 自动加）**，`In-Reply-To/References` = v1 cover |
 
-## 4. 投递受阻（**需用户**）
+## 4. 投递（2026-11-28 08:37 CST 已实发；原「受阻」小节降为历史）
 
-- 现状：本机当前只有 **GDM greeter** 会话（`loginctl` 可见 `c1 gdm-greeter`），keyring 锁着 ⇒
+- **结果**：`Result: 250`，MID `<20261128003737.1300698-1-xiaqinghuan@mail.ustc.edu.cn>`，日志 `out/mail-20261128/send-v2-iris-colorspace.log`；lore 复核 ✅ **HTTP 200 / 15 377 B gzip**，线程 6 封（v1 cover+3 贴+Bryan 回帖+本 v2），Subject 未改写、`Fixes:`/`Cc: stable`/SoB 逐字在档。
+- 历史（当时受阻原因，留作工具事实）：本机当时只有 **GDM greeter** 会话（`loginctl` 可见 `c1 gdm-greeter`），keyring 锁着 ⇒
   `git credential fill` 报 `could not read Password for 'smtp://…@smtp.ustc.edu.cn:465'`（rc=128，8 s 超时内返回，非挂死）。
 - 需人工：用户**登录图形会话**后执行下面一条（命令已 dry-run 验证过，逐字可复制）：
 

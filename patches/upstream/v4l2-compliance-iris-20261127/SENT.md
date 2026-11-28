@@ -28,3 +28,14 @@
 - lane 独立核（`reports/v4l2-compliance-overlap-20261128.md`）：`b530b95de22c` 的 **parent `38fc8beaba55` 里那 4 行 `*_DEFAULT` 已存在** ⇒ 父代理初判「b530b95 是初始化引入点」作废。
 - 父代理复跑（GitHub API 逐级 parent + raw 文件「有/无」）：`iris_vdec.c` 在 **`38fc8beaba55`**（reqbuf 提交，2025-02-07）才创建（其 parent `bb8a95aa038e` 该文件 404），**初始化**引入点 = 38fc8bea；**行为**（S_FMT 存 DEFAULT / G_FMT 回吐）引入点 = `b530b95de22c`。
 - 二版报文同时点名两个 sha，`Fixes:` 仍用 `b530b95de22c`（缺陷可观测形态的引入点）。新 sha256 = `35816a1bc7db3db9…`，`git apply --check` 与 `send-email --dry-run` 重跑均 OK。
+
+## 2026-11-28 08:37 CST —— **v2 已实发（单贴，keyring 解锁后）**
+
+| 项 | 值 |
+|---|---|
+| 命令 | `git send-email --confirm=never … --in-reply-to=<v1 cover> 0002-v2-fill-default-colorspace.patch`（用户已登录图形会话，keyring 解锁） |
+| 结果 | **`Result: 250`**（日志 `out/mail-20261128/send-v2-iris-colorspace.log`） |
+| Message-ID | `<20261128003737.1300698-1-xiaqinghuan@mail.ustc.edu.cn>` |
+| 收件人 | To `linux-media`；Cc `linux-arm-msm`/Vikash/Dikshita/Abhinav/Bryan/Mauro/Hans/Stefan + `stable@vger`（Cc trailer 自动带入） |
+| lore 复核 | ✅ `GET /linux-media/<MID>/t.mbox.gz` **HTTP 200 / 15 377 B gzip**；线程 **6 封**（v1 cover+3 贴+Bryan 回帖+本 v2），Subject 未改写，`Fixes:`/`Cc: stable`/SoB 逐字在档 |
+| 正文要点 | v2 只留 colorspace 1 贴；明写 1/3 重复主线 `1facae9bc3c1`、3/3 被主线 s_fmt 无条件 crop seed 取代，请 drop；点名 `38fc8beaba55`（初始化）与 `b530b95de22c`（行为）两个 sha |

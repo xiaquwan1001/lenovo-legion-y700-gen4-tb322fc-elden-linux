@@ -24,7 +24,7 @@
 | **D16** | 我们自己 patch 过的 systemd 单元没部署到设备（`verify.sh` 的 5 条 FAIL 背后） | 🆕 | 79 | `TASKS/dim/D16.md` |
 | **D17** | 开机早期两个 A/B 守护单元都踩「块设备还没枚举」 | 🆕 | 80 | `TASKS/dim/D17.md` |
 | **D18** | 自研「键盘设置」GUI（用户 2026-11-25 提：震动强度 / 词库引擎 / 按键声音 / 自定义功能键） | 🟡 | 81 | `TASKS/dim/D18.md` |
-| **D20** | 下载通道（rayburst/aria2）GitHub release 302+SAS hang | 🟡 | 82 | `TASKS/dim/D20.md` |
+| **D20** | 下载通道（rayburst/aria2）GitHub release 302+SAS hang | ⛔ 过时（2026-11-28 用户裁决） | 82 | `TASKS/dim/D20.md` |
 | **D19** | 无人值守上机闭环（BL ⇄ Linux） | ✅ | 83 | `TASKS/dim/D19.md` |
 | **D21** | Gunyah 线现状 （拓展项，用户 2026-11-26 要求「至少一个 lane 负责 gunyah」） | ✅ | 84 | `TASKS/dim/D21.md` |
 | **D22** | 核实「传感器驱动有问题」这个说法（用户 2026-11-26 要求单独 lane 核实） | ✅ | 85 | `TASKS/dim/D22.md` |
