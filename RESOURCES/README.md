@@ -457,6 +457,8 @@ git log --oneline -10
 | 桌面栈构建 / 调试（T16 新立面 2026-11-27） | `scripts/build-phosh-upstream-fix.sh` | 用上游 main 源树 + 本地补丁编 aarch64 phosh——验证 upstream/*.patch 可上机件时。 |
 | | `scripts/phoc-build-launch.sh` | root 独立 session 启动 build-phoc-arm64.sh（脱离调用者进程组，日志 /tmp/phoc-build.log）——编 phoc 不想被 sudo_exec/tmux 退出连杀时。 |
 | | `scripts/build-phoc046-trixie.sh` | 在 Debian 13 trixie arm64 chroot 里编「设备在版 phoc 0.46 + 补丁」（动态 libwlroots-0.18、glibc 2.41），产物 `out/phoc-046-edge-swipe-arm64-<日期>/`——上机验证上游 MR 前的设备件。 |
+| | `scripts/build-phoc-cross.sh` | **无 root/无 chroot** 交叉编 phoc（0.46 设备版或上游树）到 trixie arm64：`rootfs/cross-aarch64-phoc.ini` + sysroot，判据 NEEDED/GLIBC 与 chroot 版对照——子代理也能编。 |
+| | `scripts/sysroot-add-debs.sh` | 通用：把 trixie arm64 的任意 deb 解进 sysroot（含 /lib 绝对路径链接修正），为交叉编补依赖——`sysroot-add-droidloom-deps.sh` 的泛化版。 |
 | | `scripts/build-phoc-mr-arm64.sh` | 在 Debian sid arm64 chroot 里编 **phoc MR 分支**并取产物/元数据（`out/phoc-edge-swipe-arm64-<日期>/`）——给上游 MR 补架构编译证据时（换 SRC/OUT 环境变量即可复用）。 |
 | | `scripts/glycin-bwrap-shim.sh` | 在 bwrap 前装 shim 让 glycin 判定沙箱不可用、退直跑 loader——修 gdk-pixbuf 2.44 断言杀 phosh 时。 |
 | 上游 / 词库 | `scripts/lore-fetch-raw.py` | 按 Message-ID 直接从 lore 取 raw（自动过 Anubis PoW）——需要上游邮件原文/附件补丁。 |

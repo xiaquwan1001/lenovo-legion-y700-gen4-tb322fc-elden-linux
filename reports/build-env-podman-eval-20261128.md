@@ -30,7 +30,7 @@
 | **C. AOSP / Android 镜像重编**（001 WifiProvisioning 自愈、`#65` 的 `onShowInputRequested`） | **需要容器**，但**已出列**：用户 2026-11-28 裁决「不是主线待办、需求下移」 | **0（不再排期）** | 该活已出列；本机可用性改由客户端侧补丁承担（`patches/local/droidloom-local-20261128/`） |
 | **D. Arch ARM sysroot / 其他发行版矩阵** | 不需要 | **已被用户裁决放弃**（T44：不走 Arch） | — |
 
-## 3. 比装 podman 更便宜的修法（建议先做）
+## 3. 比装 podman 更便宜的修法（**2026-11-28 已落地**）
 
 把「arm64 构建要 root」从流程里拿掉，而不是引入一个新的容器层：
 
@@ -38,6 +38,9 @@
 2. 写 `rootfs/cross-aarch64-phoc.ini`（c 编译器就填现有的 `aarch64-linux-gnu-gcc` + `--sysroot`，我们已在 `build-droidloom-userland-crates.sh` 里验证过这条路径可行）；
 3. 判据：`meson setup --cross-file` 后 `ninja src/phoc` 产出的件与 trixie chroot 版 **NEEDED/GLIBC 判据一致**（我们已有 `out/phoc-046-edge-swipe-arm64-20261128/phoc` 做对照）。
    ⇒ 此后**任何 lane（含子代理）都能编 phoc，不需要 sudo**，也不需要 podman。
+   **实测结论**：`scripts/build-phoc-cross.sh` 从零 build dir 交叉编 phoc 0.46+补丁 = **672,432 B**，
+   `NEEDED` 与 trixie chroot 版**逐项一致**（16 项含 `libwlroots-0.18.so`），max `GLIBC_2.38`；sysroot 906 MB
+   （含 gtk3 依赖链 + 从 chroot 同步的 arm64 构建工具，经已注册的 qemu-aarch64 binfmt 直接执行）。
 
 ## 4. 装 podman 的触发条件（任一命中就装，别提前）
 
