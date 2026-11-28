@@ -37,6 +37,17 @@ RECOVER_UV=${RECOVER_UV:-4600000}	# 高于它才考虑抬回
 RECOVER_SAMPLES=${RECOVER_SAMPLES:-15}	# 连续 15 次（≈30 s）稳定才算恢复
 MAX_TRIES=${MAX_TRIES:-2}		# 抬回最多试 2 次，之后整段插着期不再试
 ICL_FLOOR=${ICL_FLOOR:-500000}		# 降档目标 = SDP 规范上限（端口优先；此档可能仍净放电，属已知代价）
+# ★2026-11-28 上机（D14③ 反向接法：数据线插短边 + PD 插长边）新增两条：
+#   ① PD 高压源豁免：v_bus ≥ PD_UV（5 V）说明对端是 PD 供电源、契约由 ADSP 谈，
+#      **绝不能**按 SDP 口径把 ICL 压到 floor（实测：PD 9 V 时每次写 floor 都失败、
+#      日志空转，而 ADSP 自己按契约给 1.3 A、电池 +1.68 A）。此时只顶 current_max。
+#      注意 `usb_type` 在这个接线形态下仍写 `[SDP]`（ADSP 报的是短边**数据口**类型，
+#      不是供电口）⇒ 不能拿 usb_type 当判据，只认 v_bus。
+#   ② 无效电压样本过滤：PD 重谈/重新插拔时 v_bus 会瞬时读到 80 mV 这类物理不可能值，
+#      原实现连读 3 次就当真塌陷把 ICL 压到 floor（实测 08:42:14 一次，随后空转 70 s）。
+#      USB 供电源不可能低于 V_VALID_MIN（3 V）⇒ 低于它的样本一律不计洼地/不计恢复。
+PD_UV=${PD_UV:-5500000}		# ≥ 它 = PD 高压源（>5 V 即不可能是普通 5 V 口；契约由 ADSP 拥有，本脚本不干预）
+V_VALID_MIN=${V_VALID_MIN:-3000000}	# 低于它 = 无效样本（瞬态/重谈），不计判据
 
 log() { echo "$(date '+%H:%M:%S') $*" >>"$LOG"; }
 rd() { cat "$1" 2>/dev/null; }
@@ -76,6 +87,18 @@ check_once() {
 CDIR=$(cd "$(dirname "$0")" && pwd)
 [ "${1:-}" = "--check" ] && check_once
 
+# optional battery-care limit from /etc/charge.conf（tick 与 PD 分支都调）
+do_battery_care() {
+	[ -f "$CONF" ] || return 0
+	. "$CONF" 2>/dev/null
+	[ -n "${LIMIT:-}" ] || return 0
+	[ "$LIMIT" = off ] && return 0
+	[ -x "$CCTL" ] || return 0
+	end=$(rd "$BAT/charge_control_end_threshold")
+	[ -n "$end" ] && [ "$end" != "$LIMIT" ] && "$CCTL" limit "$LIMIT" >/dev/null 2>&1
+	return 0
+}
+
 # tick() = 一次迭代（读 → 顶回 → 洼地判定 → battery-care）。不带 sleep，便于自测。
 tick() {
 	online=$(rd "$USB/online")
@@ -89,6 +112,26 @@ tick() {
 	max=$(rd "$USB/current_max")
 	cur=$(rd "$USB/input_current_limit")
 	v=$(rd "$USB/voltage_now")
+	case "${v:-0}" in ''|*[!0-9]*) v=0 ;; esac
+
+	# PD 高压源（>5 V，实测 9 V）：契约归 ADSP，按 current_max 跟随一次即可，不跑洼地状态机
+	if [ "$v" -ge "$PD_UV" ] && [ -n "${max:-}" ]; then
+		if [ "${cur:-}" != "$max" ]; then
+			if echo "$max" >"$USB/input_current_limit" 2>/dev/null; then
+				log "PD source v_bus=$v uV -> follow current_max $max uA (no SDP clamp)"
+				wfail=0
+			else
+				wfail=$(( ${wfail:-0} + 1 ))
+				# 实测（2026-11-28）：电池充满/充电终止后 ADSP 对 ICL 写返回 EINVAL，
+				# 旧实现只在成功时写日志 ⇒ 「写不动」完全静默。有界记账：首次 + 每 30 次。
+				[ "$wfail" -eq 1 ] || [ $((wfail % 30)) -eq 0 ] \
+					&& log "write input_current_limit=$max rejected (EINVAL?) x$wfail (cur=$cur) - charging terminated?"
+			fi
+		fi
+		target=$max; tries=0; sag=0; good=0
+		do_battery_care
+		return 0
+	fi
 
 	if [ -n "$max" ]; then
 		[ -n "${target:-}" ] || target=$max
@@ -102,9 +145,8 @@ tick() {
 		fi
 	fi
 
-	# 2. 洼地保护
-	case "${v:-0}" in ''|*[!0-9]*) v=0 ;; esac
-	if [ "$v" -gt 0 ] && [ "$v" -lt "$SAG_UV" ]; then
+	# 2. 洼地保护（v < V_VALID_MIN 的样本视为无效：既不计塌陷也不计恢复）
+	if [ "$v" -ge "$V_VALID_MIN" ] && [ "$v" -lt "$SAG_UV" ]; then
 		sag=$((sag + 1)); good=0
 	elif [ "$v" -gt "$RECOVER_UV" ]; then
 		good=$((good + 1)); sag=0
@@ -125,14 +167,7 @@ tick() {
 		fi
 	fi
 
-	# 3. optional battery-care limit
-	if [ -f "$CONF" ]; then
-		. "$CONF" 2>/dev/null
-		if [ -n "${LIMIT:-}" ] && [ "$LIMIT" != off ] && [ -x "$CCTL" ]; then
-			end=$(rd "$BAT/charge_control_end_threshold")
-			[ -n "$end" ] && [ "$end" != "$LIMIT" ] && "$CCTL" limit "$LIMIT" >/dev/null 2>&1
-		fi
-	fi
+	do_battery_care
 	return 0
 }
 
@@ -173,8 +208,18 @@ selftest() {
 	echo 1 >"$USB/online"; echo 5000000 >"$USB/voltage_now"; tick
 	chk "重插复位后顶档" 900000 "$(rd "$USB/input_current_limit")"
 	chk "重插后 tries 归零" 0 "$tries"
+	# 8) 无效电压样本（PD 重谈时读到 80 mV）连打 6 次 ⇒ 不得降档
+	set_rt 1 5000000; tick
+	for i in 1 2 3 4 5 6; do echo 80000 >"$USB/voltage_now"; tick; done
+	chk "无效电压不触发降档" 900000 "$(rd "$USB/input_current_limit")"
+	# 9) PD 高压源（9 V / current_max 5 A）：按 current_max 跟随，且不被洼地/floor 干预
+	echo 1 >"$USB/online"; echo 5000000 >"$USB/current_max"
+	echo 9000000 >"$USB/voltage_now"; echo 3000000 >"$USB/input_current_limit"
+	tick; chk "PD 源跟随 current_max" 5000000 "$(rd "$USB/input_current_limit")"
+	for i in 1 2 3; do echo 9000000 >"$USB/voltage_now"; echo 3000000 >"$USB/input_current_limit"; tick; done
+	chk "PD 源保持 current_max（不被 SDP 口径压档）" 5000000 "$(rd "$USB/input_current_limit")"
 	rm -rf "$ST"
-	[ "$fail" = 0 ] && echo "selftest: PASS (7/7)" || { echo "selftest: FAIL ($fail)"; return 1; }
+	[ "$fail" = 0 ] && echo "selftest: PASS (13/13)" || { echo "selftest: FAIL ($fail/13)"; return 1; }
 }
 
 CDIR=$(cd "$(dirname "$0")" && pwd)

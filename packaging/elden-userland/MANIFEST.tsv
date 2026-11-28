@@ -54,7 +54,7 @@ dst	kind	sha256	size	mode	repo_src
 /usr/local/sbin/cam-mode.sh	script	cd8d4e237527ef2b7af2bb7dc078b34a10f4687f7711891cea5b4288d1b07de6	10012	755	files/usr/local/sbin/cam-mode.sh
 /usr/local/sbin/camera-modules-load.sh	script	d1b0a9ebf803440a48502704e383b573b2d616a39a3e7f3b6871568d259a1d04	4076	755	files/usr/local/sbin/camera-modules-load.sh
 /usr/local/sbin/charge-ctl.sh	script	4757f6a9e8909b188329e98679a1d1d3cd4a04cea5ccd6cf3a7cb7326756e0b1	2857	755	files/usr/local/sbin/charge-ctl.sh
-/usr/local/sbin/charge-watch.sh	script	257b0125fa40590a37f0980e5dea6eb5b1f26c6bf166820a8a98daa5c6506134	9027	755	files/usr/local/sbin/charge-watch.sh
+/usr/local/sbin/charge-watch.sh	script	59efd23b6f6c1ce31e49a233d7d179bdc767eb7ad769025be03dc92e53857c67	12036	755	files/usr/local/sbin/charge-watch.sh
 /usr/local/sbin/dpms-watch.sh	script	25de8dafcd963be1feb7adbc8fea1c0fa59c59bf92d44ab9e4b566f4a2a650c7	773	755	files/usr/local/sbin/dpms-watch.sh
 /usr/local/sbin/elden-backlight-floor.sh	script	a85471519a2b2b575167210f85b9b8c89adffdef6b4ffb63e0220263444681d8	2458	755	files/usr/local/sbin/elden-backlight-floor.sh
 /usr/local/sbin/elden-bootlog.sh	script	43051f7e650dcd29c0332ad0aa66a78c6896157e3767611dac6118a36b78dea4	727	755	files/usr/local/sbin/elden-bootlog.sh

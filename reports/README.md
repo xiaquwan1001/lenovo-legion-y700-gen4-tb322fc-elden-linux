@@ -4,7 +4,7 @@
 > 要改分类/标题请改报告文件自己的首个 `# ` 标题。
 > 入口关系：`INDEX.md` 是唯一入口；本文件只做 `reports/` 内部的**查全**用索引，不承载状态结论。
 
-- 报告总数：750
+- 报告总数：751
 - 命名约定：`<主题>-<YYYYMMDD>.md`（无日期的少数为早期件）
 - 分组依据：文件名去掉日期后按 `-` 取首段；同组按日期倒序
 
@@ -133,6 +133,7 @@
 | `coresight` | 1 | `coresight-list-subscribe-20261127.md` |
 | `counts` | 1 | `counts-gate-20261107.md` |
 | `d1` | 1 | `d1-host-side-20261123.md` |
+| `d14` | 1 | `d14-reverse-wiring-20261128.md` |
 | `daily` | 1 | `daily-linux-deploy-20261122.md` |
 | `desktop` | 1 | `desktop-chain-gate-20261119.md` |
 | `determinism` | 1 | `determinism-gap-and-q28-plan-20261023.md` |
@@ -1252,6 +1253,10 @@
 ## `d1`（1）
 
 - `d1-host-side-20261123.md` — D1 主机侧：hexagonrpcd 不进构建器 + 时间基线自愈（2026-11-23）
+
+## `d14`（1）
+
+- `d14-reverse-wiring-20261128.md` — D14③ 反向接法上机（数据线插短边 + PD 插长边）：PD 供电成立，顺手修掉 `charge-watch` 两处误动作（2026-11-28）
 
 ## `daily`（1）
 
